@@ -10,7 +10,7 @@ The generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone source is preserved at `texture_sources/cobblestone.png`. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone source is preserved at `texture_sources/cobblestone.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -43,6 +43,19 @@ This writes:
 - `src/main/resources/assets/fastfurnacev2/textures/block/fast_cobblestone.png.mcmeta`
 
 The existing block model references the animated texture automatically; no model change is needed.
+
+## Regenerate Fast Furnace
+
+Each furnace texture is generated independently from its square vanilla source. From the project root on Windows, run:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_front.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_front.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_front_on.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_front_on.png --seed 312
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_side.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_side.png --seed 313
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_top.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_top.png --seed 314
+```
+
+On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. The normal and lit furnace models share the animated side and top textures.
 
 ## Generate Another Lava-Vein Texture
 

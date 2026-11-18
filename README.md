@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-A NeoForge mod for Minecraft 26.1.2, currently adding Fast Cobblestone as its first block.
+A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and a vanilla-compatible Fast Furnace with animated lava-vein textures.
 
 ## Features
 
@@ -13,6 +13,16 @@ A NeoForge mod for Minecraft 26.1.2, currently adding Fast Cobblestone as its fi
 - Drops Fast Cobblestone—not vanilla cobblestone—when broken with an appropriate tool.
 - Mining stone with a correct, non-Silk-Touch tool has an independent 10% chance to drop one bonus Fast Cobblestone alongside the normal vanilla cobblestone drop. The bonus does not apply in creative mode or when block drops are disabled.
 - Appears in both the vanilla **Building Blocks** tab and the mod's **Fast Furnace V2** tab, whose icon is Fast Cobblestone.
+
+### Fast Furnace
+
+- Registry ID: `fastfurnacev2:fast_furnace`.
+- Currently operates like a vanilla furnace: standard smelting recipes and fuels, furnace menu and recipe book, inventory/experience handling, directional placement, comparator output, and familiar fire sounds and particles.
+- Uses the vanilla furnace's 3.5 hardness and blast resistance, requires a pickaxe for drops, and emits light level 13 while lit.
+- Drops itself and preserves a custom name assigned before breaking.
+- Can be crafted with the vanilla furnace pattern using eight Fast Cobblestone.
+- Appears in both the vanilla **Functional Blocks** tab and the mod's **Fast Furnace V2** tab.
+- Uses animated lava-vein variants of the vanilla furnace front, lit front, side, and top textures.
 
 The former MDK example blocks, items, configuration, startup messages, client setup, and empty Mixin registration have been removed.
 
@@ -59,18 +69,20 @@ For a clean rebuild:
 ```text
 src/main/java/com/skylark193/fastfurnacev2/
 ├── FastFurnaceV2.java             # Registration and event listener setup
-└── FastCobblestoneDrops.java      # Bonus drops from player-mined stone
+├── FastCobblestoneDrops.java      # Bonus drops from player-mined stone
+├── FastFurnaceBlock.java          # Vanilla-style furnace block behavior
+└── FastFurnaceBlockEntity.java    # Smelting, fuel, inventory, and furnace menu
 src/main/resources/
 ├── assets/fastfurnacev2/
-│   ├── blockstates/fast_cobblestone.json
-│   ├── items/fast_cobblestone.json
+│   ├── blockstates/               # Fast Cobblestone and directional/lit furnace states
+│   ├── items/                     # Block item model definitions
 │   ├── lang/en_us.json
-│   ├── models/block/fast_cobblestone.json
-│   └── textures/block/
-│       ├── fast_cobblestone.png
-│       └── fast_cobblestone.png.mcmeta
+│   ├── models/block/              # Cobblestone and normal/lit furnace models
+│   └── textures/block/            # Animated PNG strips and .png.mcmeta metadata
 └── data/
-    ├── fastfurnacev2/loot_table/blocks/fast_cobblestone.json
+    ├── fastfurnacev2/
+    │   ├── loot_table/blocks/     # Self-drops; furnace preserves custom names
+    │   └── recipe/fast_furnace.json
     └── minecraft/tags/block/mineable/pickaxe.json
 src/main/templates/META-INF/
 └── neoforge.mods.toml             # Metadata populated from gradle.properties
@@ -78,13 +90,13 @@ tools/
 ├── generate_lava_texture.py       # Reusable animated lava-vein generator
 ├── test_generate_lava_texture.py  # Generator determinism and image checks
 ├── requirements.txt               # Pinned Pillow dependency
-├── texture_sources/cobblestone.png
+├── texture_sources/               # Preserved square vanilla source textures
 └── README.md                      # Texture generation instructions
 ```
 
 ## Texture Generation
 
-Fast Cobblestone uses an eight-frame lava-vein animation with a two-tick frame time. The reusable generator, preserved cobblestone source, pinned Python dependency, and full regeneration commands are in [tools/README.md](tools/README.md).
+Fast Cobblestone and all four Fast Furnace textures use eight-frame lava-vein animations with a two-tick frame time. The reusable generator, preserved vanilla sources, pinned Python dependency, and full regeneration commands are in [tools/README.md](tools/README.md).
 
 To regenerate after setting up the tools environment:
 
@@ -97,6 +109,8 @@ The generator writes both the vertical PNG strip and its `.png.mcmeta` animation
 ## Block Behavior and Metadata
 
 Fast Cobblestone's Java properties mirror the vanilla cobblestone definition. Its pickaxe-minable tag controls mining behavior, while its loot table explicitly specifies the Fast Cobblestone item as its drop. Keep these definitions synchronized if its behavior changes.
+
+Fast Furnace mirrors the vanilla furnace block and block entity with its own registry objects and block entity type. It uses `RecipeType.SMELTING` and `FurnaceMenu`, so vanilla smelting and fuel behavior remain unchanged. Its blockstate selects separate normal and lit models, while its loot table copies `minecraft:custom_name` from the block entity just like vanilla.
 
 `FastCobblestoneDrops` listens to NeoForge's server-side `BlockDropsEvent`. For stone broken by a non-creative player, it checks the block-drops game rule, the player's harvest tool, and the tool's Silk Touch level before applying the 10% roll. A successful roll appends one Fast Cobblestone to the existing drop list without replacing vanilla cobblestone.
 

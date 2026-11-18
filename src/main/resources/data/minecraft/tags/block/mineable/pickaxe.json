@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "fastfurnacev2:fast_cobblestone"
+    "fastfurnacev2:fast_cobblestone",
+    "fastfurnacev2:fast_furnace"
   ]
 }
