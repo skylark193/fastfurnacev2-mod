@@ -167,6 +167,10 @@ GitHub Actions runs the same Gradle build on pushes and pull requests using JDK 
 - [NeoForge Discord](https://discord.neoforged.net/)
 - [Mojang mappings license information](https://github.com/NeoForged/NeoForm/blob/main/Mojang.md)
 
+## AI Assistance Disclosure
+
+This project was developed with assistance from [Claude Code](https://claude.com/claude-code), Anthropic's AI coding assistant. AI-assisted contributions include Java code, tests, documentation, resource files, texture-generation tooling, and generated textures. Development is directed by the project maintainer, and changes are validated using the project's build, GameTests, and texture-generator tests where applicable. This disclosure does not imply endorsement by Anthropic.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
