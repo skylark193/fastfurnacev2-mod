@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fast Furnace V2 is a NeoForge mod for Minecraft. Its current content is Fast Cobblestone (`fastfurnacev2:fast_cobblestone`), a block based on vanilla cobblestone. The mod has a custom creative tab named Fast Furnace V2 with Fast Cobblestone as its icon.
+Fast Furnace V2 is a NeoForge mod for Minecraft. Its current content is Fast Cobblestone (`fastfurnacev2:fast_cobblestone`), a block based on vanilla cobblestone. The mod has a custom creative tab named Fast Furnace V2 with Fast Cobblestone as its icon. Mining stone with a correct, non-Silk-Touch tool also has a 10% chance to add one bonus Fast Cobblestone alongside vanilla cobblestone.
 
 The MDK example content, example configuration and client classes, startup messages, and unused empty Mixin registration have been removed. Furnace-specific behavior has not been implemented yet.
 
@@ -43,7 +43,8 @@ The build is the primary validation command and matches GitHub Actions CI. There
 
 ## Project Structure
 
-- `src/main/java/com/skylark193/fastfurnacev2/FastFurnaceV2.java`: common mod entry point, Fast Cobblestone block/item registration, custom creative tab, and Building Blocks tab population.
+- `src/main/java/com/skylark193/fastfurnacev2/FastFurnaceV2.java`: common mod entry point, Fast Cobblestone block/item registration, custom creative tab, Building Blocks tab population, and game-event listener registration.
+- `src/main/java/com/skylark193/fastfurnacev2/FastCobblestoneDrops.java`: appends the 10% bonus drop to stone's existing drops for eligible players and tools.
 - `src/main/resources/assets/fastfurnacev2/blockstates/fast_cobblestone.json`: blockstate-to-model mapping.
 - `src/main/resources/assets/fastfurnacev2/models/block/fast_cobblestone.json`: cube-all block model using the mod's texture.
 - `src/main/resources/assets/fastfurnacev2/items/fast_cobblestone.json`: item model definition; this Minecraft version uses `assets/<namespace>/items/`.
@@ -59,6 +60,7 @@ The build is the primary validation command and matches GitHub Actions CI. There
 
 - Use NeoForge `DeferredRegister` objects for blocks, items, and creative tabs; register all registers with the mod event bus.
 - Fast Cobblestone mirrors vanilla cobblestone's explicit properties: stone map color, base-drum instrument, `requiresCorrectToolForDrops()`, and strength 2.0/6.0. The mineable tag supplies pickaxe behavior, and the loot table explicitly drops Fast Cobblestone.
+- `FastCobblestoneDrops` handles NeoForge's server-side `BlockDropsEvent`, after vanilla drops have been calculated. It requires stone, a non-creative player breaker, enabled block drops, and a correct tool without Silk Touch. Its 10% roll appends one Fast Cobblestone to `event.getDrops()`; do not replace or clear the normal cobblestone drop.
 - Do not replace the explicit properties with `BlockBehaviour.Properties.ofFullCopy(Blocks.COBBLESTONE)`: full copy also copies vanilla's loot-table key and description ID, which can produce the wrong drops and translation key.
 - Add translations for new registry objects and configuration options.
 - Keep common logic separate from any future client-only logic. Client classes must use `Dist.CLIENT` and must not be referenced from dedicated-server paths.

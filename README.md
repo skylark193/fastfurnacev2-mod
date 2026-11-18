@@ -11,6 +11,7 @@ A NeoForge mod for Minecraft 26.1.2, currently adding Fast Cobblestone as its fi
 - Matches vanilla cobblestone's stone map color, base-drum note-block instrument, 2.0 hardness, and 6.0 blast resistance.
 - Is mineable with a pickaxe and requires an appropriate tool for drops, matching vanilla cobblestone's wooden-pickaxe-or-better behavior.
 - Drops Fast Cobblestone—not vanilla cobblestone—when broken with an appropriate tool.
+- Mining stone with a correct, non-Silk-Touch tool has an independent 10% chance to drop one bonus Fast Cobblestone alongside the normal vanilla cobblestone drop. The bonus does not apply in creative mode or when block drops are disabled.
 - Appears in both the vanilla **Building Blocks** tab and the mod's **Fast Furnace V2** tab, whose icon is Fast Cobblestone.
 
 The former MDK example blocks, items, configuration, startup messages, client setup, and empty Mixin registration have been removed.
@@ -57,7 +58,8 @@ For a clean rebuild:
 
 ```text
 src/main/java/com/skylark193/fastfurnacev2/
-└── FastFurnaceV2.java             # Block/item/tab registration and creative tabs
+├── FastFurnaceV2.java             # Registration and event listener setup
+└── FastCobblestoneDrops.java      # Bonus drops from player-mined stone
 src/main/resources/
 ├── assets/fastfurnacev2/
 │   ├── blockstates/fast_cobblestone.json
@@ -75,6 +77,8 @@ src/main/templates/META-INF/
 ## Block Behavior and Metadata
 
 Fast Cobblestone's Java properties mirror the vanilla cobblestone definition. Its pickaxe-minable tag controls mining behavior, while its loot table explicitly specifies the Fast Cobblestone item as its drop. Keep these definitions synchronized if its behavior changes.
+
+`FastCobblestoneDrops` listens to NeoForge's server-side `BlockDropsEvent`. For stone broken by a non-creative player, it checks the block-drops game rule, the player's harvest tool, and the tool's Silk Touch level before applying the 10% roll. A successful roll appends one Fast Cobblestone to the existing drop list without replacing vanilla cobblestone.
 
 Use [gradle.properties](gradle.properties) to change the mod ID, display name, version, Minecraft/NeoForge versions, group ID, or license. If the mod ID changes, also update `FastFurnaceV2.MODID`, resource paths, package references, and metadata as needed.
 
