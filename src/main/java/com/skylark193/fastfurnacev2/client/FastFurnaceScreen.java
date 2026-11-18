@@ -71,10 +71,10 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
             graphics.text(this.font, SPEED, x + 6, y + 20, 0xFFE0E0E0, false);
             graphics.text(this.font, DOUBLE_BURN, x + 6, y + 31, 0xFFE0E0E0, false);
             graphics.text(this.font,
-                    Component.translatable("gui.fastfurnacev2.current_burn", this.menu.getCurrentBurnTime()),
+                    Component.translatable("gui.fastfurnacev2.current_burn", this.menu.getCurrentBurnTime() / 20.0F),
                     x + 6, y + 44, 0xFFE0E0E0, false);
             graphics.text(this.font,
-                    Component.translatable("gui.fastfurnacev2.total_fuel", this.menu.getTotalFuelTime()),
+                    Component.translatable("gui.fastfurnacev2.total_fuel", this.menu.getTotalFuelTime() / 20.0F),
                     x + 6, y + 55, 0xFFE0E0E0, false);
         }
     }

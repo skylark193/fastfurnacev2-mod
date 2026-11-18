@@ -20,7 +20,7 @@ A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and an accelerated 
 - Uses vanilla smelting recipes and fuels, recipe-book integration, inventory/experience handling, directional placement, comparator output, and familiar fire sounds and particles.
 - Smelts at 150% of vanilla speed; a normal 200-tick item completes in 133 ticks.
 - Each consumed fuel item has an independent 10% chance to provide twice its normal burn time.
-- Has an information button at the top right of its GUI. Its fly-out shows the speed, double-burn chance, remaining burn time, and current fuel's total burn time, with fuel timers synchronized every tick.
+- Has an information button at the top right of its GUI. Its fly-out shows the speed, double-burn chance, remaining burn time, and current fuel's total burn time in seconds with two decimal places, synchronized from exact tick values every tick.
 - Uses the vanilla furnace's 3.5 hardness and blast resistance, requires a pickaxe for drops, and emits light level 13 while lit.
 - Drops itself and preserves a custom name assigned before breaking.
 - Can be crafted with the vanilla furnace pattern using eight Fast Cobblestone.
