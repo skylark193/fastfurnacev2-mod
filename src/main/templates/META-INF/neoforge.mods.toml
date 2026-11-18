@@ -6,7 +6,7 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="skylark193"
 description='''
-Adds Fast Cobblestone and future furnace-related content.
+Adds Fast Cobblestone and an accelerated Fast Furnace with optional JEI integration.
 '''
 
 [[dependencies.${mod_id}]]
@@ -21,4 +21,11 @@ modId="minecraft"
 type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="jei"
+type="optional"
+versionRange="[${jei_version},)"
+ordering="AFTER"
 side="BOTH"

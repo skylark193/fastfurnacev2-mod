@@ -30,6 +30,13 @@ base {
     archivesName = mod_id
 }
 
+repositories {
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com'
+    }
+}
+
 // Mojang ships Java 25 to end users in 26.1.2, so mods should target Java 25.
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
@@ -104,6 +111,17 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+dependencies {
+    compileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${jei_minecraft_version}-neoforge-api:${jei_version}"
+
+    // JEI 29.2.0.21 requires Minecraft 26.1 exactly and cannot launch on this project's 26.1.2.
+    // Opt in only when using a JEI runtime whose metadata supports the configured Minecraft version.
+    if (providers.gradleProperty('withJei').isPresent()) {
+        localRuntime "mezz.jei:jei-${jei_minecraft_version}-neoforge:${jei_version}"
+    }
+}
+
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -115,6 +133,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
+            jei_version            : jei_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties

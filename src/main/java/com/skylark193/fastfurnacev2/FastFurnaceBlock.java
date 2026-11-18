@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -37,7 +38,12 @@ public class FastFurnaceBlock extends AbstractFurnaceBlock {
 
     @Override
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createFurnaceTicker(level, type, FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get());
+        return level instanceof ServerLevel serverLevel
+                ? createTickerHelper(
+                        type,
+                        FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get(),
+                        (innerLevel, pos, blockState, entity) -> FastFurnaceBlockEntity.serverTick(serverLevel, pos, blockState, entity))
+                : null;
     }
 
     @Override

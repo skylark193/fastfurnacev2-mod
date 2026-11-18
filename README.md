@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and a vanilla-compatible Fast Furnace with animated lava-vein textures.
+A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and an accelerated Fast Furnace with animated lava-vein textures and optional JEI integration.
 
 ## Features
 
@@ -17,7 +17,10 @@ A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and a vanilla-compa
 ### Fast Furnace
 
 - Registry ID: `fastfurnacev2:fast_furnace`.
-- Currently operates like a vanilla furnace: standard smelting recipes and fuels, furnace menu and recipe book, inventory/experience handling, directional placement, comparator output, and familiar fire sounds and particles.
+- Uses vanilla smelting recipes and fuels, recipe-book integration, inventory/experience handling, directional placement, comparator output, and familiar fire sounds and particles.
+- Smelts at 150% of vanilla speed; a normal 200-tick item completes in 133 ticks.
+- Each consumed fuel item has an independent 10% chance to provide twice its normal burn time.
+- Has an information button at the top right of its GUI. Its fly-out shows the speed, double-burn chance, remaining burn time, and current fuel's total burn time, with fuel timers synchronized every tick.
 - Uses the vanilla furnace's 3.5 hardness and blast resistance, requires a pickaxe for drops, and emits light level 13 while lit.
 - Drops itself and preserves a custom name assigned before breaking.
 - Can be crafted with the vanilla furnace pattern using eight Fast Cobblestone.
@@ -25,6 +28,14 @@ A NeoForge mod for Minecraft 26.1.2, adding Fast Cobblestone and a vanilla-compa
 - Uses animated lava-vein variants of the vanilla furnace front, lit front, side, and top textures.
 
 The former MDK example blocks, items, configuration, startup messages, client setup, and empty Mixin registration have been removed.
+
+### Optional JEI Integration
+
+When a JEI release compatible with Minecraft 26.1.2 is installed, Fast Furnace is registered as a smelting and smelting-fuel crafting station. JEI recipe transfer supports both recipe types; clicking the furnace progress arrow opens smelting recipes, and clicking the fire icon opens valid fuels. Fast Cobblestone has an information page explaining its bonus drop, and JEI reserves space for the furnace information fly-out while it is open.
+
+JEI is an optional mod dependency and its API is compile-only. The BlameJared Maven repository and JEI versions are configured in [build.gradle](build.gradle) and [gradle.properties](gradle.properties).
+
+**Runtime compatibility:** JEI 29.2.0.21 currently declares support for Minecraft 26.1 exactly, not 26.1.2, so it is excluded from normal development launches. After selecting a compatible JEI release, opt into its development runtime with `-PwithJei`, for example `./gradlew runClient -PwithJei`. Without a compatible release, JEI's own mod requirement prevents Minecraft from starting; do not bypass that requirement as a substitute for compatibility testing.
 
 ## Requirements
 
@@ -62,6 +73,7 @@ For a clean rebuild:
 ./gradlew runClient   # Development client
 ./gradlew runServer   # Dedicated server with --nogui
 ./gradlew runData     # Data generation into src/generated/resources
+./gradlew runGameTestServer  # Fast Furnace GameTests
 ```
 
 ## Project Structure
@@ -71,7 +83,14 @@ src/main/java/com/skylark193/fastfurnacev2/
 ├── FastFurnaceV2.java             # Registration and event listener setup
 ├── FastCobblestoneDrops.java      # Bonus drops from player-mined stone
 ├── FastFurnaceBlock.java          # Vanilla-style furnace block behavior
-└── FastFurnaceBlockEntity.java    # Smelting, fuel, inventory, and furnace menu
+├── FastFurnaceBlockEntity.java    # Accelerated smelting, fuel rolls, and timer synchronization
+├── FastFurnaceMenu.java           # Custom furnace menu and exact fuel-time data
+├── FastFurnaceGameTests.java      # Cooking-speed and fuel-behavior GameTests
+├── client/
+│   ├── FastFurnaceV2Client.java   # Client-only screen registration
+│   └── FastFurnaceScreen.java     # Furnace GUI and live information fly-out
+└── compat/jei/
+    └── FastFurnaceJeiPlugin.java  # Optional JEI recipes, information, and GUI integration
 src/main/resources/
 ├── assets/fastfurnacev2/
 │   ├── blockstates/               # Fast Cobblestone and directional/lit furnace states
@@ -110,7 +129,9 @@ The generator writes both the vertical PNG strip and its `.png.mcmeta` animation
 
 Fast Cobblestone's Java properties mirror the vanilla cobblestone definition. Its pickaxe-minable tag controls mining behavior, while its loot table explicitly specifies the Fast Cobblestone item as its drop. Keep these definitions synchronized if its behavior changes.
 
-Fast Furnace mirrors the vanilla furnace block and block entity with its own registry objects and block entity type. It uses `RecipeType.SMELTING` and `FurnaceMenu`, so vanilla smelting and fuel behavior remain unchanged. Its blockstate selects separate normal and lit models, while its loot table copies `minecraft:custom_name` from the block entity just like vanilla.
+Fast Furnace uses its own block, block entity, menu, and client screen types. `FastFurnaceBlockEntity.serverTick` retains vanilla smelting, fuel, inventory, and experience behavior while scaling recipe cooking times by two-thirds. Each ignition rolls the 10% doubled-burn chance independently. Its blockstate selects separate normal and lit models, while its loot table copies `minecraft:custom_name` from the block entity just like vanilla.
+
+`FastFurnaceMenu` extends the vanilla abstract furnace menu with four extra data values. The client receives the low and high halves of the exact remaining and total burn times on every menu synchronization, avoiding vanilla's short-value normalization for long fuel durations. `FastFurnaceScreen` uses these values in its fly-out and exposes its bounds to the optional JEI plugin.
 
 `FastCobblestoneDrops` listens to NeoForge's server-side `BlockDropsEvent`. For stone broken by a non-creative player, it checks the block-drops game rule, the player's harvest tool, and the tool's Silk Touch level before applying the 10% roll. A successful roll appends one Fast Cobblestone to the existing drop list without replacing vanilla cobblestone.
 
@@ -122,7 +143,7 @@ The `neoforge.mods.toml` file is generated from [src/main/templates/META-INF/neo
 
 1. Make focused changes and remove obsolete code and imports.
 2. Update [README.md](README.md) and [CLAUDE.md](CLAUDE.md) whenever project behavior, structure, commands, or development guidance changes.
-3. Run `.\gradlew.bat build` on Windows or `./gradlew build` on macOS/Linux. When changing texture generation, also run the generator tests documented in [tools/README.md](tools/README.md).
+3. Run `.\gradlew.bat clean build` and `.\gradlew.bat runGameTestServer` on Windows (or `./gradlew clean build` and `./gradlew runGameTestServer` on macOS/Linux). When changing texture generation, also run the generator tests documented in [tools/README.md](tools/README.md).
 4. Commit all changes that pass validation; do not commit while validation is failing.
 
 GitHub Actions runs the same Gradle build on pushes and pull requests using JDK 25.
