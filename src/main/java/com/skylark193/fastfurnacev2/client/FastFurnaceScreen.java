@@ -3,6 +3,7 @@ package com.skylark193.fastfurnacev2.client;
 import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractFurnaceScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
@@ -29,12 +30,17 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
     private static final int INFO_BUTTON_X = 160;
     private static final int INFO_BUTTON_Y = 4;
     private static final int INFO_BUTTON_SIZE = 12;
-    private static final int INFO_PANEL_WIDTH = 152;
+    private static final int INFO_PANEL_WIDTH = 176;
     private static final int INFO_PANEL_HEIGHT = 68;
+    private static final int INFO_VALUE_RIGHT_X = 132;
+    private static final int INFO_SECONDS_X = 136;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.info");
     private static final Component SPEED = Component.translatable("gui.fastfurnacev2.speed", FastFurnaceBlockEntity.SPEED_PERCENT);
     private static final Component DOUBLE_BURN = Component.translatable(
             "gui.fastfurnacev2.double_burn_chance", FastFurnaceBlockEntity.DOUBLE_BURN_CHANCE_PERCENT);
+    private static final Component CURRENT_BURN = Component.translatable("gui.fastfurnacev2.current_burn");
+    private static final Component TOTAL_FUEL = Component.translatable("gui.fastfurnacev2.total_fuel");
+    private static final Component SECONDS = Component.translatable("gui.fastfurnacev2.seconds");
 
     private boolean infoVisible;
 
@@ -70,13 +76,16 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
             graphics.text(this.font, INFO_TITLE, x + 6, y + 6, 0xFFFFFFFF, false);
             graphics.text(this.font, SPEED, x + 6, y + 20, 0xFFE0E0E0, false);
             graphics.text(this.font, DOUBLE_BURN, x + 6, y + 31, 0xFFE0E0E0, false);
-            graphics.text(this.font,
-                    Component.translatable("gui.fastfurnacev2.current_burn", this.menu.getCurrentBurnTime() / 20.0F),
-                    x + 6, y + 44, 0xFFE0E0E0, false);
-            graphics.text(this.font,
-                    Component.translatable("gui.fastfurnacev2.total_fuel", this.menu.getTotalFuelTime() / 20.0F),
-                    x + 6, y + 55, 0xFFE0E0E0, false);
+            this.drawTime(graphics, CURRENT_BURN, this.menu.getCurrentBurnTime(), x, y + 44);
+            this.drawTime(graphics, TOTAL_FUEL, this.menu.getTotalFuelTime(), x, y + 55);
         }
+    }
+
+    private void drawTime(GuiGraphicsExtractor graphics, Component label, int ticks, int x, int y) {
+        String value = String.format(Locale.ROOT, "%.1f", ticks / 20.0);
+        graphics.text(this.font, label, x + 6, y, 0xFFE0E0E0, false);
+        graphics.text(this.font, value, x + INFO_VALUE_RIGHT_X - this.font.width(value), y, 0xFFE0E0E0, false);
+        graphics.text(this.font, SECONDS, x + INFO_SECONDS_X, y, 0xFFE0E0E0, false);
     }
 
     public List<Rect2i> getJeiExtraAreas() {
