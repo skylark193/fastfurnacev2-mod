@@ -2,24 +2,33 @@ package com.skylark193.fastfurnacev2;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 
-final class FastCobblestoneDrops {
+final class FastBonusDrops {
     private static final float DROP_CHANCE = 0.10F;
 
-    private FastCobblestoneDrops() {
+    private FastBonusDrops() {
     }
 
     static void onBlockDrops(BlockDropsEvent event) {
-        if (!event.getState().is(Blocks.STONE)
-                || !(event.getBreaker() instanceof Player player)
-                || player.isCreative()) {
+        ItemLike bonusItem;
+        if (event.getState().is(Blocks.STONE)) {
+            bonusItem = FastFurnaceV2.FAST_COBBLESTONE_ITEM.get();
+        } else if (event.getState().is(BlockTags.COAL_ORES)) {
+            bonusItem = FastFurnaceV2.FAST_COAL.get();
+        } else {
+            return;
+        }
+
+        if (!(event.getBreaker() instanceof Player player) || player.isCreative()) {
             return;
         }
 
@@ -37,7 +46,7 @@ final class FastCobblestoneDrops {
         }
 
         // Vanilla drops have already been calculated; append the bonus without replacing them.
-        ItemStack bonusDrop = new ItemStack(FastFurnaceV2.FAST_COBBLESTONE_ITEM.get());
+        ItemStack bonusDrop = new ItemStack(bonusItem);
         event.getDrops().add(new ItemEntity(
                 level,
                 pos.getX() + 0.5,

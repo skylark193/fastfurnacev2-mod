@@ -8,6 +8,7 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -41,6 +42,7 @@ public class FastFurnaceV2 {
             .requiresCorrectToolForDrops()
             .strength(2.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_COBBLESTONE_ITEM = ITEMS.registerSimpleBlockItem("fast_cobblestone", FAST_COBBLESTONE);
+    public static final DeferredItem<Item> FAST_COAL = ITEMS.registerSimpleItem("fast_coal");
 
     // Matches the vanilla furnace, including light level 13 while lit.
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = BLOCKS.registerBlock("fast_furnace", FastFurnaceBlock::new, properties -> properties
@@ -62,6 +64,7 @@ public class FastFurnaceV2 {
             .icon(() -> FAST_COBBLESTONE_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(FAST_COBBLESTONE_ITEM.get());
+                output.accept(FAST_COAL.get());
                 output.accept(FAST_FURNACE_ITEM.get());
             })
             .build());
@@ -80,12 +83,15 @@ public class FastFurnaceV2 {
 
         modEventBus.addListener(this::addCreative);
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
-        NeoForge.EVENT_BUS.addListener(FastCobblestoneDrops::onBlockDrops);
+        NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(FAST_COBBLESTONE_ITEM);
+        }
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(FAST_COAL);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(FAST_FURNACE_ITEM);

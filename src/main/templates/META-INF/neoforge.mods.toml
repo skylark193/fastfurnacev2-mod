@@ -6,7 +6,7 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="skylark193"
 description='''
-Adds Fast Cobblestone and an accelerated Fast Furnace with optional JEI integration.
+Adds Fast Cobblestone, Fast Coal, and an accelerated Fast Furnace with optional JEI integration.
 '''
 
 [[dependencies.${mod_id}]]

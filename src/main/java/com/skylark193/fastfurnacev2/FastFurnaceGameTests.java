@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
@@ -28,13 +29,18 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_furnace_speed");
     private static final Identifier FUEL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_furnace_fuel");
+    private static final Identifier FAST_COAL_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> FAST_COAL_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, FAST_COAL_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
-            FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime);
+            FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
+            FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime);
 
     private FastFurnaceGameTests() {
     }
@@ -51,6 +57,7 @@ final class FastFurnaceGameTests {
                 true);
         event.registerTest(SPEED_TEST_ID, new DirectGameTestInstance(SPEED_FUNCTION, testData));
         event.registerTest(FUEL_TEST_ID, new DirectGameTestInstance(FUEL_FUNCTION, testData));
+        event.registerTest(FAST_COAL_TEST_ID, new DirectGameTestInstance(FAST_COAL_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -103,6 +110,49 @@ final class FastFurnaceGameTests {
         tickFurnace(helper, normalFurnace, new BlockPos(2, 0, 0));
         if (normalMenu.getCurrentBurnTime() != 1600 || normalMenu.getTotalFuelTime() != 1600) {
             throw helper.assertionException("Non-doubled coal did not retain its vanilla 1600-tick burn time");
+        }
+        helper.succeed();
+    }
+
+    private static void fastCoalAcceleratesAndExtendsBurnTime(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ItemStack fastCoal = new ItemStack(FastFurnaceV2.FAST_COAL.get());
+        int vanillaBurnTime = fastCoal.getBurnTime(RecipeType.SMELTING, level.fuelValues());
+        if (vanillaBurnTime != FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME) {
+            throw helper.assertionException("Fast Coal did not retain coal's vanilla 1600-tick burn time");
+        }
+
+        FastFurnaceBlockEntity furnace = placeFurnace(helper, BlockPos.ZERO, fastCoal.copy());
+        FastFurnaceMenu menu = createMenu(helper, furnace);
+        level.getRandom().setSeed(findFuelRollSeed(false));
+        tickFurnace(helper, furnace, BlockPos.ZERO);
+        if (menu.getCurrentBurnTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME
+                || menu.getTotalFuelTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME
+                || !menu.isFastCoalActive()) {
+            throw helper.assertionException("Fast Coal did not synchronize its 2400-tick Fast Furnace burn time");
+        }
+
+        BlockPos pos = helper.absolutePos(BlockPos.ZERO);
+        for (int tick = 2; tick <= 100; tick++) {
+            FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), furnace);
+            if (tick < 100 && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Fast Coal smelted before tick 100");
+            }
+        }
+        ItemStack result = furnace.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!result.is(Items.STONE) || result.getCount() != 1) {
+            throw helper.assertionException("Fast Coal did not smelt one stone on tick 100");
+        }
+
+        FastFurnaceBlockEntity doubledFurnace = placeFurnace(
+                helper, new BlockPos(2, 0, 0), fastCoal.copy());
+        FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
+        level.getRandom().setSeed(findFuelRollSeed(true));
+        tickFurnace(helper, doubledFurnace, new BlockPos(2, 0, 0));
+        if (doubledMenu.getCurrentBurnTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME * 2
+                || doubledMenu.getTotalFuelTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME * 2
+                || !doubledMenu.isFastCoalActive()) {
+            throw helper.assertionException("Doubled Fast Coal did not synchronize its 4800-tick burn time");
         }
         helper.succeed();
     }

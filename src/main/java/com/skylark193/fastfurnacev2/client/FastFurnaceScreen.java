@@ -30,12 +30,14 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
     private static final int INFO_BUTTON_X = 160;
     private static final int INFO_BUTTON_Y = 4;
     private static final int INFO_BUTTON_SIZE = 12;
-    private static final int INFO_PANEL_WIDTH = 176;
+    private static final int INFO_PANEL_WIDTH = 146;
     private static final int INFO_PANEL_HEIGHT = 68;
-    private static final int INFO_VALUE_RIGHT_X = 132;
-    private static final int INFO_SECONDS_X = 136;
+    private static final int INFO_VALUE_RIGHT_X = 100;
+    private static final int INFO_SECONDS_X = 104;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.info");
     private static final Component SPEED = Component.translatable("gui.fastfurnacev2.speed", FastFurnaceBlockEntity.SPEED_PERCENT);
+    private static final Component FAST_COAL_SPEED = Component.translatable(
+            "gui.fastfurnacev2.speed", FastFurnaceBlockEntity.FAST_COAL_SPEED_PERCENT);
     private static final Component DOUBLE_BURN = Component.translatable(
             "gui.fastfurnacev2.double_burn_chance", FastFurnaceBlockEntity.DOUBLE_BURN_CHANCE_PERCENT);
     private static final Component CURRENT_BURN = Component.translatable("gui.fastfurnacev2.current_burn");
@@ -74,7 +76,8 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
             graphics.fill(x - 1, y - 1, x + INFO_PANEL_WIDTH + 1, y + INFO_PANEL_HEIGHT + 1, 0xFFC6C6C6);
             graphics.fill(x, y, x + INFO_PANEL_WIDTH, y + INFO_PANEL_HEIGHT, 0xF0181818);
             graphics.text(this.font, INFO_TITLE, x + 6, y + 6, 0xFFFFFFFF, false);
-            graphics.text(this.font, SPEED, x + 6, y + 20, 0xFFE0E0E0, false);
+            graphics.text(this.font, this.menu.isFastCoalActive() ? FAST_COAL_SPEED : SPEED,
+                    x + 6, y + 20, 0xFFE0E0E0, false);
             graphics.text(this.font, DOUBLE_BURN, x + 6, y + 31, 0xFFE0E0E0, false);
             this.drawTime(graphics, CURRENT_BURN, this.menu.getCurrentBurnTime(), x, y + 44);
             this.drawTime(graphics, TOTAL_FUEL, this.menu.getTotalFuelTime(), x, y + 55);

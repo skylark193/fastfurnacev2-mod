@@ -10,7 +10,7 @@ The generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone source is preserved at `texture_sources/cobblestone.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone and coal sources are preserved at `texture_sources/cobblestone.png` and `texture_sources/coal.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -43,6 +43,22 @@ This writes:
 - `src/main/resources/assets/fastfurnacev2/textures/block/fast_cobblestone.png.mcmeta`
 
 The existing block model references the animated texture automatically; no model change is needed.
+
+## Regenerate Fast Coal
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\coal.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_coal.png --seed 415 --frames 8 --frame-time 2 --veins 2
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/coal.png --output src/main/resources/assets/fastfurnacev2/textures/item/fast_coal.png --seed 415 --frames 8 --frame-time 2 --veins 2
+```
+
+This writes the animated item texture and its `.png.mcmeta` metadata. The existing Fast Coal item model references the texture automatically.
 
 ## Regenerate Fast Furnace
 

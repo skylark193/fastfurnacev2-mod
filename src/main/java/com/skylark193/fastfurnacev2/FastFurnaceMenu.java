@@ -11,11 +11,12 @@ import net.minecraft.world.item.crafting.RecipePropertySet;
 import net.minecraft.world.item.crafting.RecipeType;
 
 public class FastFurnaceMenu extends AbstractFurnaceMenu {
-    public static final int MENU_DATA_COUNT = 8;
+    public static final int MENU_DATA_COUNT = 9;
     private static final int DATA_BURN_TIME_LOW = 4;
     private static final int DATA_BURN_TIME_HIGH = 5;
     private static final int DATA_FUEL_TIME_LOW = 6;
     private static final int DATA_FUEL_TIME_HIGH = 7;
+    private static final int DATA_FAST_COAL_ACTIVE = 8;
 
     private final ContainerData data;
 
@@ -42,6 +43,10 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
 
     public int getTotalFuelTime() {
         return joinInt(this.data.get(DATA_FUEL_TIME_LOW), this.data.get(DATA_FUEL_TIME_HIGH));
+    }
+
+    public boolean isFastCoalActive() {
+        return this.data.get(DATA_FAST_COAL_ACTIVE) != 0;
     }
 
     private static int joinInt(int low, int high) {

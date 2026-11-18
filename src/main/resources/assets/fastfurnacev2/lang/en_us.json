@@ -2,11 +2,14 @@
   "itemGroup.fastfurnacev2": "Fast Furnace V2",
   "block.fastfurnacev2.fast_cobblestone": "Fast Cobblestone",
   "block.fastfurnacev2.fast_furnace": "Fast Furnace",
+  "item.fastfurnacev2.fast_coal": "Fast Coal",
   "gui.fastfurnacev2.info": "Fast Furnace Info",
   "gui.fastfurnacev2.speed": "Speed: %s%%",
   "gui.fastfurnacev2.double_burn_chance": "Double burn chance: %s%%",
   "gui.fastfurnacev2.current_burn": "Burn time:",
   "gui.fastfurnacev2.total_fuel": "Fuel total:",
   "gui.fastfurnacev2.seconds": "seconds",
-  "jei.fastfurnacev2.fast_cobblestone": "Mine stone with a correct tool without Silk Touch. Each stone broken has a 10% chance to drop one bonus Fast Cobblestone alongside the normal cobblestone. Fast Cobblestone also drops from itself when mined with a pickaxe."
+  "jei.fastfurnacev2.fast_furnace_fuel": "Fast Furnace Fuels",
+  "jei.fastfurnacev2.fast_cobblestone": "Mine stone with a correct tool without Silk Touch. Each stone broken has a 10% chance to drop one bonus Fast Cobblestone alongside the normal cobblestone. Fast Cobblestone also drops from itself when mined with a pickaxe.",
+  "jei.fastfurnacev2.fast_coal": "Mine coal ore or deepslate coal ore with a correct tool without Silk Touch. Each ore broken has a 10% chance to drop one bonus Fast Coal alongside its normal drops. Fast Coal burns like regular coal in normal furnaces. In a Fast Furnace it burns 50% longer and increases smelting speed to 200% of vanilla speed."
 }
