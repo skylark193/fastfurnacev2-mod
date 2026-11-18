@@ -13,7 +13,8 @@ import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 
 final class FastBonusDrops {
-    private static final float DROP_CHANCE = 0.10F;
+    private static final float BASE_DROP_CHANCE = 0.10F;
+    private static final float FORTUNE_CHANCE_BONUS = 0.05F;
 
     private FastBonusDrops() {
     }
@@ -41,7 +42,9 @@ final class FastBonusDrops {
 
         int silkTouchLevel = event.getTool().getEnchantmentLevel(
                 level.registryAccess().getOrThrow(Enchantments.SILK_TOUCH));
-        if (silkTouchLevel > 0 || level.getRandom().nextFloat() >= DROP_CHANCE) {
+        int fortuneLevel = event.getTool().getEnchantmentLevel(
+                level.registryAccess().getOrThrow(Enchantments.FORTUNE));
+        if (silkTouchLevel > 0 || level.getRandom().nextFloat() >= getDropChance(fortuneLevel)) {
             return;
         }
 
@@ -53,5 +56,9 @@ final class FastBonusDrops {
                 pos.getY() + 0.5,
                 pos.getZ() + 0.5,
                 bonusDrop));
+    }
+
+    static float getDropChance(int fortuneLevel) {
+        return Math.min(1.0F, BASE_DROP_CHANCE + Math.max(0, fortuneLevel) * FORTUNE_CHANCE_BONUS);
     }
 }

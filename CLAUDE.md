@@ -12,7 +12,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2 with three registered con
 
 Fast Furnace cooks at 150% vanilla speed normally and 200% while Fast Coal is actively burning. Standard 200-tick recipes take 133 or 100 ticks. Each consumed fuel item independently has a 10% chance to double its adjusted burn time. Fast Coal burns for 2,400 ticks in Fast Furnace before that roll, or 4,800 ticks when doubled.
 
-Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a 10% chance. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern.
+Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern.
 
 All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Vanilla tabs are Building Blocks, Ingredients, and Functional Blocks respectively.
 
@@ -79,7 +79,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 - **GUI changes:** use a development client for visual/input validation when possible; compilation does not validate layout or interaction.
 - **Side-separation changes:** smoke-test the dedicated server when possible.
 
-The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, and active-fuel synchronization. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
+The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
 Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
@@ -118,7 +118,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Register every `DeferredRegister` with the mod event bus. Add translations for new registry objects and user-facing text.
 - Fast Cobblestone explicitly mirrors vanilla cobblestone: stone map color, base-drum instrument, `requiresCorrectToolForDrops()`, and strength 2.0/6.0. The mineable tag supplies pickaxe behavior; its loot table explicitly drops Fast Cobblestone.
 - Do not use `BlockBehaviour.Properties.ofFullCopy(Blocks.COBBLESTONE)`: it also copies vanilla's loot-table key and description ID, causing incorrect drops or translations.
-- `FastBonusDrops` runs during NeoForge's server-side `BlockDropsEvent`, after vanilla drops are calculated. Require a non-creative player breaker, enabled block drops, a correct tool, and no Silk Touch. Append to `event.getDrops()`; never clear or replace normal drops. `BlockTags.COAL_ORES` covers coal ore and deepslate coal ore.
+- `FastBonusDrops` runs during NeoForge's server-side `BlockDropsEvent`, after vanilla drops are calculated. Require a non-creative player breaker, enabled block drops, a correct tool, and no Silk Touch. `getDropChance` starts at 10% and adds 5 percentage points per Fortune level, capped at 100% for nonstandard levels. Append to `event.getDrops()`; never clear or replace normal drops. `BlockTags.COAL_ORES` covers coal ore and deepslate coal ore.
 - Fast Coal uses default vanilla item properties and `data/neoforge/data_maps/item/furnace_fuels.json` with `burn_time: 1600`. Only Fast Furnace applies its longer duration and speed boost.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.

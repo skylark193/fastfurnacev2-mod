@@ -31,16 +31,21 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_furnace_fuel");
     private static final Identifier FAST_COAL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal");
+    private static final Identifier BONUS_DROP_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_bonus_drops");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FAST_COAL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_COAL_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> BONUS_DROP_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, BONUS_DROP_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
-            FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime);
+            FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime,
+            BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance);
 
     private FastFurnaceGameTests() {
     }
@@ -58,6 +63,7 @@ final class FastFurnaceGameTests {
         event.registerTest(SPEED_TEST_ID, new DirectGameTestInstance(SPEED_FUNCTION, testData));
         event.registerTest(FUEL_TEST_ID, new DirectGameTestInstance(FUEL_FUNCTION, testData));
         event.registerTest(FAST_COAL_TEST_ID, new DirectGameTestInstance(FAST_COAL_FUNCTION, testData));
+        event.registerTest(BONUS_DROP_TEST_ID, new DirectGameTestInstance(BONUS_DROP_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -153,6 +159,21 @@ final class FastFurnaceGameTests {
                 || doubledMenu.getTotalFuelTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME * 2
                 || !doubledMenu.isFastCoalActive()) {
             throw helper.assertionException("Doubled Fast Coal did not synchronize its 4800-tick burn time");
+        }
+        helper.succeed();
+    }
+
+    private static void fortuneIncreasesBonusDropChance(GameTestHelper helper) {
+        float[] expectedChances = {0.10F, 0.15F, 0.20F, 0.25F};
+        for (int fortuneLevel = 0; fortuneLevel < expectedChances.length; fortuneLevel++) {
+            float chance = FastBonusDrops.getDropChance(fortuneLevel);
+            if (Math.abs(chance - expectedChances[fortuneLevel]) > 0.0001F) {
+                throw helper.assertionException(
+                        "Unexpected bonus-drop chance at Fortune " + fortuneLevel + ": " + chance);
+            }
+        }
+        if (FastBonusDrops.getDropChance(20) != 1.0F) {
+            throw helper.assertionException("Nonstandard Fortune levels did not cap the bonus-drop chance at 100%");
         }
         helper.succeed();
     }

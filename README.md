@@ -7,13 +7,13 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 ### Fast Cobblestone
 
 - Matches vanilla cobblestone's mining requirements and physical properties, but drops Fast Cobblestone.
-- Mining stone in survival mode with a correct, non-Silk-Touch tool has a 10% chance to add one Fast Cobblestone alongside the normal drops. The bonus respects the block-drops game rule.
+- Mining stone in survival mode with a correct, non-Silk-Touch tool has a base 10% chance to add one Fast Cobblestone alongside the normal drops. Each Fortune level adds 5 percentage points to this chance. The bonus respects the block-drops game rule.
 - Used to craft Fast Furnace with the vanilla furnace pattern: eight Fast Cobblestone around an empty center.
 - Appears in Building Blocks and the mod's Fast Furnace V2 creative tab.
 
 ### Fast Coal
 
-- Mining coal ore or deepslate coal ore in survival mode with a correct, non-Silk-Touch tool has a 10% chance to add one Fast Coal alongside the normal drops. The bonus respects the block-drops game rule.
+- Mining coal ore or deepslate coal ore in survival mode with a correct, non-Silk-Touch tool has a base 10% chance to add one Fast Coal alongside the normal drops. Each Fortune level adds 5 percentage points to this chance. The bonus respects the block-drops game rule.
 - Burns for 1,600 ticks in ordinary furnaces, exactly like vanilla coal.
 - Burns for 2,400 ticks in Fast Furnace. Its independent double-burn roll can increase this to 4,800 ticks.
 - Raises Fast Furnace to 200% of vanilla smelting speed while actively burning.
