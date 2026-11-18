@@ -32,6 +32,11 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Python Texture Tools ###
+.venv/
+__pycache__/
+*.py[cod]
+
 ### Minecraft Modding ###
 run/
 !**/src/**/run/

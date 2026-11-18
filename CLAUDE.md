@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fast Furnace V2 is a NeoForge mod for Minecraft. Its current content is Fast Cobblestone (`fastfurnacev2:fast_cobblestone`), a block based on vanilla cobblestone. The mod has a custom creative tab named Fast Furnace V2 with Fast Cobblestone as its icon. Mining stone with a correct, non-Silk-Touch tool also has a 10% chance to add one bonus Fast Cobblestone alongside vanilla cobblestone.
+Fast Furnace V2 is a NeoForge mod for Minecraft. Its current content is Fast Cobblestone (`fastfurnacev2:fast_cobblestone`), a block based on vanilla cobblestone with generated animated lava veins. The mod has a custom creative tab named Fast Furnace V2 with Fast Cobblestone as its icon. Mining stone with a correct, non-Silk-Touch tool also has a 10% chance to add one bonus Fast Cobblestone alongside vanilla cobblestone.
 
 The MDK example content, example configuration and client classes, startup messages, and unused empty Mixin registration have been removed. Furnace-specific behavior has not been implemented yet.
 
@@ -15,6 +15,7 @@ The MDK example content, example configuration and client classes, startup messa
 - NeoForge ModDev Gradle plugin 2.0.148
 - Minecraft 26.1.2
 - NeoForge 26.1.2.126
+- Optional texture tooling: Python 3 and Pillow 13.0.0, installed in an ignored `.venv` as documented in `tools/README.md`
 
 Version and mod metadata live in `gradle.properties`. Keep `mod_id` synchronized with `FastFurnaceV2.MODID`, and ensure Minecraft and NeoForge versions remain compatible.
 
@@ -39,7 +40,7 @@ Use `.\gradlew.bat` on Windows or `./gradlew` on macOS/Linux.
 .\gradlew.bat runData
 ```
 
-The build is the primary validation command and matches GitHub Actions CI. There are currently no standalone unit tests or GameTests. Built JARs are written to `build/libs/`.
+The build is the primary Java validation command and matches GitHub Actions CI. There are currently no Java unit tests or GameTests; the Python texture generator has its own unittest suite under `tools/`. Built JARs are written to `build/libs/`.
 
 ## Project Structure
 
@@ -48,13 +49,18 @@ The build is the primary validation command and matches GitHub Actions CI. There
 - `src/main/resources/assets/fastfurnacev2/blockstates/fast_cobblestone.json`: blockstate-to-model mapping.
 - `src/main/resources/assets/fastfurnacev2/models/block/fast_cobblestone.json`: cube-all block model using the mod's texture.
 - `src/main/resources/assets/fastfurnacev2/items/fast_cobblestone.json`: item model definition; this Minecraft version uses `assets/<namespace>/items/`.
-- `src/main/resources/assets/fastfurnacev2/textures/block/fast_cobblestone.png`: local copy of the vanilla cobblestone texture.
+- `src/main/resources/assets/fastfurnacev2/textures/block/fast_cobblestone.png`: eight-frame vertical animation strip based on vanilla cobblestone with lava veins.
+- `src/main/resources/assets/fastfurnacev2/textures/block/fast_cobblestone.png.mcmeta`: sequential, non-interpolated animation with a two-tick frame time.
 - `src/main/resources/assets/fastfurnacev2/lang/en_us.json`: block and creative-tab translations.
 - `src/main/resources/data/fastfurnacev2/loot_table/blocks/fast_cobblestone.json`: self-drop loot table.
 - `src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json`: adds Fast Cobblestone to vanilla's pickaxe-minable blocks.
 - `src/main/templates/META-INF/neoforge.mods.toml`: mod metadata template, expanded using `gradle.properties` during resource processing.
 - `build.gradle`: NeoForge dependencies, run configurations, generated metadata, and publishing setup.
 - `.github/workflows/build.yml`: Java 25 CI build.
+- `tools/generate_lava_texture.py`: seeded Pillow-based generator for tileable lava veins, branching paths, crust, and traveling heat pulses.
+- `tools/texture_sources/cobblestone.png`: preserved square vanilla source used for regeneration.
+- `tools/test_generate_lava_texture.py`: deterministic, animation, stone-preservation, and transparency tests for the generator.
+- `tools/README.md`: isolated environment setup, regeneration command, and options for future textures.
 
 ## Development Notes
 
@@ -63,6 +69,7 @@ The build is the primary validation command and matches GitHub Actions CI. There
 - `FastCobblestoneDrops` handles NeoForge's server-side `BlockDropsEvent`, after vanilla drops have been calculated. It requires stone, a non-creative player breaker, enabled block drops, and a correct tool without Silk Touch. Its 10% roll appends one Fast Cobblestone to `event.getDrops()`; do not replace or clear the normal cobblestone drop.
 - Do not replace the explicit properties with `BlockBehaviour.Properties.ofFullCopy(Blocks.COBBLESTONE)`: full copy also copies vanilla's loot-table key and description ID, which can produce the wrong drops and translation key.
 - Add translations for new registry objects and configuration options.
+- Do not use the generated Fast Cobblestone animation strip as generator input. Use the preserved square source in `tools/texture_sources/` and follow `tools/README.md`; the generator writes both the strip and `.mcmeta` file. Run generator tests with `.venv/Scripts/python -I -m unittest discover -s tools -p 'test_*.py'` on Windows or `.venv/bin/python -I -m unittest discover -s tools -p 'test_*.py'` on macOS/Linux.
 - Keep common logic separate from any future client-only logic. Client classes must use `Dist.CLIENT` and must not be referenced from dedicated-server paths.
 - Update generated mod metadata through `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`, not files under `build/`.
 - Generated resources belong in `src/generated/resources`; do not edit Gradle caches or build outputs.

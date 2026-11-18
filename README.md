@@ -7,7 +7,7 @@ A NeoForge mod for Minecraft 26.1.2, currently adding Fast Cobblestone as its fi
 ### Fast Cobblestone
 
 - Registry ID: `fastfurnacev2:fast_cobblestone`
-- Uses a local copy of the vanilla cobblestone texture and matching block/item models.
+- Uses the vanilla cobblestone texture as a base with generated, animated lava veins and matching block/item models.
 - Matches vanilla cobblestone's stone map color, base-drum note-block instrument, 2.0 hardness, and 6.0 blast resistance.
 - Is mineable with a pickaxe and requires an appropriate tool for drops, matching vanilla cobblestone's wooden-pickaxe-or-better behavior.
 - Drops Fast Cobblestone—not vanilla cobblestone—when broken with an appropriate tool.
@@ -66,13 +66,33 @@ src/main/resources/
 │   ├── items/fast_cobblestone.json
 │   ├── lang/en_us.json
 │   ├── models/block/fast_cobblestone.json
-│   └── textures/block/fast_cobblestone.png
+│   └── textures/block/
+│       ├── fast_cobblestone.png
+│       └── fast_cobblestone.png.mcmeta
 └── data/
     ├── fastfurnacev2/loot_table/blocks/fast_cobblestone.json
     └── minecraft/tags/block/mineable/pickaxe.json
 src/main/templates/META-INF/
 └── neoforge.mods.toml             # Metadata populated from gradle.properties
+tools/
+├── generate_lava_texture.py       # Reusable animated lava-vein generator
+├── test_generate_lava_texture.py  # Generator determinism and image checks
+├── requirements.txt               # Pinned Pillow dependency
+├── texture_sources/cobblestone.png
+└── README.md                      # Texture generation instructions
 ```
+
+## Texture Generation
+
+Fast Cobblestone uses an eight-frame lava-vein animation with a two-tick frame time. The reusable generator, preserved cobblestone source, pinned Python dependency, and full regeneration commands are in [tools/README.md](tools/README.md).
+
+To regenerate after setting up the tools environment:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\cobblestone.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_cobblestone.png --seed 193 --frames 8 --frame-time 2 --veins 2
+```
+
+The generator writes both the vertical PNG strip and its `.png.mcmeta` animation metadata. Use different input/output paths and seeds for future lava-vein textures.
 
 ## Block Behavior and Metadata
 
@@ -88,7 +108,7 @@ The `neoforge.mods.toml` file is generated from [src/main/templates/META-INF/neo
 
 1. Make focused changes and remove obsolete code and imports.
 2. Update [README.md](README.md) and [CLAUDE.md](CLAUDE.md) whenever project behavior, structure, commands, or development guidance changes.
-3. Run `.\gradlew.bat build` on Windows or `./gradlew build` on macOS/Linux.
+3. Run `.\gradlew.bat build` on Windows or `./gradlew build` on macOS/Linux. When changing texture generation, also run the generator tests documented in [tools/README.md](tools/README.md).
 4. Commit all changes that pass validation; do not commit while validation is failing.
 
 GitHub Actions runs the same Gradle build on pushes and pull requests using JDK 25.
