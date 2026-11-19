@@ -20,15 +20,22 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 public class FastFurnaceBlock extends AbstractFurnaceBlock {
-    public static final MapCodec<FastFurnaceBlock> CODEC = simpleCodec(FastFurnaceBlock::new);
+    private final FastFurnaceTier tier;
+    private final MapCodec<FastFurnaceBlock> codec;
 
-    public FastFurnaceBlock(BlockBehaviour.Properties properties) {
+    public FastFurnaceBlock(BlockBehaviour.Properties properties, FastFurnaceTier tier) {
         super(properties);
+        this.tier = tier;
+        this.codec = simpleCodec(propertiesCopy -> new FastFurnaceBlock(propertiesCopy, tier));
+    }
+
+    public FastFurnaceTier getTier() {
+        return this.tier;
     }
 
     @Override
     public MapCodec<FastFurnaceBlock> codec() {
-        return CODEC;
+        return this.codec;
     }
 
     @Override

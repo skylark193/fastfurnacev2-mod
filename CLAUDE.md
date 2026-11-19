@@ -4,15 +4,22 @@ This file is the durable engineering handbook for Claude Code working in this re
 
 ## Project Contract
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2 with three registered content objects:
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. Its registered content is:
 
 - `fastfurnacev2:fast_cobblestone`: vanilla-style cobblestone with an animated lava-vein texture, a self-drop loot table, and use in the Fast Furnace crafting recipe.
 - `fastfurnacev2:fast_coal`: vanilla-style coal with an animated texture and ordinary fuel value of 1,600 ticks.
-- `fastfurnacev2:fast_furnace`: a vanilla-compatible smelting furnace with custom speed, fuel-time, GUI, and optional JEI behavior.
+- `fastfurnacev2:fast_furnace`, `iron_fast_furnace`, `gold_fast_furnace`, and `diamond_fast_furnace`: vanilla-compatible smelting furnaces with tiered speed, fuel-time, GUI, and optional JEI behavior.
 
-Fast Furnace cooks at 150% vanilla speed normally and 200% while Fast Coal is actively burning. Standard 200-tick recipes take 133 or 100 ticks. Each consumed fuel item independently has a 10% chance to double its adjusted burn time. Fast Coal burns for 2,400 ticks in Fast Furnace before that roll, or 4,800 ticks when doubled.
+| Tier | Normal speed | Fast Coal speed | Standard recipe, normal / Fast Coal | Fuel doubling | Fast Coal burn time before / after doubling |
+|---|---:|---:|---:|---:|---:|
+| Fast | 150% | 200% | 133 / 100 ticks | 10% | 2,400 / 4,800 ticks |
+| Iron | 200% | 250% | 100 / 80 ticks | 15% | 2,800 / 5,600 ticks |
+| Gold | 250% | 300% | 80 / 66 ticks | 20% | 3,200 / 6,400 ticks |
+| Diamond | 300% | 350% | 66 / 57 ticks | 25% | 3,600 / 7,200 ticks |
 
-Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern.
+Each consumed fuel item independently rolls the tier's chance to double its adjusted burn time. Fast Coal always adds 50 percentage points to active smelting speed; its duration multiplier increases by 25 percentage points per tier.
+
+Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern. Each upgrade surrounds the previous tier with eight iron, gold, then diamond blocks in tier order.
 
 All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Vanilla tabs are Building Blocks, Ingredients, and Functional Blocks respectively.
 
@@ -79,7 +86,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 - **GUI changes:** use a development client for visual/input validation when possible; compilation does not validate layout or interaction.
 - **Side-separation changes:** smoke-test the dedicated server when possible.
 
-The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
+The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, tier-specific fuel configuration, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
 Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
@@ -93,16 +100,17 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 
 ## Architecture Map
 
-- `FastFurnaceV2.java`: common entry point; all `DeferredRegister` instances; block/item/block-entity/menu/GameTest/creative-tab registration; vanilla tab population; event listeners.
+- `FastFurnaceV2.java`: common entry point; all `DeferredRegister` instances; block/item/block-entity/menu/GameTest/creative-tab registration; tier lookup helpers; vanilla tab population; event listeners.
+- `FastFurnaceTier.java`: shared source of truth for registry IDs, normal/Fast Coal speed, doubling chance, Fast Coal duration scaling, cook-time scaling, and JEI smelt counts.
 - `FastBonusDrops.java`: appends Fast Cobblestone or Fast Coal to eligible vanilla drops.
-- `FastFurnaceBlock.java`: vanilla-style block codec, facing/lit behavior, server ticker, menu opening, statistics, fire sounds, and particles.
-- `FastFurnaceBlockEntity.java`: custom cooking and burn timing, fuel consumption, active-fuel state, persistence, and server-to-menu data.
-- `FastFurnaceMenu.java`: vanilla smelting recipe-book setup and nine synchronized data values.
+- `FastFurnaceBlock.java`: tier-aware block codec, facing/lit behavior, server ticker, menu opening, statistics, fire sounds, and particles.
+- `FastFurnaceBlockEntity.java`: shared block entity for all four blocks; custom cooking and burn timing, fuel consumption, active-fuel state, persistence, and server-to-menu data.
+- `FastFurnaceMenu.java`: shared menu with four tier-specific `MenuType` registrations, vanilla smelting recipe-book setup, and nine synchronized data values.
 - `FastFurnaceGameTests.java`: registered GameTests and custom direct function instance codec.
-- `client/FastFurnaceV2Client.java`: client-only menu-screen registration.
-- `client/FastFurnaceScreen.java`: furnace screen, information button/fly-out, timer formatting, and JEI exclusion bounds.
-- `compat/jei/FastFurnaceJeiPlugin.java`: optional catalysts, recipe transfers, click areas, ingredient information, fuel enumeration, and GUI handler.
-- `compat/jei/FastFurnaceFuelCategory.java`: Fast-Furnace-specific fuel category and adjusted smelt counts.
+- `client/FastFurnaceV2Client.java`: client-only registration of each tier's menu and screen.
+- `client/FastFurnaceScreen.java`: shared furnace screen, information button/fly-out, timer formatting, and JEI exclusion bounds. The three upgrade screens are trivial subclasses used to distinguish JEI click areas.
+- `compat/jei/FastFurnaceJeiPlugin.java`: optional per-tier catalysts, recipe transfers, click areas, ingredient information, fuel enumeration, and GUI handlers.
+- `compat/jei/FastFurnaceFuelCategory.java`: per-tier fuel categories and speed-adjusted smelt counts.
 - `compat/jei/FastFurnaceFuelRecipe.java`: immutable JEI fuel inputs and burn time.
 - `src/main/resources/assets/fastfurnacev2/`: blockstates, item definitions, models, translations, and animated textures.
 - `src/main/resources/data/`: self-drop loot tables, the furnace recipe, pickaxe-minable tag, and Fast Coal fuel data map.
@@ -125,12 +133,13 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 
 ### Furnace ticking and synchronization
 
-- Fast Furnace has its own `BlockEntityType`, constructed with this version's public `BlockEntityType` constructor; `BlockEntityType.Builder` is unavailable.
-- Its ticker must use `FAST_FURNACE_BLOCK_ENTITY` and call `FastFurnaceBlockEntity.serverTick` through `createTickerHelper`. Vanilla `createFurnaceTicker` would bypass custom timing.
+- One `BlockEntityType` accepts all four furnace blocks and is constructed with this version's public `BlockEntityType` constructor; `BlockEntityType.Builder` is unavailable. The block entity derives its immutable tier from the actual block state.
+- Each block uses a tier-capturing codec; a shared codec that always constructs the base tier would decode upgrades incorrectly.
+- The ticker must use `FAST_FURNACE_BLOCK_ENTITY` and call `FastFurnaceBlockEntity.serverTick` through `createTickerHelper`. Vanilla `createFurnaceTicker` would bypass custom timing.
 - Retain the custom `openContainer` block-entity check; vanilla `FurnaceBlock` specifically checks `FurnaceBlockEntity`.
 - `FastFurnaceBlockEntity` extends `AbstractFurnaceBlockEntity` with `RecipeType.SMELTING`. Preserve vanilla recipes, other fuels, inventory, XP, comparators, fuel remainders, facing, light level 13 while lit, and custom-name drops.
-- Scale cooking using `scaleCookTime`: 150% normally and 200% with active Fast Coal. Keep the 133-tick and 100-tick behavior for standard recipes.
-- Apply Fast Coal's 50% duration increase through `scaleFastCoalBurnTime`, then apply the independent 10% doubling roll. The order is 1,600 → 2,400 → 4,800 ticks. Do not globally alter Fast Coal's ordinary fuel value.
+- Scale cooking through `FastFurnaceTier.scaleCookTime`: 150/200/250/300% normally and an additional 50 percentage points with active Fast Coal. Standard normal-fuel recipes take 133/100/80/66 ticks; Fast Coal recipes take 100/80/66/57 ticks.
+- Apply Fast Coal's tier duration multiplier through `scaleFastCoalBurnTime`, then apply the independent tier-specific doubling roll. Before doubling, Fast Coal burns for 2,400/2,800/3,200/3,600 ticks. Do not globally alter Fast Coal's ordinary fuel value.
 - Track `fastCoalBurning` from the fuel stack actually consumed, not the current fuel slot, which may already hold different fuel. Clear the flag when burn time expires and persist it as `fast_coal_burning`.
 - Exact remaining and total burn times are stored under `lit_time_remaining` and `lit_total_time` and mirrored into vanilla data for furnace behavior.
 - `FastFurnaceMenu` has nine data slots. Indices 0–3 retain vanilla behavior; 4–7 contain low/high halves of the exact remaining and total fuel times; index 8 is the active Fast Coal flag. Use the split integers instead of vanilla short-value normalization or a custom per-tick packet.
@@ -139,11 +148,12 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 
 - Keep common logic separate from client-only code. Client entry points use `@Mod(value = MODID, dist = Dist.CLIENT)`. Client classes and Minecraft client references must stay out of dedicated-server paths.
 - Do not add `@OnlyIn` for runtime stripping; NeoForge 26.1.2 no longer provides that behavior.
-- `FastFurnaceScreen` draws the information button and fly-out in `extractLabels`. It chooses 150% or 200% from synchronized active-fuel state.
+- Four `MenuType` registrations carry the tier to the client; all use the same `FastFurnaceMenu` logic and nine-value synchronization. The upgrade screens share `FastFurnaceScreen` through trivial subclasses so JEI can register tier-specific click areas.
+- `FastFurnaceScreen` draws the information button and fly-out in `extractLabels`. It gets normal and Fast Coal speed and doubling chance from `menu.getTier()`, choosing current speed from synchronized active-fuel state.
 - Format timer numbers explicitly in Java with `Locale.ROOT` and `%.1f`. Right-align the value and draw the translated seconds unit separately at a fixed X coordinate; do not move numeric formatting back into translations or allow units to shift with number width.
 - `getJeiExtraAreas` uses current GUI coordinates and returns bounds only while the fly-out is visible.
-- Register Fast Furnace for `RecipeTypes.SMELTING` and the custom `FastFurnaceFuelCategory.RECIPE_TYPE`, including transfers and click areas for each.
-- The custom fuel category enumerates item fuels from the current level's `FuelValues`, applying `scaleFastCoalBurnTime` only to Fast Coal. It displays 12 Fast Coal smelts in Fast Furnace while vanilla's category remains 8.
+- Register every tier for `RecipeTypes.SMELTING` and its own `FastFurnaceFuelCategory` recipe type, including transfers and click areas for each.
+- The custom fuel categories enumerate item fuels once from the current level's `FuelValues`, then create per-tier recipes applying `scaleFastCoalBurnTime` only to Fast Coal. Smelt counts use `burnTime / tier.scaleCookTime(200, fastCoalActive)`, not vanilla's fixed 200-tick divisor. Regular coal displays approximately 12.03/16/20/24.24 smelts; Fast Coal displays 24/35/48.48/63.16 before any random doubling roll.
 - Do not modify `RecipeTypes.SMELTING_FUEL` to implement Fast Furnace durations; that would incorrectly change ordinary furnace displays.
 
 ### GameTests and textures
@@ -151,7 +161,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod/class initialization is too late. `DirectGameTestInstance` invokes the mod's mapped functions directly.
 - Preserve deterministic fuel-roll seeds in tests when asserting doubled versus non-doubled durations. Extend existing tests when timing, synchronization, remainders, or active-fuel behavior changes.
 - Use the square sources under `tools/texture_sources/`; never feed a generated animation strip back into the generator. It writes both the vertical PNG strip and sibling `.png.mcmeta`.
-- Production seeds: Fast Cobblestone 193; furnace front 311, lit front 312, side 313, top 314; Fast Coal 415. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
+- Production seeds: Fast Cobblestone 193; Fast Coal 415; all seven furnace textures 311. The shared furnace seed is intentional so every tier has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
 - Follow `tools/README.md` for environment setup and exact regeneration commands. Keep new sources and seeds documented.
 
 ## Documentation, Continuity, and Compaction

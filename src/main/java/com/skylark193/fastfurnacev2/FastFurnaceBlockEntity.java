@@ -24,15 +24,9 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
-    public static final int SPEED_PERCENT = 150;
-    public static final int FAST_COAL_SPEED_PERCENT = 200;
-    public static final int FAST_COAL_BURN_TIME_PERCENT = 150;
     public static final int VANILLA_COAL_BURN_TIME = 1600;
-    public static final int FAST_COAL_BURN_TIME = VANILLA_COAL_BURN_TIME * FAST_COAL_BURN_TIME_PERCENT / 100;
-    public static final int DOUBLE_BURN_CHANCE_PERCENT = 10;
-    private static final float DOUBLE_BURN_CHANCE = DOUBLE_BURN_CHANCE_PERCENT / 100.0F;
-    private static final Component DEFAULT_NAME = Component.translatable("block.fastfurnacev2.fast_furnace");
 
+    private final FastFurnaceTier tier;
     private final RecipeManager.CachedCheck<SingleRecipeInput, ? extends AbstractCookingRecipe> quickCheck =
             RecipeManager.createCheck(RecipeType.SMELTING);
     private int currentBurnTime;
@@ -73,16 +67,17 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
 
     public FastFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get(), pos, state, RecipeType.SMELTING);
+        this.tier = ((FastFurnaceBlock) state.getBlock()).getTier();
     }
 
     @Override
     protected Component getDefaultName() {
-        return DEFAULT_NAME;
+        return Component.translatable("block.fastfurnacev2." + this.tier.getId());
     }
 
     @Override
     protected AbstractContainerMenu createMenu(int containerId, Inventory inventory) {
-        return new FastFurnaceMenu(containerId, inventory, this, this.menuDataAccess);
+        return new FastFurnaceMenu(containerId, inventory, this, this.menuDataAccess, this.tier);
     }
 
     @Override
@@ -101,19 +96,13 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         output.putBoolean("fast_coal_burning", this.fastCoalBurning);
     }
 
-    public static int scaleFastCoalBurnTime(int burnTime) {
-        return (int) Math.min(
-                Integer.MAX_VALUE,
-                burnTime * (long) FAST_COAL_BURN_TIME_PERCENT / 100L);
-    }
-
     @Override
     protected int getBurnDuration(FuelValues fuelValues, ItemStack fuel) {
         int burnTime = super.getBurnDuration(fuelValues, fuel);
         if (burnTime > 0 && fuel.is(FastFurnaceV2.FAST_COAL.get())) {
-            burnTime = scaleFastCoalBurnTime(burnTime);
+            burnTime = this.tier.scaleFastCoalBurnTime(burnTime);
         }
-        if (burnTime > 0 && this.level != null && this.level.getRandom().nextFloat() < DOUBLE_BURN_CHANCE) {
+        if (burnTime > 0 && this.level != null && this.level.getRandom().nextFloat() < this.tier.getDoubleBurnChance()) {
             return (int) Math.min(Integer.MAX_VALUE, burnTime * 2L);
         }
         return burnTime;
@@ -152,7 +141,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 SingleRecipeInput input = new SingleRecipeInput(ingredient);
                 RecipeHolder<? extends AbstractCookingRecipe> recipe = entity.quickCheck.getRecipeFor(input, level).orElse(null);
                 if (recipe != null) {
-                    int expectedCookTime = scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
+                    int expectedCookTime = entity.scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
                     entity.updateCookingTotal(expectedCookTime);
                     int maxStackSize = entity.getMaxStackSize();
                     ItemStack burnResult = recipe.value().assemble(input);
@@ -164,7 +153,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                             entity.syncBurnData();
                             if (newBurnTime > 0) {
                                 entity.fastCoalBurning = fuel.is(FastFurnaceV2.FAST_COAL.get());
-                                expectedCookTime = scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
+                                expectedCookTime = entity.scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
                                 entity.updateCookingTotal(expectedCookTime);
                                 consumeFuel(entity.items, fuel);
                                 isLit = true;
@@ -237,9 +226,8 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         }
     }
 
-    private static int scaleCookTime(int vanillaCookTime, boolean fastCoalActive) {
-        int speedPercent = fastCoalActive ? FAST_COAL_SPEED_PERCENT : SPEED_PERCENT;
-        return Math.max(1, (int) (vanillaCookTime * 100L / speedPercent));
+    private int scaleCookTime(int vanillaCookTime, boolean fastCoalActive) {
+        return this.tier.scaleCookTime(vanillaCookTime, fastCoalActive);
     }
 
     private static void consumeFuel(NonNullList<ItemStack> items, ItemStack fuel) {

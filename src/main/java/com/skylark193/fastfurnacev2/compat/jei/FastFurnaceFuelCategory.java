@@ -1,7 +1,10 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
+import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
 import java.text.NumberFormat;
+import java.util.EnumMap;
+import java.util.Map;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.placement.HorizontalAlignment;
@@ -15,27 +18,40 @@ import mezz.jei.api.recipe.vanilla.IJeiFuelingRecipe;
 import net.minecraft.network.chat.Component;
 
 final class FastFurnaceFuelCategory implements IRecipeCategory<IJeiFuelingRecipe> {
-    static final IRecipeType<IJeiFuelingRecipe> RECIPE_TYPE =
-            IRecipeType.create(FastFurnaceV2.MODID, "fast_furnace_fuel", IJeiFuelingRecipe.class);
-
+    private static final Map<FastFurnaceTier, IRecipeType<IJeiFuelingRecipe>> RECIPE_TYPES =
+            new EnumMap<>(FastFurnaceTier.class);
     private static final int WIDTH = 160;
     private static final int HEIGHT = 34;
-    private static final Component TITLE = Component.translatable("jei.fastfurnacev2.fast_furnace_fuel");
 
+    static {
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            RECIPE_TYPES.put(tier, IRecipeType.create(
+                    FastFurnaceV2.MODID, tier.getId() + "_fuel", IJeiFuelingRecipe.class));
+        }
+    }
+
+    private final FastFurnaceTier tier;
+    private final Component title;
     private final IDrawable icon;
 
-    FastFurnaceFuelCategory(IGuiHelper guiHelper) {
-        this.icon = guiHelper.createDrawableItemLike(FastFurnaceV2.FAST_FURNACE.get());
+    FastFurnaceFuelCategory(IGuiHelper guiHelper, FastFurnaceTier tier) {
+        this.tier = tier;
+        this.title = Component.translatable("jei.fastfurnacev2." + tier.getId() + "_fuel");
+        this.icon = guiHelper.createDrawableItemLike(FastFurnaceV2.getFurnaceBlock(tier).get());
+    }
+
+    static IRecipeType<IJeiFuelingRecipe> getRecipeType(FastFurnaceTier tier) {
+        return RECIPE_TYPES.get(tier);
     }
 
     @Override
     public IRecipeType<IJeiFuelingRecipe> getRecipeType() {
-        return RECIPE_TYPE;
+        return getRecipeType(this.tier);
     }
 
     @Override
     public Component getTitle() {
-        return TITLE;
+        return this.title;
     }
 
     @Override
@@ -63,21 +79,24 @@ final class FastFurnaceFuelCategory implements IRecipeCategory<IJeiFuelingRecipe
     @Override
     public void createRecipeExtras(IRecipeExtrasBuilder builder, IJeiFuelingRecipe recipe, IFocusGroup focuses) {
         builder.addAnimatedRecipeFlame(recipe.getBurnTime()).setPosition(1, 0);
-        builder.addText(createSmeltCountText(recipe.getBurnTime()), WIDTH - 20, HEIGHT)
+        builder.addText(createSmeltCountText(this.tier, recipe), WIDTH - 20, HEIGHT)
                 .setPosition(20, 0)
                 .setTextAlignment(HorizontalAlignment.CENTER)
                 .setTextAlignment(VerticalAlignment.CENTER)
                 .setColor(0xFF808080);
     }
 
-    private static Component createSmeltCountText(int burnTime) {
-        if (burnTime == 200) {
+    private static Component createSmeltCountText(FastFurnaceTier tier, IJeiFuelingRecipe recipe) {
+        boolean fastCoalActive = recipe.getInputs().stream()
+                .anyMatch(stack -> stack.is(FastFurnaceV2.FAST_COAL.get()));
+        float smeltCount = tier.getSmeltCount(recipe.getBurnTime(), fastCoalActive);
+        if (smeltCount == 1.0F) {
             return Component.translatable("gui.jei.category.fuel.smeltCount.single");
         }
         NumberFormat numberFormat = NumberFormat.getNumberInstance();
         numberFormat.setMaximumFractionDigits(2);
         return Component.translatable(
                 "gui.jei.category.fuel.smeltCount",
-                numberFormat.format(burnTime / 200.0F));
+                numberFormat.format(smeltCount));
     }
 }

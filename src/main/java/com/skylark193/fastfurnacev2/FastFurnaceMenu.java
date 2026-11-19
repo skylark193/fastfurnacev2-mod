@@ -19,14 +19,19 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
     private static final int DATA_FAST_COAL_ACTIVE = 8;
 
     private final ContainerData data;
+    private final FastFurnaceTier tier;
 
     public FastFurnaceMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(MENU_DATA_COUNT));
+        this(containerId, inventory, FastFurnaceTier.FAST);
     }
 
-    public FastFurnaceMenu(int containerId, Inventory inventory, Container container, ContainerData data) {
+    public FastFurnaceMenu(int containerId, Inventory inventory, FastFurnaceTier tier) {
+        this(containerId, inventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(MENU_DATA_COUNT), tier);
+    }
+
+    public FastFurnaceMenu(int containerId, Inventory inventory, Container container, ContainerData data, FastFurnaceTier tier) {
         super(
-                FastFurnaceV2.FAST_FURNACE_MENU.get(),
+                FastFurnaceV2.getFurnaceMenu(tier).get(),
                 RecipeType.SMELTING,
                 RecipePropertySet.FURNACE_INPUT,
                 RecipeBookType.FURNACE,
@@ -35,6 +40,11 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
                 container,
                 data);
         this.data = data;
+        this.tier = tier;
+    }
+
+    public FastFurnaceTier getTier() {
+        return this.tier;
     }
 
     public int getCurrentBurnTime() {

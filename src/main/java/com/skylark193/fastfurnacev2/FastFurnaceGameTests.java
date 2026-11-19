@@ -33,6 +33,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal");
     private static final Identifier BONUS_DROP_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_bonus_drops");
+    private static final Identifier TIER_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "furnace_tiers");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -41,11 +43,14 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_COAL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> BONUS_DROP_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, BONUS_DROP_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> TIER_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, TIER_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
             FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime,
-            BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance);
+            BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
+            TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel);
 
     private FastFurnaceGameTests() {
     }
@@ -64,6 +69,7 @@ final class FastFurnaceGameTests {
         event.registerTest(FUEL_TEST_ID, new DirectGameTestInstance(FUEL_FUNCTION, testData));
         event.registerTest(FAST_COAL_TEST_ID, new DirectGameTestInstance(FAST_COAL_FUNCTION, testData));
         event.registerTest(BONUS_DROP_TEST_ID, new DirectGameTestInstance(BONUS_DROP_FUNCTION, testData));
+        event.registerTest(TIER_TEST_ID, new DirectGameTestInstance(TIER_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -128,12 +134,13 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Fast Coal did not retain coal's vanilla 1600-tick burn time");
         }
 
+        int fastCoalBurnTime = FastFurnaceTier.FAST.scaleFastCoalBurnTime(vanillaBurnTime);
         FastFurnaceBlockEntity furnace = placeFurnace(helper, BlockPos.ZERO, fastCoal.copy());
         FastFurnaceMenu menu = createMenu(helper, furnace);
         level.getRandom().setSeed(findFuelRollSeed(false));
         tickFurnace(helper, furnace, BlockPos.ZERO);
-        if (menu.getCurrentBurnTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME
-                || menu.getTotalFuelTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME
+        if (menu.getCurrentBurnTime() != fastCoalBurnTime
+                || menu.getTotalFuelTime() != fastCoalBurnTime
                 || !menu.isFastCoalActive()) {
             throw helper.assertionException("Fast Coal did not synchronize its 2400-tick Fast Furnace burn time");
         }
@@ -155,10 +162,87 @@ final class FastFurnaceGameTests {
         FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
         level.getRandom().setSeed(findFuelRollSeed(true));
         tickFurnace(helper, doubledFurnace, new BlockPos(2, 0, 0));
-        if (doubledMenu.getCurrentBurnTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME * 2
-                || doubledMenu.getTotalFuelTime() != FastFurnaceBlockEntity.FAST_COAL_BURN_TIME * 2
+        if (doubledMenu.getCurrentBurnTime() != fastCoalBurnTime * 2
+                || doubledMenu.getTotalFuelTime() != fastCoalBurnTime * 2
                 || !doubledMenu.isFastCoalActive()) {
             throw helper.assertionException("Doubled Fast Coal did not synchronize its 4800-tick burn time");
+        }
+        helper.succeed();
+    }
+
+    private static void furnaceTiersScaleSpeedAndFuel(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int[] normalCookTimes = {133, 100, 80, 66};
+        int[] fastCoalCookTimes = {100, 80, 66, 57};
+        int[] normalSpeeds = {150, 200, 250, 300};
+        int[] fastCoalSpeeds = {200, 250, 300, 350};
+        int[] doubleBurnChances = {10, 15, 20, 25};
+        int[] fastCoalBurnTimes = {2400, 2800, 3200, 3600};
+
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int tierIndex = tier.ordinal();
+            if (tier.getSpeedPercent() != normalSpeeds[tierIndex]
+                    || tier.getSpeedPercent(true) != fastCoalSpeeds[tierIndex]
+                    || tier.getDoubleBurnChancePercent() != doubleBurnChances[tierIndex]
+                    || tier.scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
+                            != fastCoalBurnTimes[tierIndex]) {
+                throw helper.assertionException("Incorrect configured stats for " + tier);
+            }
+
+            for (boolean fastCoalActive : new boolean[] {false, true}) {
+                int expectedCookTime = fastCoalActive
+                        ? fastCoalCookTimes[tierIndex]
+                        : normalCookTimes[tierIndex];
+                int expectedBurnTime = fastCoalActive
+                        ? fastCoalBurnTimes[tierIndex]
+                        : FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
+                ItemStack fuel = fastCoalActive
+                        ? new ItemStack(FastFurnaceV2.FAST_COAL.get())
+                        : new ItemStack(Items.COAL);
+                BlockPos relativePos = new BlockPos(tierIndex * 4 + (fastCoalActive ? 2 : 0), 2, 0);
+                FastFurnaceBlockEntity furnace = placeFurnace(helper, relativePos, fuel, tier);
+                FastFurnaceMenu menu = createMenu(helper, furnace);
+                level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), false));
+                tickFurnace(helper, furnace, relativePos);
+
+                if (menu.getTier() != tier
+                        || menu.isFastCoalActive() != fastCoalActive
+                        || menu.getCurrentBurnTime() != expectedBurnTime
+                        || menu.getTotalFuelTime() != expectedBurnTime) {
+                    throw helper.assertionException("Incorrect fuel synchronization for " + tier);
+                }
+
+                BlockPos pos = helper.absolutePos(relativePos);
+                for (int tick = 2; tick <= expectedCookTime; tick++) {
+                    FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), furnace);
+                    if (tick < expectedCookTime && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                        throw helper.assertionException(tier + " smelted before tick " + expectedCookTime);
+                    }
+                }
+                ItemStack result = furnace.getItem(FastFurnaceMenu.RESULT_SLOT);
+                if (!result.is(Items.STONE) || result.getCount() != 1) {
+                    throw helper.assertionException(tier + " did not smelt on tick " + expectedCookTime);
+                }
+
+                float expectedSmelts = expectedBurnTime / (float) expectedCookTime;
+                if (Math.abs(tier.getSmeltCount(expectedBurnTime, fastCoalActive) - expectedSmelts) > 0.0001F) {
+                    throw helper.assertionException("Incorrect JEI smelt count for " + tier);
+                }
+
+                ItemStack doubledFuel = fastCoalActive
+                        ? new ItemStack(FastFurnaceV2.FAST_COAL.get())
+                        : new ItemStack(Items.COAL);
+                BlockPos doubledPos = relativePos.above(4);
+                FastFurnaceBlockEntity doubledFurnace = placeFurnace(helper, doubledPos, doubledFuel, tier);
+                FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
+                level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), true));
+                tickFurnace(helper, doubledFurnace, doubledPos);
+                if (doubledMenu.getCurrentBurnTime() != expectedBurnTime * 2
+                        || doubledMenu.getTotalFuelTime() != expectedBurnTime * 2
+                        || doubledMenu.isFastCoalActive() != fastCoalActive) {
+                    throw helper.assertionException("Incorrect doubled fuel synchronization for " + tier);
+                }
+            }
         }
         helper.succeed();
     }
@@ -180,7 +264,12 @@ final class FastFurnaceGameTests {
 
     private static FastFurnaceBlockEntity placeFurnace(
             GameTestHelper helper, BlockPos relativePos, ItemStack fuel) {
-        helper.setBlock(relativePos, FastFurnaceV2.FAST_FURNACE.get());
+        return placeFurnace(helper, relativePos, fuel, FastFurnaceTier.FAST);
+    }
+
+    private static FastFurnaceBlockEntity placeFurnace(
+            GameTestHelper helper, BlockPos relativePos, ItemStack fuel, FastFurnaceTier tier) {
+        helper.setBlock(relativePos, FastFurnaceV2.getFurnaceBlock(tier).get());
         FastFurnaceBlockEntity furnace = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
         furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
         furnace.setItem(FastFurnaceMenu.FUEL_SLOT, fuel);
@@ -193,9 +282,12 @@ final class FastFurnaceGameTests {
     }
 
     private static long findFuelRollSeed(boolean doubled) {
+        return findFuelRollSeed(FastFurnaceTier.FAST.getDoubleBurnChance(), doubled);
+    }
+
+    private static long findFuelRollSeed(double doubleBurnChance, boolean doubled) {
         for (long seed = 0; ; seed++) {
-            boolean rollDoubles = RandomSource.create(seed).nextFloat()
-                    < FastFurnaceBlockEntity.DOUBLE_BURN_CHANCE_PERCENT / 100.0F;
+            boolean rollDoubles = RandomSource.create(seed).nextFloat() < doubleBurnChance;
             if (rollDoubles == doubled) {
                 return seed;
             }
