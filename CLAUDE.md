@@ -200,6 +200,8 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 
 1. Make focused changes, remove obsolete code/imports/resources, and keep user-facing behavior stable unless the request changes it.
 2. Inspect local dependency sources or mapped APIs when version-specific behavior is uncertain instead of guessing from another Minecraft/NeoForge/JEI version.
-3. Commit all changes that pass validation, as requested by the maintainer. Run the build before every commit and never commit while relevant validation is failing.
-4. Before committing, review the full diff and stage only intended files. Include documentation updates in the same validated commit as their implementation.
-5. If validation cannot be run or fails, report the exact limitation or failure and leave the changes uncommitted.
+3. Do not automatically launch a Minecraft client.
+4. Do not take control of the device or cause mouse, keyboard, controller, touch, or other inputs on behalf of the user.
+5. Commit all changes that pass validation, as requested by the maintainer. Run the build before every commit and never commit while relevant validation is failing.
+6. Before committing, review the full diff and stage only intended files. Include documentation updates in the same validated commit as their implementation.
+7. If validation cannot be run or fails, report the exact limitation or failure and leave the changes uncommitted.
