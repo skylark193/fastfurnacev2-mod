@@ -25,6 +25,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 
 public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public static final int VANILLA_COAL_BURN_TIME = 1600;
+    public static final int VANILLA_COAL_BLOCK_BURN_TIME = 16000;
 
     private final FastFurnaceTier tier;
     private final RecipeManager.CachedCheck<SingleRecipeInput, ? extends AbstractCookingRecipe> quickCheck =
@@ -99,7 +100,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     @Override
     protected int getBurnDuration(FuelValues fuelValues, ItemStack fuel) {
         int burnTime = super.getBurnDuration(fuelValues, fuel);
-        if (burnTime > 0 && fuel.is(FastFurnaceV2.FAST_COAL.get())) {
+        if (burnTime > 0 && FastFurnaceV2.isFastCoalFuel(fuel)) {
             burnTime = this.tier.scaleFastCoalBurnTime(burnTime);
         }
         if (burnTime > 0 && this.level != null && this.level.getRandom().nextFloat() < this.tier.getDoubleBurnChance()) {
@@ -152,7 +153,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                             entity.totalFuelTime = newBurnTime;
                             entity.syncBurnData();
                             if (newBurnTime > 0) {
-                                entity.fastCoalBurning = fuel.is(FastFurnaceV2.FAST_COAL.get());
+                                entity.fastCoalBurning = FastFurnaceV2.isFastCoalFuel(fuel);
                                 expectedCookTime = entity.scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
                                 entity.updateCookingTotal(expectedCookTime);
                                 consumeFuel(entity.items, fuel);

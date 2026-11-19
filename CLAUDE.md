@@ -8,6 +8,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. Its registered content i
 
 - `fastfurnacev2:fast_cobblestone`: vanilla-style cobblestone with an animated lava-vein texture, a self-drop loot table, and use in the Fast Furnace crafting recipe.
 - `fastfurnacev2:fast_coal`: vanilla-style coal with an animated texture and ordinary fuel value of 1,600 ticks.
+- `fastfurnacev2:fast_coal_block`: a reversible nine-Fast-Coal storage block with vanilla coal-block properties, an animated lava-vein texture, and ordinary fuel value of 16,000 ticks.
 - `fastfurnacev2:fast_furnace`, `iron_fast_furnace`, `gold_fast_furnace`, and `diamond_fast_furnace`: vanilla-compatible smelting furnaces with tiered speed, fuel-time, GUI, and optional JEI behavior.
 
 | Tier | Normal speed | Fast Coal speed | Standard recipe, normal / Fast Coal | Fuel doubling | Fast Coal burn time before / after doubling |
@@ -17,11 +18,11 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. Its registered content i
 | Gold | 250% | 300% | 80 / 66 ticks | 20% | 3,200 / 6,400 ticks |
 | Diamond | 300% | 350% | 66 / 57 ticks | 25% | 3,600 / 7,200 ticks |
 
-Each consumed fuel item independently rolls the tier's chance to double its adjusted burn time. Fast Coal always adds 50 percentage points to active smelting speed; its duration multiplier increases by 25 percentage points per tier.
+Each consumed fuel item independently rolls the tier's chance to double its adjusted burn time. Fast Coal and Block of Fast Coal always add 50 percentage points to active smelting speed; their duration multiplier increases by 25 percentage points per tier. Before doubling, the block burns for 24,000/28,000/32,000/36,000 ticks by tier.
 
-Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern. Each upgrade surrounds the previous tier with eight iron, gold, then diamond blocks in tier order.
+Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern. Each upgrade surrounds the previous tier with eight iron, gold, then diamond blocks in tier order. Block of Fast Coal uses a full 3×3 Fast Coal recipe and unpacks into nine Fast Coal.
 
-All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Vanilla tabs are Building Blocks, Ingredients, and Functional Blocks respectively.
+All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Fast Cobblestone and Block of Fast Coal also appear in Building Blocks, Fast Coal in Ingredients, and all furnaces in Functional Blocks.
 
 ## Source of Truth and Session Startup
 
@@ -86,7 +87,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 - **GUI changes:** use a development client for visual/input validation when possible; compilation does not validate layout or interaction.
 - **Side-separation changes:** smoke-test the dedicated server when possible.
 
-The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, tier-specific fuel configuration, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
+The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
 Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
@@ -113,7 +114,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - `compat/jei/FastFurnaceFuelCategory.java`: per-tier fuel categories and speed-adjusted smelt counts.
 - `compat/jei/FastFurnaceFuelRecipe.java`: immutable JEI fuel inputs and burn time.
 - `src/main/resources/assets/fastfurnacev2/`: blockstates, item definitions, models, translations, and animated textures.
-- `src/main/resources/data/`: self-drop loot tables, the furnace recipe, pickaxe-minable tag, and Fast Coal fuel data map.
+- `src/main/resources/data/`: self-drop loot tables, furnace and Fast Coal Block recipes, pickaxe-minable tag, and Fast Coal fuel data maps.
 - `tools/`: deterministic texture generator, tests, preserved square sources, and detailed regeneration instructions.
 - `.github/workflows/build.yml`: Java 25 CI build.
 
@@ -128,6 +129,8 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Do not use `BlockBehaviour.Properties.ofFullCopy(Blocks.COBBLESTONE)`: it also copies vanilla's loot-table key and description ID, causing incorrect drops or translations.
 - `FastBonusDrops` runs during NeoForge's server-side `BlockDropsEvent`, after vanilla drops are calculated. Require a non-creative player breaker, enabled block drops, a correct tool, and no Silk Touch. `getDropChance` starts at 10% and adds 5 percentage points per Fortune level, capped at 100% for nonstandard levels. Append to `event.getDrops()`; never clear or replace normal drops. `BlockTags.COAL_ORES` covers coal ore and deepslate coal ore.
 - Fast Coal uses default vanilla item properties and `data/neoforge/data_maps/item/furnace_fuels.json` with `burn_time: 1600`. Only Fast Furnace applies its longer duration and speed boost.
+- Block of Fast Coal explicitly mirrors vanilla coal blocks: black map color, base-drum instrument, `requiresCorrectToolForDrops()`, and strength 5.0/6.0. The mineable tag supplies pickaxe behavior; its loot table explicitly drops itself. Do not use `ofFullCopy(Blocks.COAL_BLOCK)`, which would inherit vanilla's loot-table key and description ID.
+- The block's fuel data map uses `burn_time: 16000`, matching a vanilla coal block rather than nine Fast Coal's 14,400 ticks. Its full 3×3 packing recipe and shapeless nine-item unpacking recipe are reversible. Only Fast Furnace applies Fast Coal duration, speed, and doubling bonuses.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.
 - Every furnace blockstate maps all four facings and both `lit` values to `minecraft:block/orientable` models. Each tier has separate front, lit-front, side, and top textures; upgrade sources combine their metal block's pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace these with `cube_all` models, which would erase furnace fronts and visual lit states.
@@ -141,7 +144,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - `FastFurnaceBlockEntity` extends `AbstractFurnaceBlockEntity` with `RecipeType.SMELTING`. Preserve vanilla recipes, other fuels, inventory, XP, comparators, fuel remainders, facing, light level 13 while lit, and custom-name drops.
 - Scale cooking through `FastFurnaceTier.scaleCookTime`: 150/200/250/300% normally and an additional 50 percentage points with active Fast Coal. Standard normal-fuel recipes take 133/100/80/66 ticks; Fast Coal recipes take 100/80/66/57 ticks.
 - Apply Fast Coal's tier duration multiplier through `scaleFastCoalBurnTime`, then apply the independent tier-specific doubling roll. Before doubling, Fast Coal burns for 2,400/2,800/3,200/3,600 ticks. Do not globally alter Fast Coal's ordinary fuel value.
-- Track `fastCoalBurning` from the fuel stack actually consumed, not the current fuel slot, which may already hold different fuel. Clear the flag when burn time expires and persist it as `fast_coal_burning`.
+- Use `FastFurnaceV2.isFastCoalFuel` for both Fast Coal and Block of Fast Coal in consumed-fuel tracking, burn-duration scaling, and JEI. Track `fastCoalBurning` from the fuel stack actually consumed, not the current fuel slot, which may already hold different fuel. Clear the flag when burn time expires and persist it as `fast_coal_burning`.
 - Exact remaining and total burn times are stored under `lit_time_remaining` and `lit_total_time` and mirrored into vanilla data for furnace behavior.
 - `FastFurnaceMenu` has nine data slots. Indices 0–3 retain vanilla behavior; 4–7 contain low/high halves of the exact remaining and total fuel times; index 8 is the active Fast Coal flag. Use the split integers instead of vanilla short-value normalization or a custom per-tick packet.
 
@@ -154,7 +157,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Format timer numbers explicitly in Java with `Locale.ROOT` and `%.1f`. Draw each value one standard font space after its label and the translated seconds unit one space after the value; do not move numeric formatting into translations.
 - `getJeiExtraAreas` uses current GUI coordinates and returns bounds only while the fly-out is visible.
 - Register every tier for `RecipeTypes.SMELTING` and its own `FastFurnaceFuelCategory` recipe type, including transfers and click areas for each.
-- The custom fuel categories enumerate item fuels once from the current level's `FuelValues`, then create per-tier recipes applying `scaleFastCoalBurnTime` only to Fast Coal. Smelt counts use `burnTime / tier.scaleCookTime(200, fastCoalActive)`, not vanilla's fixed 200-tick divisor. Regular coal displays approximately 12.03/16/20/24.24 smelts; Fast Coal displays 24/35/48.48/63.16 before any random doubling roll.
+- The custom fuel categories enumerate item fuels once from the current level's `FuelValues`, then create per-tier recipes applying `scaleFastCoalBurnTime` only to fuels recognized by `isFastCoalFuel`. Smelt counts use `burnTime / tier.scaleCookTime(200, fastCoalActive)`, not vanilla's fixed 200-tick divisor. Regular coal displays approximately 12.03/16/20/24.24 smelts; Fast Coal displays 24/35/48.48/63.16 and its block 240/350/484.85/631.58 before any random doubling roll.
 - Do not modify `RecipeTypes.SMELTING_FUEL` to implement Fast Furnace durations; that would incorrectly change ordinary furnace displays.
 
 ### GameTests and textures
@@ -162,7 +165,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod/class initialization is too late. `DirectGameTestInstance` invokes the mod's mapped functions directly.
 - Preserve deterministic fuel-roll seeds in tests when asserting doubled versus non-doubled durations. Extend existing tests when timing, synchronization, remainders, or active-fuel behavior changes.
 - Use the square sources under `tools/texture_sources/`; never feed a generated animation strip back into the generator. It writes both the vertical PNG strip and sibling `.png.mcmeta`.
-- Production seeds: Fast Cobblestone 193; Fast Coal 415; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
+- Production seeds: Fast Cobblestone 193; Fast Coal 415; Block of Fast Coal 416; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
 - Follow `tools/README.md` for environment setup and exact regeneration commands. Keep new sources and seeds documented.
 
 ## Documentation, Continuity, and Compaction

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "fastfurnacev2:block/fast_coal_block"
+  }
+}

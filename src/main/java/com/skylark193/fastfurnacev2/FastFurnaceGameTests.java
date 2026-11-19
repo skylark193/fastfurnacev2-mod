@@ -31,6 +31,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_furnace_fuel");
     private static final Identifier FAST_COAL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal");
+    private static final Identifier FAST_COAL_BLOCK_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal_block");
     private static final Identifier BONUS_DROP_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_bonus_drops");
     private static final Identifier TIER_TEST_ID =
@@ -41,6 +43,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FAST_COAL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_COAL_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> FAST_COAL_BLOCK_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, FAST_COAL_BLOCK_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> BONUS_DROP_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, BONUS_DROP_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> TIER_FUNCTION =
@@ -49,6 +53,7 @@ final class FastFurnaceGameTests {
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
             FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime,
+            FAST_COAL_BLOCK_FUNCTION, FastFurnaceGameTests::fastCoalBlockActsAsFastCoalFuel,
             BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
             TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel);
 
@@ -68,6 +73,7 @@ final class FastFurnaceGameTests {
         event.registerTest(SPEED_TEST_ID, new DirectGameTestInstance(SPEED_FUNCTION, testData));
         event.registerTest(FUEL_TEST_ID, new DirectGameTestInstance(FUEL_FUNCTION, testData));
         event.registerTest(FAST_COAL_TEST_ID, new DirectGameTestInstance(FAST_COAL_FUNCTION, testData));
+        event.registerTest(FAST_COAL_BLOCK_TEST_ID, new DirectGameTestInstance(FAST_COAL_BLOCK_FUNCTION, testData));
         event.registerTest(BONUS_DROP_TEST_ID, new DirectGameTestInstance(BONUS_DROP_FUNCTION, testData));
         event.registerTest(TIER_TEST_ID, new DirectGameTestInstance(TIER_FUNCTION, testData));
     }
@@ -166,6 +172,64 @@ final class FastFurnaceGameTests {
                 || doubledMenu.getTotalFuelTime() != fastCoalBurnTime * 2
                 || !doubledMenu.isFastCoalActive()) {
             throw helper.assertionException("Doubled Fast Coal did not synchronize its 4800-tick burn time");
+        }
+        helper.succeed();
+    }
+
+    private static void fastCoalBlockActsAsFastCoalFuel(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ItemStack fastCoalBlock = new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get());
+        int vanillaBurnTime = fastCoalBlock.getBurnTime(RecipeType.SMELTING, level.fuelValues());
+        if (vanillaBurnTime != FastFurnaceBlockEntity.VANILLA_COAL_BLOCK_BURN_TIME) {
+            throw helper.assertionException("Fast Coal Block did not retain a coal block's vanilla 16000-tick burn time");
+        }
+
+        int[] expectedCookTimes = {100, 80, 66, 57};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int tierIndex = tier.ordinal();
+            int expectedBurnTime = tier.scaleFastCoalBurnTime(vanillaBurnTime);
+            BlockPos relativePos = new BlockPos(tierIndex * 4, 4, 0);
+            FastFurnaceBlockEntity furnace = placeFurnace(
+                    helper, relativePos, new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()), tier);
+            FastFurnaceMenu menu = createMenu(helper, furnace);
+            level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), false));
+            tickFurnace(helper, furnace, relativePos);
+
+            if (!menu.isFastCoalActive()
+                    || menu.getCurrentBurnTime() != expectedBurnTime
+                    || menu.getTotalFuelTime() != expectedBurnTime) {
+                throw helper.assertionException("Incorrect Fast Coal Block fuel synchronization for " + tier);
+            }
+
+            int expectedCookTime = expectedCookTimes[tierIndex];
+            BlockPos pos = helper.absolutePos(relativePos);
+            for (int tick = 2; tick <= expectedCookTime; tick++) {
+                FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), furnace);
+                if (tick < expectedCookTime && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                    throw helper.assertionException(tier + " smelted before Fast Coal Block tick " + expectedCookTime);
+                }
+            }
+            ItemStack result = furnace.getItem(FastFurnaceMenu.RESULT_SLOT);
+            if (!result.is(Items.STONE) || result.getCount() != 1) {
+                throw helper.assertionException(tier + " did not smelt with Fast Coal Block on tick " + expectedCookTime);
+            }
+
+            float expectedSmelts = expectedBurnTime / (float) expectedCookTime;
+            if (Math.abs(tier.getSmeltCount(expectedBurnTime, true) - expectedSmelts) > 0.0001F) {
+                throw helper.assertionException("Incorrect Fast Coal Block JEI smelt count for " + tier);
+            }
+
+            BlockPos doubledPos = relativePos.above(4);
+            FastFurnaceBlockEntity doubledFurnace = placeFurnace(
+                    helper, doubledPos, new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()), tier);
+            FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
+            level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), true));
+            tickFurnace(helper, doubledFurnace, doubledPos);
+            if (!doubledMenu.isFastCoalActive()
+                    || doubledMenu.getCurrentBurnTime() != expectedBurnTime * 2
+                    || doubledMenu.getTotalFuelTime() != expectedBurnTime * 2) {
+                throw helper.assertionException("Incorrect doubled Fast Coal Block burn time for " + tier);
+            }
         }
         helper.succeed();
     }

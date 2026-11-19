@@ -56,6 +56,9 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.FAST_COAL.get(),
                 Component.translatable("jei.fastfurnacev2.fast_coal"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.FAST_COAL_BLOCK.get(),
+                Component.translatable("jei.fastfurnacev2.fast_coal_block"));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addIngredientInfo(
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
@@ -76,7 +79,7 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             if (burnTime <= 0) {
                 continue;
             }
-            boolean fastCoal = stack.is(FastFurnaceV2.FAST_COAL.get());
+            boolean fastCoal = FastFurnaceV2.isFastCoalFuel(stack);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 int adjustedBurnTime = fastCoal ? tier.scaleFastCoalBurnTime(burnTime) : burnTime;
                 fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(List.of(stack), adjustedBurnTime));

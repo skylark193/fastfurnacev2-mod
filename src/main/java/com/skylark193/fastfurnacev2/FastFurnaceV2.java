@@ -10,6 +10,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -43,6 +44,13 @@ public class FastFurnaceV2 {
             .strength(2.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_COBBLESTONE_ITEM = ITEMS.registerSimpleBlockItem("fast_cobblestone", FAST_COBBLESTONE);
     public static final DeferredItem<Item> FAST_COAL = ITEMS.registerSimpleItem("fast_coal");
+    // Matches vanilla coal blocks without copying their loot-table key or description ID.
+    public static final DeferredBlock<Block> FAST_COAL_BLOCK = BLOCKS.registerSimpleBlock("fast_coal_block", properties -> properties
+            .mapColor(MapColor.COLOR_BLACK)
+            .instrument(NoteBlockInstrument.BASEDRUM)
+            .requiresCorrectToolForDrops()
+            .strength(5.0F, 6.0F));
+    public static final DeferredItem<BlockItem> FAST_COAL_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("fast_coal_block", FAST_COAL_BLOCK);
 
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = registerFurnace(FastFurnaceTier.FAST);
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
@@ -73,6 +81,7 @@ public class FastFurnaceV2 {
             .displayItems((parameters, output) -> {
                 output.accept(FAST_COBBLESTONE_ITEM.get());
                 output.accept(FAST_COAL.get());
+                output.accept(FAST_COAL_BLOCK_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
                 }
@@ -94,6 +103,10 @@ public class FastFurnaceV2 {
         modEventBus.addListener(this::addCreative);
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
         NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
+    }
+
+    public static boolean isFastCoalFuel(ItemStack stack) {
+        return stack.is(FAST_COAL.get()) || stack.is(FAST_COAL_BLOCK_ITEM.get());
     }
 
     public static DeferredBlock<FastFurnaceBlock> getFurnaceBlock(FastFurnaceTier tier) {
@@ -141,6 +154,7 @@ public class FastFurnaceV2 {
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(FAST_COBBLESTONE_ITEM);
+            event.accept(FAST_COAL_BLOCK_ITEM);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(FAST_COAL);

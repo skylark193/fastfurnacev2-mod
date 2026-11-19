@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, and four tiers of accelerated furnaces with animated lava-vein textures and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, a Block of Fast Coal, and four tiers of accelerated furnaces with animated lava-vein textures and optional JEI integration.
 
 ## Features
 
@@ -17,6 +17,15 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 - Burns for 1,600 ticks in ordinary furnaces, exactly like vanilla coal.
 - Adds 50 percentage points to the active furnace's smelting speed and receives a tier-dependent burn-time bonus while actively burning.
 - Appears in Ingredients and the mod's Fast Furnace V2 creative tab.
+
+### Block of Fast Coal
+
+- Crafted from a full 3×3 grid of Fast Coal and can be unpacked back into nine Fast Coal.
+- Matches a vanilla coal block's mining requirements and physical properties, drops itself, and has an animated coal-block texture with lava veins.
+- Burns for 16,000 ticks in ordinary furnaces, exactly like a vanilla coal block.
+- Counts as active Fast Coal fuel in every Fast Furnace tier, adding 50 percentage points to smelting speed and receiving the tier's duration multiplier and independent fuel-doubling roll.
+- Burns for 24,000 / 28,000 / 32,000 / 36,000 ticks in Fast / Iron / Gold / Diamond Fast Furnaces before doubling, or 48,000 / 56,000 / 64,000 / 72,000 ticks after doubling.
+- Appears in Building Blocks and the mod's Fast Furnace V2 creative tab.
 
 ### Fast Furnace Tiers
 
@@ -39,16 +48,16 @@ Every tier supports vanilla smelting recipes and fuels, the furnace recipe book,
 
 Every tier uses the same furnace GUI. Its information fly-out shows the tier's current speed, fuel doubling chance, remaining burn time, and total current-fuel burn time. Timers use exact tick counts and display seconds with one decimal place. All furnaces appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
 
-Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, and all furnace textures use animated lava veins. Each upgrade has a furnace-shaped front, side, and top made from its tier material, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
+Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, Block of Fast Coal, and all furnace textures use animated lava veins. Each upgrade has a furnace-shaped front, side, and top made from its tier material, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
 
 ## Optional JEI Integration
 
 With a compatible JEI release installed:
 
 - Each furnace's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category.
-- Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal's speed and duration bonuses.
+- Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
 - Recipe transfer supports smelting and fuel insertion for every tier.
-- Every furnace includes a short speed and fuel-doubling description; Fast Cobblestone and Fast Coal include acquisition information.
+- Every furnace includes a short speed and fuel-doubling description; Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
 - JEI reserves space around the furnace information fly-out.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.
