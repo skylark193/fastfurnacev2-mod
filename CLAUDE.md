@@ -10,6 +10,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. Its registered content i
 - `fastfurnacev2:fast_coal`: vanilla-style coal with an animated texture and ordinary fuel value of 1,600 ticks.
 - `fastfurnacev2:fast_coal_block`: a reversible nine-Fast-Coal storage block with vanilla coal-block properties, an animated lava-vein texture, and ordinary fuel value of 16,000 ticks.
 - `fastfurnacev2:fast_furnace`, `iron_fast_furnace`, `gold_fast_furnace`, and `diamond_fast_furnace`: vanilla-compatible smelting furnaces with tiered speed, fuel-time, GUI, and optional JEI behavior.
+- `fastfurnacev2:fast_crusher`: a temporary Fast-tier smelting copy with an all-sided animated Netherrack texture. It currently has no crafting recipe or crusher-specific behavior.
 
 | Tier | Normal speed | Fast Coal speed | Standard recipe, normal / Fast Coal | Fuel doubling | Fast Coal burn time before / after doubling |
 |---|---:|---:|---:|---:|---:|
@@ -22,7 +23,7 @@ Each consumed fuel item independently rolls the tier's chance to double its adju
 
 Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern. Each upgrade surrounds the previous tier with eight iron, gold, then diamond blocks in tier order. Block of Fast Coal uses a full 3×3 Fast Coal recipe and unpacks into nine Fast Coal.
 
-All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Fast Cobblestone and Block of Fast Coal also appear in Building Blocks, Fast Coal and crushed ores in Ingredients, and all furnaces in Functional Blocks.
+All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Fast Cobblestone and Block of Fast Coal also appear in Building Blocks, Fast Coal and crushed ores in Ingredients, and all furnaces and Fast Crusher in Functional Blocks.
 
 The mod also discovers vanilla and modded raw ore items during registration and creates one crushed item per source. Discovery recognizes conventional `raw_...`/`..._raw` IDs and direct or nested entries in packaged `c:raw_materials` item tags. Crushed variants use a shared dust-pile model tinted from the source item texture. Their generated ordinary smelting recipes preserve the raw recipe's output, experience, cooking time, category, and group, so they work in vanilla and Fast Furnaces.
 
@@ -89,7 +90,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 - **GUI changes:** use a development client for visual/input validation when possible; compilation does not validate layout or interaction.
 - **Side-separation changes:** smoke-test the dedicated server when possible.
 
-The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, Fortune-scaled bonus-drop chances, and crushed-ore discovery and recipe equivalence in ordinary and Fast Furnaces. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
+The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Crusher's Fast-tier behavior and display name, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, Fortune-scaled bonus-drop chances, and crushed-ore discovery and recipe equivalence in ordinary and Fast Furnaces. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
 Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
@@ -110,8 +111,8 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - `CrushedOreItem.java`: dynamic source mapping and material-specific display names.
 - `CrushedOreResources.java`: always-enabled in-memory client resource pack containing per-variant item definitions.
 - `FastFurnaceBlock.java`: tier-aware block codec, facing/lit behavior, server ticker, menu opening, statistics, fire sounds, and particles.
-- `FastFurnaceBlockEntity.java`: shared block entity for all four blocks; custom cooking and burn timing, fuel consumption, active-fuel state, persistence, and server-to-menu data.
-- `FastFurnaceMenu.java`: shared menu with four tier-specific `MenuType` registrations, vanilla smelting recipe-book setup, and nine synchronized data values.
+- `FastFurnaceBlockEntity.java`: shared block entity for all four furnaces and Fast Crusher; custom cooking and burn timing, fuel consumption, active-fuel state, persistence, and server-to-menu data.
+- `FastFurnaceMenu.java`: shared menu with four tier-specific `MenuType` registrations, vanilla smelting recipe-book setup, and nine synchronized data values. Fast Crusher reuses the Fast Furnace menu.
 - `FastFurnaceGameTests.java`: registered GameTests and custom direct function instance codec.
 - `client/FastFurnaceV2Client.java`: client-only registration of each tier's menu and screen, crushed-ore tint source, and color reload listener.
 - `client/CrushedOreColors.java`: source-texture color extraction, normalization, caching, and reload handling.
@@ -139,7 +140,8 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Block of Fast Coal explicitly mirrors vanilla coal blocks: black map color, base-drum instrument, `requiresCorrectToolForDrops()`, and strength 5.0/6.0. The mineable tag supplies pickaxe behavior; its loot table explicitly drops itself. Do not use `ofFullCopy(Blocks.COAL_BLOCK)`, which would inherit vanilla's loot-table key and description ID.
 - The block's fuel data map uses `burn_time: 16000`, matching a vanilla coal block rather than nine Fast Coal's 14,400 ticks. Its full 3×3 packing recipe and shapeless nine-item unpacking recipe are reversible. Only Fast Furnace applies Fast Coal duration, speed, and doubling bonuses.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
-- Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.
+- Fast Furnace's and Fast Crusher's loot tables drop themselves and copy `minecraft:custom_name`; they do not preserve inventory, XP, or burn state when broken. Fast Crusher has no crafting recipe yet.
+- Fast Crusher deliberately uses a single `cube_all` model and animated Netherrack texture for all facings and lit states; its block properties and behavior otherwise copy Fast Furnace. Do not apply the furnace orientable-model rule below to it.
 - Every furnace blockstate maps all four facings and both `lit` values to `minecraft:block/orientable` models. Each tier has separate front, lit-front, side, and top textures; upgrade sources combine their metal block's pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace these with `cube_all` models, which would erase furnace fronts and visual lit states.
 
 ### Dynamic crushed ores
@@ -153,7 +155,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 
 ### Furnace ticking and synchronization
 
-- One `BlockEntityType` accepts all four furnace blocks and is constructed with this version's public `BlockEntityType` constructor; `BlockEntityType.Builder` is unavailable. The block entity derives its immutable tier from the actual block state.
+- One `BlockEntityType` accepts all four furnace blocks and Fast Crusher and is constructed with this version's public `BlockEntityType` constructor; `BlockEntityType.Builder` is unavailable. The block entity derives its immutable tier from the actual block state. Fast Crusher uses `FastFurnaceTier.FAST`, shares the Fast Furnace menu and screen, and gets its default display name from its actual block rather than its tier.
 - Each block uses a tier-capturing codec; a shared codec that always constructs the base tier would decode upgrades incorrectly.
 - The ticker must use `FAST_FURNACE_BLOCK_ENTITY` and call `FastFurnaceBlockEntity.serverTick` through `createTickerHelper`. Vanilla `createFurnaceTicker` would bypass custom timing.
 - Retain the custom `openContainer` block-entity check; vanilla `FurnaceBlock` specifically checks `FurnaceBlockEntity`.
@@ -172,7 +174,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - `FastFurnaceScreen` draws the information button and fly-out in `extractLabels`. It gets normal and Fast Coal speed and doubling chance from `menu.getTier()`, choosing current speed from synchronized active-fuel state.
 - Format timer numbers explicitly in Java with `Locale.ROOT` and `%.1f`. Draw each value one standard font space after its label and the translated seconds unit one space after the value; do not move numeric formatting into translations.
 - `getJeiExtraAreas` uses current GUI coordinates and returns bounds only while the fly-out is visible.
-- Register every tier for `RecipeTypes.SMELTING` and its own `FastFurnaceFuelCategory` recipe type, including transfers and click areas for each.
+- Register every tier for `RecipeTypes.SMELTING` and its own `FastFurnaceFuelCategory` recipe type, including transfers and click areas for each. Fast Crusher additionally registers as a catalyst for smelting and the Fast tier's fuel category, reusing the Fast Furnace menu's transfer handlers and screen click areas.
 - The custom fuel categories enumerate item fuels once from the current level's `FuelValues`, then create per-tier recipes applying `scaleFastCoalBurnTime` only to fuels recognized by `isFastCoalFuel`. Smelt counts use `burnTime / tier.scaleCookTime(200, fastCoalActive)`, not vanilla's fixed 200-tick divisor. Regular coal displays approximately 12.03/16/20/24.24 smelts; Fast Coal displays 24/35/48.48/63.16 and its block 240/350/484.85/631.58 before any random doubling roll.
 - Do not modify `RecipeTypes.SMELTING_FUEL` to implement Fast Furnace durations; that would incorrectly change ordinary furnace displays.
 
@@ -181,7 +183,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod/class initialization is too late. `DirectGameTestInstance` invokes the mod's mapped functions directly.
 - Preserve deterministic fuel-roll seeds in tests when asserting doubled versus non-doubled durations. Extend existing tests when timing, synchronization, remainders, or active-fuel behavior changes.
 - Use the square sources under `tools/texture_sources/`; never feed a generated animation strip back into the generator. It writes both the vertical PNG strip and sibling `.png.mcmeta`.
-- Production seeds: Fast Cobblestone 193; Fast Coal 415; Block of Fast Coal 416; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
+- Production seeds: Fast Cobblestone 193; Fast Coal 415; Block of Fast Coal 416; Fast Crusher 417; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
 - Follow `tools/README.md` for environment setup and exact regeneration commands. Keep new sources and seeds documented.
 
 ## Documentation, Continuity, and Compaction

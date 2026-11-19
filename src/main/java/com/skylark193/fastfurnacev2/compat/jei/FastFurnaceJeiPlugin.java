@@ -64,6 +64,9 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
                     Component.translatable("jei.fastfurnacev2." + tier.getId()));
         }
+        registration.addIngredientInfo(
+                FastFurnaceV2.FAST_CRUSHER.get(),
+                Component.translatable("jei.fastfurnacev2.fast_crusher"));
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
@@ -99,6 +102,9 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             registration.addCraftingStation(
                     FastFurnaceFuelCategory.getRecipeType(tier), FastFurnaceV2.getFurnaceBlock(tier).get());
         }
+        registration.addCraftingStation(RecipeTypes.SMELTING, FastFurnaceV2.FAST_CRUSHER.get());
+        registration.addCraftingStation(
+                FastFurnaceFuelCategory.getRecipeType(FastFurnaceTier.FAST), FastFurnaceV2.FAST_CRUSHER.get());
     }
 
     @Override

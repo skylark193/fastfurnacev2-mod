@@ -48,6 +48,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "furnace_tiers");
     private static final Identifier CRUSHED_ORE_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "crushed_ores");
+    private static final Identifier FAST_CRUSHER_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_crusher");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -62,6 +64,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, TIER_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> CRUSHED_ORE_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, CRUSHED_ORE_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> FAST_CRUSHER_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, FAST_CRUSHER_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
@@ -69,7 +73,8 @@ final class FastFurnaceGameTests {
             FAST_COAL_BLOCK_FUNCTION, FastFurnaceGameTests::fastCoalBlockActsAsFastCoalFuel,
             BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
             TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
-            CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting);
+            CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting,
+            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCopiesFastFurnace);
 
     private FastFurnaceGameTests() {
     }
@@ -91,6 +96,7 @@ final class FastFurnaceGameTests {
         event.registerTest(BONUS_DROP_TEST_ID, new DirectGameTestInstance(BONUS_DROP_FUNCTION, testData));
         event.registerTest(TIER_TEST_ID, new DirectGameTestInstance(TIER_FUNCTION, testData));
         event.registerTest(CRUSHED_ORE_TEST_ID, new DirectGameTestInstance(CRUSHED_ORE_FUNCTION, testData));
+        event.registerTest(FAST_CRUSHER_TEST_ID, new DirectGameTestInstance(FAST_CRUSHER_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -112,6 +118,34 @@ final class FastFurnaceGameTests {
         ItemStack result = furnace.getItem(FastFurnaceMenu.RESULT_SLOT);
         if (!result.is(Items.STONE) || result.getCount() != 1) {
             throw helper.assertionException("Fast Furnace did not smelt one stone on tick 133");
+        }
+        helper.succeed();
+    }
+
+    private static void fastCrusherCopiesFastFurnace(GameTestHelper helper) {
+        BlockPos relativePos = BlockPos.ZERO;
+        BlockPos pos = helper.absolutePos(relativePos);
+        ServerLevel level = helper.getLevel();
+        helper.setBlock(relativePos, FastFurnaceV2.FAST_CRUSHER.get());
+        FastFurnaceBlockEntity crusher = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
+        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        crusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
+
+        FastFurnaceMenu menu = createMenu(helper, crusher);
+        if (menu.getTier() != FastFurnaceTier.FAST || !crusher.getDisplayName().getString().equals("Fast Crusher")) {
+            throw helper.assertionException("Fast Crusher did not use Fast-tier behavior and its own display name");
+        }
+
+        for (int tick = 1; tick <= 133; tick++) {
+            FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), crusher);
+            if (tick < 133 && !crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Fast Crusher smelted before tick 133");
+            }
+        }
+
+        ItemStack result = crusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!result.is(Items.STONE) || result.getCount() != 1) {
+            throw helper.assertionException("Fast Crusher did not smelt one stone on tick 133");
         }
         helper.succeed();
     }

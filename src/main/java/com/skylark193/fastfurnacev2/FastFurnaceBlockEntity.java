@@ -73,7 +73,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
 
     @Override
     protected Component getDefaultName() {
-        return Component.translatable("block.fastfurnacev2." + this.tier.getId());
+        return Component.translatable(this.getBlockState().getBlock().getDescriptionId());
     }
 
     @Override
