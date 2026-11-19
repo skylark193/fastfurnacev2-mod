@@ -130,7 +130,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Fast Coal uses default vanilla item properties and `data/neoforge/data_maps/item/furnace_fuels.json` with `burn_time: 1600`. Only Fast Furnace applies its longer duration and speed boost.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.
-- The base, Iron, and Gold Fast Furnace blockstates map all four facings and both `lit` values to `minecraft:block/orientable` models. Iron and Gold Fast Furnace have separate front, lit-front, side, and top textures; their sources combine the corresponding metal block pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace them with `cube_all`, which would erase furnace fronts and visual lit states.
+- Every furnace blockstate maps all four facings and both `lit` values to `minecraft:block/orientable` models. Each tier has separate front, lit-front, side, and top textures; upgrade sources combine their metal block's pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace these with `cube_all` models, which would erase furnace fronts and visual lit states.
 
 ### Furnace ticking and synchronization
 
