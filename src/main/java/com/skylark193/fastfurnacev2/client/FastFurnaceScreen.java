@@ -31,8 +31,6 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
     private static final int INFO_BUTTON_SIZE = 12;
     private static final int INFO_PANEL_WIDTH = 146;
     private static final int INFO_PANEL_HEIGHT = 68;
-    private static final int INFO_VALUE_RIGHT_X = 100;
-    private static final int INFO_SECONDS_X = 102;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.info");
     private static final Component CURRENT_BURN = Component.translatable("gui.fastfurnacev2.current_burn");
     private static final Component TOTAL_FUEL = Component.translatable("gui.fastfurnacev2.total_fuel");
@@ -88,9 +86,12 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
 
     private void drawTime(GuiGraphicsExtractor graphics, Component label, int ticks, int x, int y) {
         String value = String.format(Locale.ROOT, "%.1f", ticks / 20.0);
-        graphics.text(this.font, label, x + 6, y, 0xFFE0E0E0, false);
-        graphics.text(this.font, value, x + INFO_VALUE_RIGHT_X - this.font.width(value), y, 0xFFE0E0E0, false);
-        graphics.text(this.font, SECONDS, x + INFO_SECONDS_X, y, 0xFFE0E0E0, false);
+        int labelX = x + 6;
+        int valueX = labelX + this.font.width(label) + this.font.width(" ");
+        int secondsX = valueX + this.font.width(value) + this.font.width(" ");
+        graphics.text(this.font, label, labelX, y, 0xFFE0E0E0, false);
+        graphics.text(this.font, value, valueX, y, 0xFFE0E0E0, false);
+        graphics.text(this.font, SECONDS, secondsX, y, 0xFFE0E0E0, false);
     }
 
     public List<Rect2i> getJeiExtraAreas() {
