@@ -22,7 +22,9 @@ Each consumed fuel item independently rolls the tier's chance to double its adju
 
 Mining stone or blocks in `BlockTags.COAL_ORES` can add matching Fast Cobblestone or Fast Coal at a base 10% chance, plus 5 percentage points per Fortune level and capped at 100%. These are bonuses alongside normal drops, not replacements. Fast Furnace is crafted from eight Fast Cobblestone using the vanilla furnace pattern. Each upgrade surrounds the previous tier with eight iron, gold, then diamond blocks in tier order. Block of Fast Coal uses a full 3×3 Fast Coal recipe and unpacks into nine Fast Coal.
 
-All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Fast Cobblestone and Block of Fast Coal also appear in Building Blocks, Fast Coal in Ingredients, and all furnaces in Functional Blocks.
+All content appears in the Fast Furnace V2 creative tab, whose icon is Fast Cobblestone. Fast Cobblestone and Block of Fast Coal also appear in Building Blocks, Fast Coal and crushed ores in Ingredients, and all furnaces in Functional Blocks.
+
+The mod also discovers vanilla and modded raw ore items during registration and creates one crushed item per source. Discovery recognizes conventional `raw_...`/`..._raw` IDs and direct or nested entries in packaged `c:raw_materials` item tags. Crushed variants use a shared dust-pile model tinted from the source item texture. Their generated ordinary smelting recipes preserve the raw recipe's output, experience, cooking time, category, and group, so they work in vanilla and Fast Furnaces.
 
 ## Source of Truth and Session Startup
 
@@ -87,7 +89,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 - **GUI changes:** use a development client for visual/input validation when possible; compilation does not validate layout or interaction.
 - **Side-separation changes:** smoke-test the dedicated server when possible.
 
-The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, and Fortune-scaled bonus-drop chances. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
+The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, Fortune-scaled bonus-drop chances, and crushed-ore discovery and recipe equivalence in ordinary and Fast Furnaces. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
 Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
@@ -104,11 +106,16 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - `FastFurnaceV2.java`: common entry point; all `DeferredRegister` instances; block/item/block-entity/menu/GameTest/creative-tab registration; tier lookup helpers; vanilla tab population; event listeners.
 - `FastFurnaceTier.java`: shared source of truth for registry IDs, normal/Fast Coal speed, doubling chance, Fast Coal duration scaling, cook-time scaling, and JEI smelt counts.
 - `FastBonusDrops.java`: appends Fast Cobblestone or Fast Coal to eligible vanilla drops.
+- `CrushedOres.java`: registry-time raw ore discovery, dynamic registration, creative contents, and cloned smelting JSON generation.
+- `CrushedOreItem.java`: dynamic source mapping and material-specific display names.
+- `CrushedOreResources.java`: always-enabled in-memory client resource pack containing per-variant item definitions.
 - `FastFurnaceBlock.java`: tier-aware block codec, facing/lit behavior, server ticker, menu opening, statistics, fire sounds, and particles.
 - `FastFurnaceBlockEntity.java`: shared block entity for all four blocks; custom cooking and burn timing, fuel consumption, active-fuel state, persistence, and server-to-menu data.
 - `FastFurnaceMenu.java`: shared menu with four tier-specific `MenuType` registrations, vanilla smelting recipe-book setup, and nine synchronized data values.
 - `FastFurnaceGameTests.java`: registered GameTests and custom direct function instance codec.
-- `client/FastFurnaceV2Client.java`: client-only registration of each tier's menu and screen.
+- `client/FastFurnaceV2Client.java`: client-only registration of each tier's menu and screen, crushed-ore tint source, and color reload listener.
+- `client/CrushedOreColors.java`: source-texture color extraction, normalization, caching, and reload handling.
+- `client/CrushedOreTintSource.java`: shared model tint lookup for dynamic crushed items.
 - `client/FastFurnaceScreen.java`: shared furnace screen, information button/fly-out, timer formatting, and JEI exclusion bounds. The three upgrade screens are trivial subclasses used to distinguish JEI click areas.
 - `compat/jei/FastFurnaceJeiPlugin.java`: optional per-tier catalysts, recipe transfers, click areas, ingredient information, fuel enumeration, and GUI handlers.
 - `compat/jei/FastFurnaceFuelCategory.java`: per-tier fuel categories and speed-adjusted smelt counts.
@@ -134,6 +141,15 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.
 - Every furnace blockstate maps all four facings and both `lit` values to `minecraft:block/orientable` models. Each tier has separate front, lit-front, side, and top textures; upgrade sources combine their metal block's pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace these with `cube_all` models, which would erase furnace fronts and visual lit states.
+
+### Dynamic crushed ores
+
+- `ModifyRegistriesEvent` is used only to capture vanilla items and install an item `AddCallback`; the item registry is frozen at that point. Actual inserts occur once the item `RegisterEvent` opens the registry. The callback covers mod registrations before and after this mod's listener. Guard recursive callbacks and duplicate source IDs.
+- Item-stack components and runtime tags are not bound during discovery. Do not call `getDefaultInstance()` or `Holder.is(TagKey)` there. `CrushedOres` instead scans mod files through `ResourcePackLoader` for `tags/item/raw_materials.json` and its subtags, resolves nested tag references, and combines those IDs with conventional raw item paths. Exclude `BlockItem` entries so raw storage blocks are not treated as raw ore. Datapacks cannot add registry items after startup.
+- Vanilla `minecraft:raw_iron` maps to `fastfurnacev2:crushed_iron`. Non-vanilla sources include their namespace in the crushed ID. `CrushedOreItem.getName` uses a material translation with an ID-derived English fallback; do not require generated language entries for every modded source.
+- `ModifyRecipeJsonsEvent` clones only `minecraft:smelting` JSON after testing its parsed ingredient with `acceptsItem` and the raw item's registry holder; components are still unbound during this event, so do not create an `ItemStack` here. Iterate over a copy before inserting recipes, use collision-free generated IDs, and preserve every field except `ingredient`. Do not replace raw recipes or hardcode result items.
+- `Item.Properties.finalizeInitializer` overwrites `DataComponents.ITEM_MODEL`, so a shared model component cannot replace per-item definitions. The in-memory client pack generates one `items/<id>.json` per variant, all referencing `models/item/crushed_ore.json` and the custom tint source. Keep this pack enabled and below user resource packs. Its generated `pack.mcmeta` must include `pack_format`, `min_format`, and `max_format`; current Minecraft rejects packs above legacy format 64 that omit the two range fields.
+- `CrushedOreColors` reads `textures/item/<raw_item_id>.png` from the active resource manager, crops animated strips to their first square frame, averages pixels with alpha at least 128, normalizes the average's maximum channel to 230, and falls back to neutral 230 RGB if the conventional texture cannot be read. Refresh colors on client resource reloads and keep `NativeImage`/other client classes out of common code.
 
 ### Furnace ticking and synchronization
 

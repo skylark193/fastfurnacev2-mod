@@ -85,6 +85,7 @@ public class FastFurnaceV2 {
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
                 }
+                CrushedOres.addCreative(output);
             })
             .build());
 
@@ -101,8 +102,12 @@ public class FastFurnaceV2 {
         CREATIVE_MODE_TABS.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(CrushedOres::registerDiscovery);
+        modEventBus.addListener(CrushedOres::registerItems);
+        modEventBus.addListener(CrushedOreResources::addPackFinder);
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
         NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
+        NeoForge.EVENT_BUS.addListener(CrushedOres::generateRecipes);
     }
 
     public static boolean isFastCoalFuel(ItemStack stack) {
@@ -158,6 +163,7 @@ public class FastFurnaceV2 {
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(FAST_COAL);
+            CrushedOres.addCreative(event);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {

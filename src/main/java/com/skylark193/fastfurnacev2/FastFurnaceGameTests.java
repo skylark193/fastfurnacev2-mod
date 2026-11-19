@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -18,9 +19,17 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 
@@ -37,6 +46,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_bonus_drops");
     private static final Identifier TIER_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "furnace_tiers");
+    private static final Identifier CRUSHED_ORE_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "crushed_ores");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -49,13 +60,16 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, BONUS_DROP_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> TIER_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, TIER_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> CRUSHED_ORE_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, CRUSHED_ORE_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
             FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime,
             FAST_COAL_BLOCK_FUNCTION, FastFurnaceGameTests::fastCoalBlockActsAsFastCoalFuel,
             BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
-            TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel);
+            TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
+            CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting);
 
     private FastFurnaceGameTests() {
     }
@@ -76,6 +90,7 @@ final class FastFurnaceGameTests {
         event.registerTest(FAST_COAL_BLOCK_TEST_ID, new DirectGameTestInstance(FAST_COAL_BLOCK_FUNCTION, testData));
         event.registerTest(BONUS_DROP_TEST_ID, new DirectGameTestInstance(BONUS_DROP_FUNCTION, testData));
         event.registerTest(TIER_TEST_ID, new DirectGameTestInstance(TIER_FUNCTION, testData));
+        event.registerTest(CRUSHED_ORE_TEST_ID, new DirectGameTestInstance(CRUSHED_ORE_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -307,6 +322,65 @@ final class FastFurnaceGameTests {
                     throw helper.assertionException("Incorrect doubled fuel synchronization for " + tier);
                 }
             }
+        }
+        helper.succeed();
+    }
+
+    private static void crushedOresMatchRawOreSmelting(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        CrushedOreItem crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
+        CrushedOreItem crushedCopper = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_copper"));
+        CrushedOreItem crushedGold = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_gold"));
+        if (crushedIron == null || crushedCopper == null || crushedGold == null) {
+            throw helper.assertionException("Vanilla raw iron, copper, and gold were not all discovered");
+        }
+        if (!crushedIron.getDefaultInstance().getHoverName().getString().equals("Crushed Iron")) {
+            throw helper.assertionException("Crushed iron did not receive its material-specific display name");
+        }
+
+        for (CrushedOreItem crushed : CrushedOres.all()) {
+            Item raw = BuiltInRegistries.ITEM.getValue(crushed.getRawOreId());
+            SingleRecipeInput rawInput = new SingleRecipeInput(raw.getDefaultInstance());
+            SingleRecipeInput crushedInput = new SingleRecipeInput(crushed.getDefaultInstance());
+            RecipeHolder<? extends Recipe<SingleRecipeInput>> rawRecipe = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, rawInput, level)
+                    .orElseThrow(() -> helper.assertionException("No raw smelting recipe for " + crushed.getRawOreId()));
+            RecipeHolder<? extends Recipe<SingleRecipeInput>> crushedRecipe = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, crushedInput, level)
+                    .orElseThrow(() -> helper.assertionException("No crushed smelting recipe for " + BuiltInRegistries.ITEM.getKey(crushed)));
+            ItemStack rawResult = rawRecipe.value().assemble(rawInput);
+            ItemStack crushedResult = crushedRecipe.value().assemble(crushedInput);
+            if (!ItemStack.isSameItemSameComponents(rawResult, crushedResult)
+                    || rawResult.getCount() != crushedResult.getCount()) {
+                throw helper.assertionException("Crushed result differs from raw result for " + crushed.getRawOreId());
+            }
+            if (rawRecipe.value() instanceof AbstractCookingRecipe rawCooking
+                    && crushedRecipe.value() instanceof AbstractCookingRecipe crushedCooking
+                    && (rawCooking.cookingTime() != crushedCooking.cookingTime()
+                    || rawCooking.experience() != crushedCooking.experience()
+                    || rawCooking.category() != crushedCooking.category()
+                    || !rawCooking.group().equals(crushedCooking.group()))) {
+                throw helper.assertionException("Crushed recipe settings differ from raw recipe for " + crushed.getRawOreId());
+            }
+        }
+
+        BlockPos vanillaPos = BlockPos.ZERO;
+        helper.setBlock(vanillaPos, Blocks.FURNACE);
+        FurnaceBlockEntity vanillaFurnace = helper.getBlockEntity(vanillaPos, FurnaceBlockEntity.class);
+        vanillaFurnace.setItem(0, crushedIron.getDefaultInstance());
+        vanillaFurnace.setItem(1, new ItemStack(Items.COAL));
+        FastFurnaceBlockEntity fastFurnace = placeFurnace(
+                helper, new BlockPos(2, 0, 0), new ItemStack(Items.COAL));
+        fastFurnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, crushedIron.getDefaultInstance());
+        for (int tick = 1; tick <= 200; tick++) {
+            AbstractFurnaceBlockEntity.serverTick(level, helper.absolutePos(vanillaPos),
+                    level.getBlockState(helper.absolutePos(vanillaPos)), vanillaFurnace);
+            tickFurnace(helper, fastFurnace, new BlockPos(2, 0, 0));
+        }
+        if (!vanillaFurnace.getItem(2).is(Items.IRON_INGOT) || vanillaFurnace.getItem(2).getCount() != 1) {
+            throw helper.assertionException("An ordinary furnace did not smelt crushed iron into iron");
+        }
+        if (!fastFurnace.getItem(FastFurnaceMenu.RESULT_SLOT).is(Items.IRON_INGOT)
+                || fastFurnace.getItem(FastFurnaceMenu.RESULT_SLOT).getCount() != 1) {
+            throw helper.assertionException("A Fast Furnace did not smelt crushed iron into iron");
         }
         helper.succeed();
     }

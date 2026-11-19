@@ -10,7 +10,7 @@ The generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, and coal block sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, and `texture_sources/coal_block.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal block, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_block.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -95,6 +95,24 @@ Each furnace texture is generated independently from its square source. All use 
 ```
 
 On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. Every tier's normal and lit models share its animated side and top textures, while its blockstate switches between the unlit and burning front models. Each command writes both its vertical PNG strip and sibling `.png.mcmeta` file.
+
+## Regenerate the Crushed Ore Dust Base
+
+The shared crushed-ore texture is a neutral grayscale version of vanilla gunpowder. The game applies a different derived tint to each discovered raw-ore variant at render time; per-mod texture files are not needed.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_dust_texture.py --input tools\texture_sources\gunpowder.png --output src\main\resources\assets\fastfurnacev2\textures\item\crushed_ore.png
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_dust_texture.py --input tools/texture_sources/gunpowder.png --output src/main/resources/assets/fastfurnacev2/textures/item/crushed_ore.png
+```
+
+The generator preserves the source silhouette and transparency while remapping visible pixels to an 80–255 grayscale range.
 
 ## Generate Another Lava-Vein Texture
 

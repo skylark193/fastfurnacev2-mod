@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, a Block of Fast Coal, and four tiers of accelerated furnaces with animated lava-vein textures and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, a Block of Fast Coal, four tiers of accelerated furnaces, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
 
 ## Features
 
@@ -26,6 +26,14 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 - Counts as active Fast Coal fuel in every Fast Furnace tier, adding 50 percentage points to smelting speed and receiving the tier's duration multiplier and independent fuel-doubling roll.
 - Burns for 24,000 / 28,000 / 32,000 / 36,000 ticks in Fast / Iron / Gold / Diamond Fast Furnaces before doubling, or 48,000 / 56,000 / 64,000 / 72,000 ticks after doubling.
 - Appears in Building Blocks and the mod's Fast Furnace V2 creative tab.
+
+### Crushed Ores
+
+- Discovers vanilla and modded raw ore items during registration, including conventional `raw_...` and `..._raw` item IDs and items listed in packaged `c:raw_materials` tags or their subtags.
+- Adds one crushed item per discovered raw ore. Each appears as a dust pile tinted from the visible pixels of its source item's texture, and appears in Ingredients and the mod's creative tab.
+- Copies each raw ore's ordinary smelting recipe for its crushed variant, preserving the output, experience, cooking time, category, and group. Crushed ores therefore work in ordinary furnaces and every Fast Furnace tier.
+- Vanilla raw iron, raw copper, and raw gold become Crushed Iron, Crushed Copper, and Crushed Gold. Modded variants use namespace-qualified registry IDs to avoid collisions and derive material names from their source IDs.
+- Discovery occurs during mod registration; datapacks cannot introduce new raw item types afterward. A source texture that does not use the conventional `textures/item/<raw_item_id>.png` path falls back to a neutral dust color.
 
 ### Fast Furnace Tiers
 
