@@ -32,7 +32,7 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
     private static final int INFO_PANEL_WIDTH = 146;
     private static final int INFO_PANEL_HEIGHT = 68;
     private static final int INFO_VALUE_RIGHT_X = 100;
-    private static final int INFO_SECONDS_X = 104;
+    private static final int INFO_SECONDS_X = 102;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.info");
     private static final Component CURRENT_BURN = Component.translatable("gui.fastfurnacev2.current_burn");
     private static final Component TOTAL_FUEL = Component.translatable("gui.fastfurnacev2.total_fuel");
