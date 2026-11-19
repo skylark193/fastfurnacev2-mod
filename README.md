@@ -39,7 +39,7 @@ Every tier supports vanilla smelting recipes and fuels, the furnace recipe book,
 
 Every tier uses the same furnace GUI. Its information fly-out shows the tier's current speed, fuel doubling chance, remaining burn time, and total current-fuel burn time. Timers use exact tick counts and display seconds with one decimal place. All furnaces appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
 
-Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, and all furnace textures use animated lava veins. Iron Fast Furnace has a furnace-shaped front, side, and top made from iron, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
+Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, and all furnace textures use animated lava veins. Iron and Gold Fast Furnace have furnace-shaped fronts, sides, and tops made from their tier materials, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
 
 ## Optional JEI Integration
 

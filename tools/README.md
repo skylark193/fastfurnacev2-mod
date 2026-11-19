@@ -10,7 +10,7 @@ The generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone and coal sources are preserved at `texture_sources/cobblestone.png` and `texture_sources/coal.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. The `iron_furnace/` directory contains four square furnace sources combining the iron block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone and coal sources are preserved at `texture_sources/cobblestone.png` and `texture_sources/coal.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. The `iron_furnace/` and `gold_furnace/` directories contain four square furnace sources each, combining the corresponding metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -68,11 +68,14 @@ Each furnace texture is generated independently from its square source. All use 
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_front_on.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_front_on.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_side.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_side.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_top.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_top.png --seed 311
-.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_furnace\furnace_front.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace_front.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_furnace\furnace_front_on.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace_front_on.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_furnace\furnace_side.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace_side.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_furnace\furnace_top.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace_top.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\diamond_fast_furnace.png --seed 311
 ```
 
-On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. The base and Iron Fast Furnace normal and lit models share their tier's animated side and top textures, while their blockstates switch between unlit and burning front models. Each command writes both its vertical PNG strip and sibling `.png.mcmeta` file.
+On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. The base, Iron, and Gold Fast Furnace normal and lit models share their tier's animated side and top textures, while their blockstates switch between unlit and burning front models. Each command writes both its vertical PNG strip and sibling `.png.mcmeta` file.
 
 ## Generate Another Lava-Vein Texture
 
