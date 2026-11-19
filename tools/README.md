@@ -10,7 +10,7 @@ The generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone and coal sources are preserved at `texture_sources/cobblestone.png` and `texture_sources/coal.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone and coal sources are preserved at `texture_sources/cobblestone.png` and `texture_sources/coal.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. The `iron_furnace/` directory contains four square furnace sources combining the iron block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -57,19 +57,22 @@ This writes the animated item texture and its `.png.mcmeta` metadata. The existi
 
 ## Regenerate Furnace Textures
 
-Each furnace texture is generated independently from its square vanilla source. All seven use seed **311** intentionally: identical seeds and generator settings give every furnace tier the same vein/crust mask and animation, so their lava veins tile together. Changing the seed for only one texture breaks that alignment. From the project root on Windows, run:
+Each furnace texture is generated independently from its square source. All use seed **311** intentionally: identical seeds and generator settings give every furnace tier and lit state the same vein/crust mask and animation, so their lava veins tile together. Changing the seed for only one texture breaks that alignment. From the project root on Windows, run:
 
 ```bash
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_front.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_front.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_front_on.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_front_on.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_side.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_side.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\furnace\furnace_top.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_furnace_top.png --seed 311
-.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_front.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_front.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_front_on.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_front_on.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_side.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_side.png --seed 311
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_furnace\furnace_top.png --output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_furnace_top.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_furnace.png --seed 311
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\diamond_fast_furnace.png --seed 311
 ```
 
-On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. The normal and lit Fast Furnace models share the animated side and top textures. Each command writes both its vertical PNG strip and sibling `.png.mcmeta` file.
+On macOS/Linux, use `.venv/bin/python` and forward slashes. The defaults produce eight frames with a two-tick frame time and two primary veins for each texture. The base and Iron Fast Furnace normal and lit models share their tier's animated side and top textures, while their blockstates switch between unlit and burning front models. Each command writes both its vertical PNG strip and sibling `.png.mcmeta` file.
 
 ## Generate Another Lava-Vein Texture
 

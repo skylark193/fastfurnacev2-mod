@@ -130,6 +130,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - Fast Coal uses default vanilla item properties and `data/neoforge/data_maps/item/furnace_fuels.json` with `burn_time: 1600`. Only Fast Furnace applies its longer duration and speed boost.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's loot table drops itself and copies `minecraft:custom_name`; it does not preserve inventory, XP, or burn state when broken.
+- The base and Iron Fast Furnace blockstates map all four facings and both `lit` values to `minecraft:block/orientable` models. Iron Fast Furnace has separate front, lit-front, side, and top textures; its sources combine the iron block pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace it with `cube_all`, which would erase the furnace front and visual lit state.
 
 ### Furnace ticking and synchronization
 
@@ -161,7 +162,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod/class initialization is too late. `DirectGameTestInstance` invokes the mod's mapped functions directly.
 - Preserve deterministic fuel-roll seeds in tests when asserting doubled versus non-doubled durations. Extend existing tests when timing, synchronization, remainders, or active-fuel behavior changes.
 - Use the square sources under `tools/texture_sources/`; never feed a generated animation strip back into the generator. It writes both the vertical PNG strip and sibling `.png.mcmeta`.
-- Production seeds: Fast Cobblestone 193; Fast Coal 415; all seven furnace textures 311. The shared furnace seed is intentional so every tier has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
+- Production seeds: Fast Cobblestone 193; Fast Coal 415; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
 - Follow `tools/README.md` for environment setup and exact regeneration commands. Keep new sources and seeds documented.
 
 ## Documentation, Continuity, and Compaction
