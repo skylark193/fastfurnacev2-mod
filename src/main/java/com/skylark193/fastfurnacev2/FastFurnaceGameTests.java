@@ -137,7 +137,7 @@ final class FastFurnaceGameTests {
 
     private static void fastCrusherCrushesAndDoublesOutput(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        CrushedOreItem crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
+        Item crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
         if (crushedIron == null) {
             throw helper.assertionException("Raw iron did not have a crushed variant");
         }
@@ -564,13 +564,14 @@ final class FastFurnaceGameTests {
 
     private static void crushedOresMatchRawOreSmelting(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        CrushedOreItem crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
-        CrushedOreItem crushedCopper = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_copper"));
-        CrushedOreItem crushedGold = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_gold"));
+        Item crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
+        Item crushedCopper = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_copper"));
+        Item crushedGold = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_gold"));
         if (crushedIron == null || crushedCopper == null || crushedGold == null) {
             throw helper.assertionException("Vanilla raw iron, copper, and gold were not all discovered");
         }
-        if (!crushedIron.getDefaultInstance().getHoverName().getString().equals("Crushed Iron")) {
+        if (crushedIron instanceof CrushedOreItem
+                && !crushedIron.getDefaultInstance().getHoverName().getString().equals("Crushed Iron")) {
             throw helper.assertionException("Crushed iron did not receive its material-specific display name");
         }
         Component moddedTinName = Component.translatable("item.fastfurnacev2.crushed_ore",
@@ -580,27 +581,42 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("A modded raw-ore suffix did not receive its English fallback name");
         }
 
-        for (CrushedOreItem crushed : CrushedOres.all()) {
-            Item raw = BuiltInRegistries.ITEM.getValue(crushed.getRawOreId());
+        if (!CrushedOres.isCrushedOreForMaterial(
+                        Identifier.fromNamespaceAndPath("ftbmaterials", "tin_dust"), "tin_raw_ore")
+                || !CrushedOres.isCrushedOreForMaterial(
+                        Identifier.fromNamespaceAndPath("create", "crushed_raw_iron"), "iron")
+                || CrushedOres.isCrushedOreForMaterial(
+                        Identifier.fromNamespaceAndPath("ftbmaterials", "tin_ore"), "tin_raw_ore")) {
+            throw helper.assertionException("Conventional external crushed ores were not matched to their raw materials");
+        }
+
+        for (Identifier rawOreId : CrushedOres.rawOres()) {
+            Item crushed = CrushedOres.forRawOre(rawOreId);
+            if (crushed == null) {
+                throw helper.assertionException("No registered crushed result for " + rawOreId);
+            }
+            Item raw = BuiltInRegistries.ITEM.getValue(rawOreId);
             SingleRecipeInput rawInput = new SingleRecipeInput(raw.getDefaultInstance());
             SingleRecipeInput crushedInput = new SingleRecipeInput(crushed.getDefaultInstance());
             RecipeHolder<? extends Recipe<SingleRecipeInput>> rawRecipe = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, rawInput, level)
-                    .orElseThrow(() -> helper.assertionException("No raw smelting recipe for " + crushed.getRawOreId()));
+                    .orElseThrow(() -> helper.assertionException("No raw smelting recipe for " + rawOreId));
             RecipeHolder<? extends Recipe<SingleRecipeInput>> crushedRecipe = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, crushedInput, level)
                     .orElseThrow(() -> helper.assertionException("No crushed smelting recipe for " + BuiltInRegistries.ITEM.getKey(crushed)));
-            ItemStack rawResult = rawRecipe.value().assemble(rawInput);
-            ItemStack crushedResult = crushedRecipe.value().assemble(crushedInput);
-            if (!ItemStack.isSameItemSameComponents(rawResult, crushedResult)
-                    || rawResult.getCount() != crushedResult.getCount()) {
-                throw helper.assertionException("Crushed result differs from raw result for " + crushed.getRawOreId());
-            }
-            if (rawRecipe.value() instanceof AbstractCookingRecipe rawCooking
-                    && crushedRecipe.value() instanceof AbstractCookingRecipe crushedCooking
-                    && (rawCooking.cookingTime() != crushedCooking.cookingTime()
-                    || rawCooking.experience() != crushedCooking.experience()
-                    || rawCooking.category() != crushedCooking.category()
-                    || !rawCooking.group().equals(crushedCooking.group()))) {
-                throw helper.assertionException("Crushed recipe settings differ from raw recipe for " + crushed.getRawOreId());
+            if (crushed instanceof CrushedOreItem) {
+                ItemStack rawResult = rawRecipe.value().assemble(rawInput);
+                ItemStack crushedResult = crushedRecipe.value().assemble(crushedInput);
+                if (!ItemStack.isSameItemSameComponents(rawResult, crushedResult)
+                        || rawResult.getCount() != crushedResult.getCount()) {
+                    throw helper.assertionException("Crushed result differs from raw result for " + rawOreId);
+                }
+                if (rawRecipe.value() instanceof AbstractCookingRecipe rawCooking
+                        && crushedRecipe.value() instanceof AbstractCookingRecipe crushedCooking
+                        && (rawCooking.cookingTime() != crushedCooking.cookingTime()
+                        || rawCooking.experience() != crushedCooking.experience()
+                        || rawCooking.category() != crushedCooking.category()
+                        || !rawCooking.group().equals(crushedCooking.group()))) {
+                    throw helper.assertionException("Crushed recipe settings differ from raw recipe for " + rawOreId);
+                }
             }
         }
 

@@ -1,6 +1,5 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
-import com.skylark193.fastfurnacev2.CrushedOreItem;
 import com.skylark193.fastfurnacev2.CrushedOres;
 import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
@@ -37,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.FuelValues;
@@ -111,8 +111,12 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     private static List<FastCrusherRecipe> createCrushingRecipes() {
         List<FastCrusherRecipe> recipes = new ArrayList<>();
-        for (CrushedOreItem crushed : CrushedOres.all()) {
-            ItemStack input = new ItemStack(BuiltInRegistries.ITEM.getValue(crushed.getRawOreId()));
+        for (Identifier rawOreId : CrushedOres.rawOres()) {
+            Item crushed = CrushedOres.forRawOre(rawOreId);
+            if (crushed == null) {
+                continue;
+            }
+            ItemStack input = new ItemStack(BuiltInRegistries.ITEM.getValue(rawOreId));
             recipes.add(new FastCrusherRecipe(
                     input,
                     new ItemStack(crushed, FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT)));

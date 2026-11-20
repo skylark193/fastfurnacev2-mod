@@ -32,7 +32,7 @@ public final class CrushedOreItem extends Item {
         return Component.translatableWithFallback(materialKey, humanize(displayMaterial));
     }
 
-    private static String displayMaterialName(String material) {
+    static String displayMaterialName(String material) {
         if (material.endsWith("_raw_ore")) {
             return material.substring(0, material.length() - "_raw_ore".length());
         }

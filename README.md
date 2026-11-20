@@ -29,11 +29,12 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 ### Crushed Ores
 
-- Discovers vanilla and modded raw ore items during registration, including conventional `raw_...` and `..._raw` item IDs and items listed in packaged `c:raw_materials` tags or their subtags.
-- Adds one crushed item per discovered raw ore. Each appears as a dust pile tinted from the visible pixels of its source item's texture, and appears in Ingredients and the mod's creative tab.
-- Copies each raw ore's ordinary smelting recipe for its crushed variant, preserving the output, experience, cooking time, category, and group. Crushed ores therefore work in ordinary furnaces and every Fast Furnace tier.
-- Vanilla raw iron, raw copper, and raw gold become Crushed Iron, Crushed Copper, and Crushed Gold. Modded variants use namespace-qualified registry IDs to avoid collisions and derive English material names from their source IDs, removing raw-ore affixes such as `_raw_ore`. For example, a modded `tin_raw_ore` item is displayed as Crushed Tin when no material translation is supplied.
-- Discovery occurs during mod registration; datapacks cannot introduce new raw item types afterward. A source texture that does not use the conventional `textures/item/<raw_item_id>.png` path falls back to a neutral dust color.
+- Discovers vanilla and modded raw ore items during registration, including conventional `raw_...`, `..._raw`, and `..._raw_ore` item IDs and items listed in packaged `c:raw_materials` tags or their subtags.
+- Reuses a matching crushed item or dust from another mod instead of generating a duplicate. Detection recognizes conventional IDs such as FTB Materials' `tin_dust` and Create's `crushed_raw_iron`, along with packaged `c:dusts` and `c:crushed_ores` tags. Same-namespace matches and tagged items are preferred.
+- When no external match exists, adds a crushed item for the raw ore. Each generated item appears as a dust pile tinted from the visible pixels of its source item's texture and appears in Ingredients and the mod's creative tab. External items keep their own names, models, and creative-tab placement.
+- Copies each raw ore's ordinary smelting recipe when the selected crushed item needs one, preserving the output, experience, cooking time, category, and group. Existing external smelting recipes are left unchanged. Crushed ores therefore work in ordinary furnaces and every Fast Furnace tier.
+- Without an external match, vanilla raw iron, raw copper, and raw gold become Crushed Iron, Crushed Copper, and Crushed Gold. Generated modded variants use namespace-qualified registry IDs to avoid collisions and derive English material names from their source IDs, removing raw-ore affixes such as `_raw_ore`. For example, a generated crushed item for a modded `tin_raw_ore` item is displayed as Crushed Tin when no material translation is supplied.
+- Discovery occurs during mod registration; datapacks cannot introduce new raw item types afterward. Packaged item definitions and required tag entries allow external items to be recognized even when their mod registers later. If a generated item's source texture does not use the conventional `textures/item/<raw_item_id>.png` path, its dust falls back to a neutral color.
 
 ### Fast Crusher
 
@@ -74,7 +75,7 @@ Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast C
 With a compatible JEI release installed:
 
 - Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Fast Crusher's progress arrow opens its dedicated crushing category, and it is a catalyst for crushing and Fast-tier fuels, not smelting.
-- The crushing category contains one recipe per discovered vanilla or modded raw ore, showing its two-item crushed output and 10% chance for four. Looking up a crushed ore shows how it is made, while looking up a raw ore shows its crushing use.
+- The crushing category contains one recipe per discovered vanilla or modded raw ore, showing two of its selected generated or external crushed item and the 10% chance for four. Looking up that crushed item shows how it is made, while looking up a raw ore shows its crushing use.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
 - Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for Fast Crusher, and fuel insertion for every tier and Fast Crusher. Smelting transfers and click areas remain disabled for Fast Crusher.
 - Every furnace includes a short speed and fuel-doubling description; Fast Crusher instead describes its raw-ore crushing and output doubling. Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
