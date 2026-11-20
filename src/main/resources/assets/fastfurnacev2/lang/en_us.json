@@ -27,7 +27,7 @@
   "jei.fastfurnacev2.iron_fast_furnace": "200% speed (250% with Fast Coal) and a 15% fuel doubling chance.",
   "jei.fastfurnacev2.gold_fast_furnace": "250% speed (300% with Fast Coal) and a 20% fuel doubling chance.",
   "jei.fastfurnacev2.diamond_fast_furnace": "300% speed (350% with Fast Coal) and a 25% fuel doubling chance.",
-  "jei.fastfurnacev2.fast_crusher": "150% speed (200% with Fast Coal) and a 10% recipe output doubling chance. Fuel duration is not doubled.",
+  "jei.fastfurnacev2.fast_crusher": "Crushes raw ore into two crushed ore at 150% speed (200% with Fast Coal), with a 10% chance for four. A blocked doubled result waits for room. Fuel duration is not doubled.",
   "jei.fastfurnacev2.fast_cobblestone": "Mine stone with a correct tool and no Silk Touch: 10% chance of a bonus alongside normal drops, +5% per Fortune level. Also drops itself when mined with a pickaxe.",
   "jei.fastfurnacev2.fast_coal": "Mine coal ore or deepslate coal ore with a correct tool and no Silk Touch: 10% chance of a bonus alongside normal drops, +5% per Fortune level. Burns like coal normally; in Fast Furnaces, lasts 50–125% longer and adds 50 percentage points to speed.",
   "jei.fastfurnacev2.fast_coal_block": "Craft 9 Fast Coal into this block and unpack it back into 9. Burns like a coal block normally; receives Fast Coal bonuses in Fast Furnaces."

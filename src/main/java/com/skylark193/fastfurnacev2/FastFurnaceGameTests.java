@@ -78,7 +78,7 @@ final class FastFurnaceGameTests {
             BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
             TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
             CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting,
-            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherSmeltsAndDoublesOutput,
+            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCrushesAndDoublesOutput,
             FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork);
 
     private FastFurnaceGameTests() {
@@ -135,8 +135,13 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
-    private static void fastCrusherSmeltsAndDoublesOutput(GameTestHelper helper) {
+    private static void fastCrusherCrushesAndDoublesOutput(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        CrushedOreItem crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
+        if (crushedIron == null) {
+            throw helper.assertionException("Raw iron did not have a crushed variant");
+        }
+
         FastFurnaceBlockEntity crusher = placeCrusher(helper, BlockPos.ZERO);
         FastFurnaceMenu menu = createMenu(helper, crusher);
         if (menu.getTier() != FastFurnaceTier.FAST
@@ -154,17 +159,29 @@ final class FastFurnaceGameTests {
         for (int tick = 2; tick <= 132; tick++) {
             tickFurnace(helper, crusher, BlockPos.ZERO);
             if (!crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
-                throw helper.assertionException("Fast Crusher smelted before tick 133");
+                throw helper.assertionException("Fast Crusher crushed before tick 133");
             }
         }
         level.getRandom().setSeed(findOutputRollSeed(false));
         tickFurnace(helper, crusher, BlockPos.ZERO);
         ItemStack result = crusher.getItem(FastFurnaceMenu.RESULT_SLOT);
-        if (!result.is(Items.STONE) || result.getCount() != 1) {
-            throw helper.assertionException("Fast Crusher did not keep one output on a failed doubling roll");
+        if (!result.is(crushedIron) || result.getCount() != 2
+                || !crusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()) {
+            throw helper.assertionException("Fast Crusher did not produce two crushed iron on a failed doubling roll");
         }
 
-        BlockPos doubledPos = new BlockPos(2, 0, 0);
+        BlockPos smeltingPos = new BlockPos(2, 0, 0);
+        FastFurnaceBlockEntity smeltingCrusher = placeCrusher(helper, smeltingPos);
+        smeltingCrusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        FastFurnaceMenu smeltingMenu = createMenu(helper, smeltingCrusher);
+        tickFurnace(helper, smeltingCrusher, smeltingPos);
+        if (smeltingMenu.getCurrentBurnTime() != 0
+                || smeltingCrusher.getItem(FastFurnaceMenu.FUEL_SLOT).getCount() != 1
+                || !smeltingCrusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Fast Crusher processed an ordinary furnace smelting recipe");
+        }
+
+        BlockPos doubledPos = new BlockPos(4, 0, 0);
         FastFurnaceBlockEntity doubledCrusher = placeCrusher(helper, doubledPos);
         for (int tick = 1; tick <= 132; tick++) {
             tickFurnace(helper, doubledCrusher, doubledPos);
@@ -172,21 +189,54 @@ final class FastFurnaceGameTests {
         level.getRandom().setSeed(findOutputRollSeed(true));
         tickFurnace(helper, doubledCrusher, doubledPos);
         ItemStack doubledResult = doubledCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
-        if (!doubledResult.is(Items.STONE) || doubledResult.getCount() != 2) {
-            throw helper.assertionException("Fast Crusher did not double its recipe output on a successful roll");
+        if (!doubledResult.is(crushedIron) || doubledResult.getCount() != 4) {
+            throw helper.assertionException("Fast Crusher did not produce four crushed iron on a successful roll");
         }
 
-        BlockPos fullOutputPos = new BlockPos(4, 0, 0);
-        FastFurnaceBlockEntity fullOutputCrusher = placeCrusher(helper, fullOutputPos);
-        fullOutputCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(Items.STONE, 63));
+        BlockPos blockedPos = new BlockPos(6, 0, 0);
+        FastFurnaceBlockEntity blockedCrusher = placeCrusher(helper, blockedPos);
+        blockedCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(crushedIron, 61));
+        FastFurnaceMenu blockedMenu = createMenu(helper, blockedCrusher);
         for (int tick = 1; tick <= 132; tick++) {
-            tickFurnace(helper, fullOutputCrusher, fullOutputPos);
+            tickFurnace(helper, blockedCrusher, blockedPos);
         }
         level.getRandom().setSeed(findOutputRollSeed(true));
-        tickFurnace(helper, fullOutputCrusher, fullOutputPos);
-        ItemStack fullOutput = fullOutputCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
-        if (!fullOutput.is(Items.STONE) || fullOutput.getCount() != 64) {
-            throw helper.assertionException("Fast Crusher exceeded the output stack limit on a successful roll");
+        tickFurnace(helper, blockedCrusher, blockedPos);
+        int pausedBurnTime = blockedMenu.getCurrentBurnTime();
+        for (int tick = 0; tick < 20; tick++) {
+            tickFurnace(helper, blockedCrusher, blockedPos);
+        }
+        ItemStack blockedOutput = blockedCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!blockedOutput.is(crushedIron) || blockedOutput.getCount() != 61
+                || blockedCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).getCount() != 1
+                || blockedMenu.getCurrentBurnTime() != pausedBurnTime) {
+            throw helper.assertionException("Fast Crusher fell back to normal output or wasted fuel when double output was blocked");
+        }
+
+        level.getRandom().setSeed(findOutputRollSeed(false));
+        blockedCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(crushedIron, 60));
+        tickFurnace(helper, blockedCrusher, blockedPos);
+        ItemStack resumedOutput = blockedCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!resumedOutput.is(crushedIron) || resumedOutput.getCount() != 64
+                || !blockedCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()
+                || blockedMenu.getCurrentBurnTime() != pausedBurnTime - 1) {
+            throw helper.assertionException("Fast Crusher did not resume the same pending doubled output");
+        }
+
+        BlockPos fastCoalPos = new BlockPos(8, 0, 0);
+        FastFurnaceBlockEntity fastCoalCrusher = placeCrusher(helper, fastCoalPos);
+        fastCoalCrusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        for (int tick = 1; tick <= 99; tick++) {
+            tickFurnace(helper, fastCoalCrusher, fastCoalPos);
+            if (!fastCoalCrusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Fast Crusher used Fast Coal before tick 100");
+            }
+        }
+        level.getRandom().setSeed(findOutputRollSeed(false));
+        tickFurnace(helper, fastCoalCrusher, fastCoalPos);
+        ItemStack fastCoalResult = fastCoalCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!fastCoalResult.is(crushedIron) || fastCoalResult.getCount() != 2) {
+            throw helper.assertionException("Fast Crusher did not retain 100-tick Fast Coal processing");
         }
         helper.succeed();
     }
@@ -261,7 +311,7 @@ final class FastFurnaceGameTests {
                     throw helper.assertionException(description + " consumed fuel with unsmeltable input");
                 }
 
-                furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+                furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
                 tickFurnace(helper, furnace, relativePos);
                 assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoal,
                         description + " did not start with the correct fuel state");
@@ -286,7 +336,7 @@ final class FastFurnaceGameTests {
                 assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fastCoal,
                         description + " wasted fuel with unsmeltable input");
 
-                furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+                furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
                 furnace.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(Items.DIRT));
                 for (int tick = 0; tick < 5; tick++) {
                     tickFurnace(helper, furnace, relativePos);
@@ -559,9 +609,13 @@ final class FastFurnaceGameTests {
     private static FastFurnaceBlockEntity placeCrusher(GameTestHelper helper, BlockPos relativePos) {
         helper.setBlock(relativePos, FastFurnaceV2.FAST_CRUSHER.get());
         FastFurnaceBlockEntity crusher = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
-        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.RAW_IRON));
         crusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
         return crusher;
+    }
+
+    private static ItemStack processableInput(FastFurnaceBlock block) {
+        return new ItemStack(block == FastFurnaceV2.FAST_CRUSHER.get() ? Items.RAW_IRON : Items.COBBLESTONE);
     }
 
     private static FastFurnaceBlockEntity placeFurnace(
@@ -578,7 +632,7 @@ final class FastFurnaceGameTests {
             GameTestHelper helper, BlockPos relativePos, ItemStack fuel, FastFurnaceBlock block) {
         helper.setBlock(relativePos, block);
         FastFurnaceBlockEntity furnace = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
-        furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
         furnace.setItem(FastFurnaceMenu.FUEL_SLOT, fuel);
         return furnace;
     }
