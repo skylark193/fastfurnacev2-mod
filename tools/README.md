@@ -2,7 +2,7 @@
 
 `generate_lava_texture.py` adds deterministic, animated lava veins to a square Minecraft texture while retaining the source as the background.
 
-The generator:
+The lava-vein generator:
 
 - Creates connected primary veins and branches that wrap across texture edges for seamless tiling.
 - Preserves transparent pixels and the original source pixels outside the vein/crust masks.
@@ -71,7 +71,7 @@ macOS/Linux:
 
 This writes the animated block texture and its `.png.mcmeta` metadata. The block and item definitions reference the same `cube_all` block model automatically.
 
-## Regenerate Fast Crusher
+## Regenerate Fast Crusher Sides and Bottom
 
 Windows:
 
@@ -85,7 +85,25 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/netherrack.png --output src/main/resources/assets/fastfurnacev2/textures/block/fast_crusher.png --seed 417 --frames 8 --frame-time 2 --veins 2
 ```
 
-This writes the animated all-sided block texture and its `.png.mcmeta` metadata.
+This writes the animated side/bottom block texture and its `.png.mcmeta` metadata.
+
+## Regenerate the Fast Crusher Blender Top
+
+The top generator draws a metal housing, glass rim, four-blade rotor, and lava-colored contents over the preserved 16×16 Netherrack source. It writes a static idle PNG without animation metadata and a separate eight-frame processing strip with one tick per frame. The rotor completes one revolution per loop; the housing remains unchanged in every frame.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_crusher_top_texture.py --input tools\texture_sources\netherrack.png --idle-output src\main\resources\assets\fastfurnacev2\textures\block\fast_crusher_top.png --active-output src\main\resources\assets\fastfurnacev2\textures\block\fast_crusher_top_on.png --frames 8 --frame-time 1
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/fast_crusher_top_on.png --frames 8 --frame-time 1
+```
+
+The crusher blockstate selects the static top for `lit=false` and the animated top for `lit=true`. Keep `fast_crusher_top.png.mcmeta` absent; only `fast_crusher_top_on.png.mcmeta` should exist.
 
 ## Regenerate Furnace Textures
 
@@ -156,4 +174,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, and source transparency. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, and the crusher top's stationary housing. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

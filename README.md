@@ -38,7 +38,8 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 ### Fast Crusher
 
 - Currently behaves exactly like a Fast Furnace: it supports ordinary smelting, runs at 150% speed (200% with active Fast Coal), and has a 10% chance to double each fuel item's adjusted burn time.
-- Uses an animated Netherrack texture with lava veins on every face. It requires a pickaxe, drops itself, preserves custom names, and emits light level 13 while lit.
+- Uses animated Netherrack textures on its sides and bottom. Its top-down blender has a stationary rotor while idle and animated rotating blades with swirling contents while lit.
+- Requires a pickaxe, drops itself, preserves custom names, and emits light level 13 while lit.
 - Appears in Functional Blocks and the mod's Fast Furnace V2 creative tab. It does not have a crafting recipe or crusher-specific recipes yet.
 
 ### Fast Furnace Tiers

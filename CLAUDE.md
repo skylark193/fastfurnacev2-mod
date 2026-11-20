@@ -10,7 +10,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. Its registered content i
 - `fastfurnacev2:fast_coal`: vanilla-style coal with an animated texture and ordinary fuel value of 1,600 ticks.
 - `fastfurnacev2:fast_coal_block`: a reversible nine-Fast-Coal storage block with vanilla coal-block properties, an animated lava-vein texture, and ordinary fuel value of 16,000 ticks.
 - `fastfurnacev2:fast_furnace`, `iron_fast_furnace`, `gold_fast_furnace`, and `diamond_fast_furnace`: vanilla-compatible smelting furnaces with tiered speed, fuel-time, GUI, and optional JEI behavior.
-- `fastfurnacev2:fast_crusher`: a temporary Fast-tier smelting copy with an all-sided animated Netherrack texture. It currently has no crafting recipe or crusher-specific behavior.
+- `fastfurnacev2:fast_crusher`: a temporary Fast-tier smelting copy with animated Netherrack sides and bottom plus a top-down blender that is static while idle and animated while lit. It currently has no crafting recipe or crusher-specific behavior.
 
 | Tier | Normal speed | Fast Coal speed | Standard recipe, normal / Fast Coal | Fuel doubling | Fast Coal burn time before / after doubling |
 |---|---:|---:|---:|---:|---:|
@@ -92,7 +92,7 @@ For example, run `.\gradlew.bat build` or `./gradlew build` from the repository 
 
 The GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. They cover ordinary and Fast-Coal-boosted smelting, every tier's normal and Fast Coal timing, Fast Crusher's Fast-tier behavior and display name, Fast Coal Block's ordinary and per-tier burn times, doubled fuel durations, exact countdown synchronization, lava-bucket remainders, active-fuel synchronization, menu tiers, JEI smelt-count math, Fortune-scaled bonus-drop chances, and crushed-ore discovery and recipe equivalence in ordinary and Fast Furnaces. Judge their result from the test-server log; a lingering Gradle launcher after a successful server shutdown is not itself a test failure.
 
-Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, and transparency. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
+Texture unit tests cover generator determinism, distinct frames, path bounds, source preservation, transparency, and the crusher top's stationary housing. They do not prove CLI regeneration or byte-for-byte reproduction of every checked-in PNG/MCMETA file; validate generated assets separately when needed.
 
 GitHub Actions runs only `./gradlew build` with JDK 25. It does not run GameTests, texture tests, data generation, a client/server smoke test, or JEI runtime tests.
 
@@ -141,7 +141,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - The block's fuel data map uses `burn_time: 16000`, matching a vanilla coal block rather than nine Fast Coal's 14,400 ticks. Its full 3×3 packing recipe and shapeless nine-item unpacking recipe are reversible. Only Fast Furnace applies Fast Coal duration, speed, and doubling bonuses.
 - This Minecraft version uses `assets/<namespace>/items/` for item model definitions. Fast Coal additionally has a generated item model under `models/item/`.
 - Fast Furnace's and Fast Crusher's loot tables drop themselves and copy `minecraft:custom_name`; they do not preserve inventory, XP, or burn state when broken. Fast Crusher has no crafting recipe yet.
-- Fast Crusher deliberately uses a single `cube_all` model and animated Netherrack texture for all facings and lit states; its block properties and behavior otherwise copy Fast Furnace. Do not apply the furnace orientable-model rule below to it.
+- Fast Crusher uses `cube_bottom_top` models with animated Netherrack sides and bottom. Its blockstate maps `lit=false` to a model with static `fast_crusher_top.png` and `lit=true` to `fast_crusher_on.json` with eight-frame `fast_crusher_top_on.png`. Both tops share the same fixed metal housing and glass rim; only the rotor and liquid move. The idle top must not have animation metadata. The existing furnace `LIT` state drives the model switch, so no crusher-specific ticker or block property is needed. Its block properties and behavior otherwise copy Fast Furnace; do not apply the furnace orientable-model rule below to it.
 - Every furnace blockstate maps all four facings and both `lit` values to `minecraft:block/orientable` models. Each tier has separate front, lit-front, side, and top textures; upgrade sources combine their metal block's pattern with vanilla furnace shading and preserve burning-fire pixels. Do not replace these with `cube_all` models, which would erase furnace fronts and visual lit states.
 
 ### Dynamic crushed ores
@@ -183,7 +183,7 @@ After selecting a JEI release compatible with Minecraft and the integration API,
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod/class initialization is too late. `DirectGameTestInstance` invokes the mod's mapped functions directly.
 - Preserve deterministic fuel-roll seeds in tests when asserting doubled versus non-doubled durations. Extend existing tests when timing, synchronization, remainders, or active-fuel behavior changes.
 - Use the square sources under `tools/texture_sources/`; never feed a generated animation strip back into the generator. It writes both the vertical PNG strip and sibling `.png.mcmeta`.
-- Production seeds: Fast Cobblestone 193; Fast Coal 415; Block of Fast Coal 416; Fast Crusher 417; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default animation is eight frames, two ticks per frame, non-interpolated, with two primary veins.
+- Production seeds: Fast Cobblestone 193; Fast Coal 415; Block of Fast Coal 416; Fast Crusher sides/bottom 417; all furnace textures 311. The shared furnace seed is intentional so every tier and lit state has the same vein/crust mask and tiles with the others. Default lava-vein animation is eight frames, two ticks per frame, non-interpolated, with two primary veins. The crusher top generator is deterministic without a seed and produces eight non-interpolated frames at one tick per frame.
 - Follow `tools/README.md` for environment setup and exact regeneration commands. Keep new sources and seeds documented.
 
 ## Documentation, Continuity, and Compaction
