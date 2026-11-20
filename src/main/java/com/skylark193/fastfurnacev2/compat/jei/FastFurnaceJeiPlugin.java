@@ -1,5 +1,8 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
+import com.skylark193.fastfurnacev2.CrushedOreItem;
+import com.skylark193.fastfurnacev2.CrushedOres;
+import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
@@ -13,6 +16,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -28,14 +32,13 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.block.entity.FuelValues;
 
 @JeiPlugin
@@ -49,6 +52,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
+        registration.addRecipeCategories(
+                new FastCrusherCategory(registration.getJeiHelpers().getGuiHelper()));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addRecipeCategories(
                     new FastFurnaceFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier));
@@ -74,6 +79,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.FAST_CRUSHER.get(),
                 Component.translatable("jei.fastfurnacev2.fast_crusher"));
+
+        registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
@@ -102,6 +109,17 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         }
     }
 
+    private static List<FastCrusherRecipe> createCrushingRecipes() {
+        List<FastCrusherRecipe> recipes = new ArrayList<>();
+        for (CrushedOreItem crushed : CrushedOres.all()) {
+            ItemStack input = new ItemStack(BuiltInRegistries.ITEM.getValue(crushed.getRawOreId()));
+            recipes.add(new FastCrusherRecipe(
+                    input,
+                    new ItemStack(crushed, FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT)));
+        }
+        return recipes;
+    }
+
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -109,6 +127,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             registration.addCraftingStation(
                     FastFurnaceFuelCategory.getRecipeType(tier), FastFurnaceV2.getFurnaceBlock(tier).get());
         }
+        registration.addCraftingStation(
+                FastCrusherCategory.getCrushingRecipeType(), FastFurnaceV2.FAST_CRUSHER.get());
         registration.addCraftingStation(
                 FastFurnaceFuelCategory.getRecipeType(FastFurnaceTier.FAST), FastFurnaceV2.FAST_CRUSHER.get());
     }
@@ -126,6 +146,11 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     3,
                     36);
         }
+        registerFilteredTransfer(
+                registration,
+                FastFurnaceTier.FAST,
+                FastCrusherCategory.getCrushingRecipeType(),
+                FastFurnaceMenu::isFastCrusher);
     }
 
     @Override
@@ -137,16 +162,25 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     private static void registerSmeltingTransfer(
             IRecipeTransferRegistration registration, FastFurnaceTier tier) {
-        IRecipeTransferInfo<FastFurnaceMenu, RecipeHolder<SmeltingRecipe>> delegate =
+        registerFilteredTransfer(
+                registration, tier, RecipeTypes.SMELTING, menu -> !menu.isFastCrusher());
+    }
+
+    private static <R> void registerFilteredTransfer(
+            IRecipeTransferRegistration registration,
+            FastFurnaceTier tier,
+            IRecipeType<R> recipeType,
+            Predicate<FastFurnaceMenu> menuFilter) {
+        IRecipeTransferInfo<FastFurnaceMenu, R> delegate =
                 registration.getTransferHelper().createBasicRecipeTransferInfo(
                         FastFurnaceMenu.class,
                         FastFurnaceV2.getFurnaceMenu(tier).get(),
-                        RecipeTypes.SMELTING,
+                        recipeType,
                         0,
                         1,
                         3,
                         36);
-        registration.addRecipeTransferHandler(new IRecipeTransferInfo<FastFurnaceMenu, RecipeHolder<SmeltingRecipe>>() {
+        registration.addRecipeTransferHandler(new IRecipeTransferInfo<FastFurnaceMenu, R>() {
             @Override
             public Class<? extends FastFurnaceMenu> getContainerClass() {
                 return delegate.getContainerClass();
@@ -158,22 +192,22 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             }
 
             @Override
-            public IRecipeType<RecipeHolder<SmeltingRecipe>> getRecipeType() {
+            public IRecipeType<R> getRecipeType() {
                 return delegate.getRecipeType();
             }
 
             @Override
-            public boolean canHandle(FastFurnaceMenu container, RecipeHolder<SmeltingRecipe> recipe) {
-                return !container.isFastCrusher() && delegate.canHandle(container, recipe);
+            public boolean canHandle(FastFurnaceMenu container, R recipe) {
+                return menuFilter.test(container) && delegate.canHandle(container, recipe);
             }
 
             @Override
-            public List<Slot> getRecipeSlots(FastFurnaceMenu container, RecipeHolder<SmeltingRecipe> recipe) {
+            public List<Slot> getRecipeSlots(FastFurnaceMenu container, R recipe) {
                 return delegate.getRecipeSlots(container, recipe);
             }
 
             @Override
-            public List<Slot> getInventorySlots(FastFurnaceMenu container, RecipeHolder<SmeltingRecipe> recipe) {
+            public List<Slot> getInventorySlots(FastFurnaceMenu container, R recipe) {
                 return delegate.getInventorySlots(container, recipe);
             }
         });
@@ -201,7 +235,10 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             @Override
             public List<IGuiClickableArea> getGuiClickableAreas(S screen, double guiMouseX, double guiMouseY) {
                 List<IGuiClickableArea> areas = new ArrayList<>();
-                if (!screen.getMenu().isFastCrusher()) {
+                if (screen.getMenu().isFastCrusher()) {
+                    areas.add(IGuiClickableArea.createBasic(
+                            78, 32, 28, 23, FastCrusherCategory.getCrushingRecipeType()));
+                } else {
                     areas.add(IGuiClickableArea.createBasic(78, 32, 28, 23, RecipeTypes.SMELTING));
                 }
                 areas.add(IGuiClickableArea.createBasic(56, 36, 14, 14, fuelType));

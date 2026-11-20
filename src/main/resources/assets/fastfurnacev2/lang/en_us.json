@@ -19,6 +19,8 @@
   "gui.fastfurnacev2.current_burn": "Burn time:",
   "gui.fastfurnacev2.total_fuel": "Fuel total:",
   "gui.fastfurnacev2.seconds": "seconds",
+  "jei.fastfurnacev2.crushing": "Ore Crushing",
+  "jei.fastfurnacev2.crushing_output_chance": "%s%% chance for %s",
   "jei.fastfurnacev2.fast_furnace_fuel": "Fast Furnace Fuels",
   "jei.fastfurnacev2.iron_fast_furnace_fuel": "Iron Fast Furnace Fuels",
   "jei.fastfurnacev2.gold_fast_furnace_fuel": "Gold Fast Furnace Fuels",

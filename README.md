@@ -73,9 +73,10 @@ Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast C
 
 With a compatible JEI release installed:
 
-- Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Fast Crusher is a catalyst for Fast-tier fuels only, not smelting.
+- Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Fast Crusher's progress arrow opens its dedicated crushing category, and it is a catalyst for crushing and Fast-tier fuels, not smelting.
+- The crushing category contains one recipe per discovered vanilla or modded raw ore, showing its two-item crushed output and 10% chance for four. Looking up a crushed ore shows how it is made, while looking up a raw ore shows its crushing use.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
-- Recipe transfer supports smelting for the four Fast Furnace tiers and fuel insertion for every tier and Fast Crusher. Smelting transfers and click areas are disabled for Fast Crusher.
+- Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for Fast Crusher, and fuel insertion for every tier and Fast Crusher. Smelting transfers and click areas remain disabled for Fast Crusher.
 - Every furnace includes a short speed and fuel-doubling description; Fast Crusher instead describes its raw-ore crushing and output doubling. Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
 - JEI reserves space around the furnace information fly-out.
 
