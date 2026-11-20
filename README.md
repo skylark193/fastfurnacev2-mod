@@ -53,6 +53,8 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 Standard recipes take 200 ticks in a vanilla furnace. Each consumed fuel item independently rolls the listed chance to double its adjusted burn time. Fast Coal's listed burn times are before that roll; doubled values are 4,800, 5,600, 6,400, and 7,200 ticks respectively.
 
+Every Fast Furnace tier and Fast Crusher pauses its active fuel countdown when there is no processable work, including empty or unsmeltable input and an output slot that cannot accept the normal result. The countdown resumes when valid work returns, preserving any active Fast Coal bonus.
+
 Craft the base Fast Furnace from eight Fast Cobblestone using the vanilla furnace pattern, then upgrade it in order:
 
 - Surround Fast Furnace with eight iron blocks to craft Iron Fast Furnace.

@@ -134,14 +134,6 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         boolean changed = false;
         boolean wasLit = entity.currentBurnTime > 0;
         boolean isLit = wasLit;
-        if (wasLit) {
-            entity.currentBurnTime--;
-            isLit = entity.currentBurnTime > 0;
-            if (!isLit) {
-                entity.fastCoalBurning = false;
-            }
-            entity.syncBurnData();
-        }
 
         ItemStack fuel = entity.items.get(SLOT_FUEL);
         ItemStack ingredient = entity.items.get(SLOT_INPUT);
@@ -152,11 +144,20 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 SingleRecipeInput input = new SingleRecipeInput(ingredient);
                 RecipeHolder<? extends AbstractCookingRecipe> recipe = entity.quickCheck.getRecipeFor(input, level).orElse(null);
                 if (recipe != null) {
-                    int expectedCookTime = entity.scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
-                    entity.updateCookingTotal(expectedCookTime);
                     int maxStackSize = entity.getMaxStackSize();
                     ItemStack burnResult = recipe.value().assemble(input);
-                    if (!burnResult.isEmpty() && canBurn(entity.items, maxStackSize, burnResult)) {
+                    boolean canProcess = !burnResult.isEmpty() && canBurn(entity.items, maxStackSize, burnResult);
+                    if (canProcess && wasLit) {
+                        entity.currentBurnTime--;
+                        isLit = entity.currentBurnTime > 0;
+                        if (!isLit) {
+                            entity.fastCoalBurning = false;
+                        }
+                        entity.syncBurnData();
+                    }
+                    int expectedCookTime = entity.scaleCookTime(recipe.value().cookingTime(), entity.fastCoalBurning);
+                    entity.updateCookingTotal(expectedCookTime);
+                    if (canProcess) {
                         if (!isLit) {
                             int newBurnTime = entity.getBurnDuration(level.fuelValues(), fuel);
                             entity.currentBurnTime = newBurnTime;
