@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
@@ -211,8 +210,6 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                             } else {
                                 entity.dataAccess.set(DATA_COOKING_PROGRESS, cookingTimer);
                             }
-                        } else {
-                            entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
                         }
                     } else if (!entity.crusherDoubleOutputPending) {
                         entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
@@ -221,12 +218,8 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
             } else {
                 entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
             }
-        } else if (entity.dataAccess.get(DATA_COOKING_PROGRESS) > 0) {
-            int cookingTimer = Mth.clamp(
-                    entity.dataAccess.get(DATA_COOKING_PROGRESS) - BURN_COOL_SPEED,
-                    0,
-                    entity.dataAccess.get(DATA_COOKING_TOTAL_TIME));
-            entity.dataAccess.set(DATA_COOKING_PROGRESS, cookingTimer);
+        } else if (!hasIngredient) {
+            entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
         }
 
         if (wasLit != isLit) {

@@ -287,10 +287,9 @@ final class FastFurnaceGameTests {
                 String description = BuiltInRegistries.BLOCK.getKey(block)
                         + (fastCoal ? " with Fast Coal" : " with coal");
                 BlockPos relativePos = new BlockPos(index * 2, fastCoal ? 8 : 4, 0);
-                ItemStack fuel = fastCoal
-                        ? new ItemStack(FastFurnaceV2.FAST_COAL.get())
-                        : new ItemStack(Items.COAL);
-                FastFurnaceBlockEntity furnace = placeFurnace(helper, relativePos, fuel, block);
+                Item fuelItem = fastCoal ? FastFurnaceV2.FAST_COAL.get() : Items.COAL;
+                FastFurnaceBlockEntity furnace = placeFurnace(
+                        helper, relativePos, new ItemStack(fuelItem), block);
                 FastFurnaceMenu menu = createMenu(helper, furnace);
                 int expectedBurnTime = fastCoal
                         ? block.getTier().scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
@@ -348,6 +347,37 @@ final class FastFurnaceGameTests {
                 tickFurnace(helper, furnace, relativePos);
                 assertBurnState(helper, menu, expectedBurnTime - 2, expectedBurnTime, fastCoal,
                         description + " did not resume its paused fuel countdown");
+
+                while (menu.getCurrentBurnTime() > 20) {
+                    furnace.setItem(
+                            FastFurnaceMenu.INGREDIENT_SLOT,
+                            alternateProcessableInput(block, furnace.getItem(FastFurnaceMenu.INGREDIENT_SLOT)));
+                    tickFurnace(helper, furnace, relativePos);
+                }
+                furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
+                while (menu.getCurrentBurnTime() > 0) {
+                    tickFurnace(helper, furnace, relativePos);
+                }
+                float savedProgress = menu.getBurnProgress();
+                if (savedProgress <= 0.0F || menu.isLit()
+                        || !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                    throw helper.assertionException(description + " lost recipe progress as its fuel expired");
+                }
+                for (int tick = 0; tick < 20; tick++) {
+                    tickFurnace(helper, furnace, relativePos);
+                }
+                if (menu.getBurnProgress() != savedProgress) {
+                    throw helper.assertionException(description + " changed saved recipe progress without fuel");
+                }
+
+                furnace.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(fuelItem));
+                level.getRandom().setSeed(findChanceRollSeed(block.getTier().getDoubleBurnChance(), false));
+                tickFurnace(helper, furnace, relativePos);
+                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoal,
+                        description + " did not restart with replacement fuel");
+                if (menu.getBurnProgress() <= savedProgress) {
+                    throw helper.assertionException(description + " restarted instead of resuming saved recipe progress");
+                }
             }
         }
         helper.succeed();
@@ -616,6 +646,13 @@ final class FastFurnaceGameTests {
 
     private static ItemStack processableInput(FastFurnaceBlock block) {
         return new ItemStack(block == FastFurnaceV2.FAST_CRUSHER.get() ? Items.RAW_IRON : Items.COBBLESTONE);
+    }
+
+    private static ItemStack alternateProcessableInput(FastFurnaceBlock block, ItemStack current) {
+        if (block == FastFurnaceV2.FAST_CRUSHER.get()) {
+            return new ItemStack(current.is(Items.RAW_IRON) ? Items.RAW_COPPER : Items.RAW_IRON);
+        }
+        return new ItemStack(current.is(Items.COBBLESTONE) ? Items.STONE : Items.COBBLESTONE);
     }
 
     private static FastFurnaceBlockEntity placeFurnace(
