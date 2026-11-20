@@ -14,8 +14,7 @@ public final class CrushedOreItem extends Item {
     CrushedOreItem(ResourceKey<Item> key, Identifier rawOreId, String material) {
         super(new Item.Properties().setId(key));
         this.rawOreId = rawOreId;
-        String materialKey = "material." + rawOreId.getNamespace() + "." + material.replace('/', '.');
-        this.materialName = Component.translatable(materialKey, humanize(material));
+        this.materialName = createMaterialName(rawOreId, material);
     }
 
     public Identifier getRawOreId() {
@@ -25,6 +24,22 @@ public final class CrushedOreItem extends Item {
     @Override
     public Component getName(ItemStack stack) {
         return Component.translatable("item.fastfurnacev2.crushed_ore", this.materialName);
+    }
+
+    static Component createMaterialName(Identifier rawOreId, String material) {
+        String displayMaterial = displayMaterialName(material);
+        String materialKey = "material." + rawOreId.getNamespace() + "." + displayMaterial.replace('/', '.');
+        return Component.translatableWithFallback(materialKey, humanize(displayMaterial));
+    }
+
+    private static String displayMaterialName(String material) {
+        if (material.endsWith("_raw_ore")) {
+            return material.substring(0, material.length() - "_raw_ore".length());
+        }
+        if (material.endsWith("_ore")) {
+            return material.substring(0, material.length() - "_ore".length());
+        }
+        return material;
     }
 
     private static String humanize(String material) {

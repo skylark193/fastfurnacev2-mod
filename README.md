@@ -32,7 +32,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 - Discovers vanilla and modded raw ore items during registration, including conventional `raw_...` and `..._raw` item IDs and items listed in packaged `c:raw_materials` tags or their subtags.
 - Adds one crushed item per discovered raw ore. Each appears as a dust pile tinted from the visible pixels of its source item's texture, and appears in Ingredients and the mod's creative tab.
 - Copies each raw ore's ordinary smelting recipe for its crushed variant, preserving the output, experience, cooking time, category, and group. Crushed ores therefore work in ordinary furnaces and every Fast Furnace tier.
-- Vanilla raw iron, raw copper, and raw gold become Crushed Iron, Crushed Copper, and Crushed Gold. Modded variants use namespace-qualified registry IDs to avoid collisions and derive material names from their source IDs.
+- Vanilla raw iron, raw copper, and raw gold become Crushed Iron, Crushed Copper, and Crushed Gold. Modded variants use namespace-qualified registry IDs to avoid collisions and derive English material names from their source IDs, removing raw-ore affixes such as `_raw_ore`. For example, a modded `tin_raw_ore` item is displayed as Crushed Tin when no material translation is supplied.
 - Discovery occurs during mod registration; datapacks cannot introduce new raw item types afterward. A source texture that does not use the conventional `textures/item/<raw_item_id>.png` path falls back to a neutral dust color.
 
 ### Fast Crusher

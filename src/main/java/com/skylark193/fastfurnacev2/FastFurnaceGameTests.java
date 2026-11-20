@@ -573,6 +573,12 @@ final class FastFurnaceGameTests {
         if (!crushedIron.getDefaultInstance().getHoverName().getString().equals("Crushed Iron")) {
             throw helper.assertionException("Crushed iron did not receive its material-specific display name");
         }
+        Component moddedTinName = Component.translatable("item.fastfurnacev2.crushed_ore",
+                CrushedOreItem.createMaterialName(
+                        Identifier.fromNamespaceAndPath("examplemod", "tin_raw_ore"), "tin_raw_ore"));
+        if (!moddedTinName.getString().equals("Crushed Tin")) {
+            throw helper.assertionException("A modded raw-ore suffix did not receive its English fallback name");
+        }
 
         for (CrushedOreItem crushed : CrushedOres.all()) {
             Item raw = BuiltInRegistries.ITEM.getValue(crushed.getRawOreId());
