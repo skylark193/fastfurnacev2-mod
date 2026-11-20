@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "fastfurnacev2:block/fast_crusher",
+    "bottom": "fastfurnacev2:block/fast_crusher",
+    "top": "fastfurnacev2:block/gold_fast_crusher_top"
+  }
+}

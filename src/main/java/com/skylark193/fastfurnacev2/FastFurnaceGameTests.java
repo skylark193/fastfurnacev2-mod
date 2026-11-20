@@ -238,7 +238,55 @@ final class FastFurnaceGameTests {
         if (!fastCoalResult.is(crushedIron) || fastCoalResult.getCount() != 2) {
             throw helper.assertionException("Fast Crusher did not retain 100-tick Fast Coal processing");
         }
+
+        crusherTiersScaleSpeedAndOutputChance(helper, crushedIron);
         helper.succeed();
+    }
+
+    private static void crusherTiersScaleSpeedAndOutputChance(GameTestHelper helper, Item crushedIron) {
+        ServerLevel level = helper.getLevel();
+        int[] normalCookTimes = {133, 100, 80, 66};
+        int[] fastCoalCookTimes = {100, 80, 66, 57};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            for (boolean fastCoalActive : new boolean[] {false, true}) {
+                int expectedCookTime = fastCoalActive
+                        ? fastCoalCookTimes[tier.ordinal()]
+                        : normalCookTimes[tier.ordinal()];
+                int expectedBurnTime = fastCoalActive
+                        ? tier.scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
+                        : FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
+                ItemStack fuel = fastCoalActive
+                        ? new ItemStack(FastFurnaceV2.FAST_COAL.get())
+                        : new ItemStack(Items.COAL);
+                FastFurnaceBlock block = FastFurnaceV2.getCrusherBlock(tier).get();
+                BlockPos relativePos = new BlockPos(tier.ordinal() * 4, fastCoalActive ? 16 : 12, 0);
+                FastFurnaceBlockEntity crusher = placeFurnace(helper, relativePos, fuel, block);
+                FastFurnaceMenu menu = createMenu(helper, crusher);
+
+                level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), true));
+                tickFurnace(helper, crusher, relativePos);
+                if (!block.isFastCrusher() || menu.getTier() != tier || !menu.isFastCrusher()) {
+                    throw helper.assertionException(tier + " crusher did not retain its tier and crusher identity");
+                }
+                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoalActive,
+                        tier + " crusher doubled its fuel or applied the wrong Fast Coal duration");
+
+                for (int tick = 2; tick <= expectedCookTime; tick++) {
+                    if (tick == expectedCookTime) {
+                        level.getRandom().setSeed(findTierOutputRollSeed(tier));
+                    }
+                    tickFurnace(helper, crusher, relativePos);
+                    if (tick < expectedCookTime && !crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                        throw helper.assertionException(tier + " crusher finished before tick " + expectedCookTime);
+                    }
+                }
+                ItemStack result = crusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+                if (!result.is(crushedIron) || result.getCount() != 4
+                        || !crusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()) {
+                    throw helper.assertionException(tier + " crusher did not use its tier's output-doubling chance");
+                }
+            }
+        }
     }
 
     private static void rollsAndSynchronizesFuelTime(GameTestHelper helper) {
@@ -279,7 +327,10 @@ final class FastFurnaceGameTests {
                 FastFurnaceV2.IRON_FAST_FURNACE.get(),
                 FastFurnaceV2.GOLD_FAST_FURNACE.get(),
                 FastFurnaceV2.DIAMOND_FAST_FURNACE.get(),
-                FastFurnaceV2.FAST_CRUSHER.get()
+                FastFurnaceV2.FAST_CRUSHER.get(),
+                FastFurnaceV2.IRON_FAST_CRUSHER.get(),
+                FastFurnaceV2.GOLD_FAST_CRUSHER.get(),
+                FastFurnaceV2.DIAMOND_FAST_CRUSHER.get()
         };
         for (boolean fastCoal : new boolean[] {false, true}) {
             for (int index = 0; index < blocks.length; index++) {
@@ -667,11 +718,11 @@ final class FastFurnaceGameTests {
     }
 
     private static ItemStack processableInput(FastFurnaceBlock block) {
-        return new ItemStack(block == FastFurnaceV2.FAST_CRUSHER.get() ? Items.RAW_IRON : Items.COBBLESTONE);
+        return new ItemStack(block.isFastCrusher() ? Items.RAW_IRON : Items.COBBLESTONE);
     }
 
     private static ItemStack alternateProcessableInput(FastFurnaceBlock block, ItemStack current) {
-        if (block == FastFurnaceV2.FAST_CRUSHER.get()) {
+        if (block.isFastCrusher()) {
             return new ItemStack(current.is(Items.RAW_IRON) ? Items.RAW_COPPER : Items.RAW_IRON);
         }
         return new ItemStack(current.is(Items.COBBLESTONE) ? Items.STONE : Items.COBBLESTONE);
@@ -721,7 +772,19 @@ final class FastFurnaceGameTests {
     }
 
     private static long findOutputRollSeed(boolean doubled) {
-        return findChanceRollSeed(FastFurnaceBlockEntity.FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT / 100.0, doubled);
+        return findChanceRollSeed(FastFurnaceTier.FAST.getDoubleBurnChance(), doubled);
+    }
+
+    private static long findTierOutputRollSeed(FastFurnaceTier tier) {
+        double previousTierChance = tier == FastFurnaceTier.FAST
+                ? 0.0
+                : FastFurnaceTier.values()[tier.ordinal() - 1].getDoubleBurnChance();
+        for (long seed = 0; ; seed++) {
+            float roll = RandomSource.create(seed).nextFloat();
+            if (roll >= previousTierChance && roll < tier.getDoubleBurnChance()) {
+                return seed;
+            }
+        }
     }
 
     private static long findChanceRollSeed(double chance, boolean success) {

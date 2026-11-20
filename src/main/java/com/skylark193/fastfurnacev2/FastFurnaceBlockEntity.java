@@ -28,7 +28,6 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public static final int VANILLA_COAL_BURN_TIME = 1600;
     public static final int VANILLA_COAL_BLOCK_BURN_TIME = 16000;
     public static final int FAST_CRUSHER_OUTPUT_COUNT = 2;
-    public static final int FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT = 10;
 
     private final FastFurnaceTier tier;
     private final boolean fastCrusher;
@@ -78,7 +77,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public FastFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get(), pos, state, RecipeType.SMELTING);
         this.tier = ((FastFurnaceBlock) state.getBlock()).getTier();
-        this.fastCrusher = state.getBlock() == FastFurnaceV2.FAST_CRUSHER.get();
+        this.fastCrusher = ((FastFurnaceBlock) state.getBlock()).isFastCrusher();
     }
 
     @Override
@@ -284,7 +283,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     }
 
     private ItemStack rollCrusherOutput(ServerLevel level, ItemStack burnResult) {
-        return level.getRandom().nextFloat() < FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT / 100.0F
+        return level.getRandom().nextFloat() < this.tier.getDoubleBurnChance()
                 ? doubleOutput(burnResult)
                 : burnResult;
     }

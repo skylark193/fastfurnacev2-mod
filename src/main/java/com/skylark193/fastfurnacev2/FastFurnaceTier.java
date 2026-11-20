@@ -25,6 +25,10 @@ public enum FastFurnaceTier {
         return this.id;
     }
 
+    public String getCrusherId() {
+        return this.id.replace("_furnace", "_crusher");
+    }
+
     public int getSpeedPercent() {
         return this.speedPercent;
     }

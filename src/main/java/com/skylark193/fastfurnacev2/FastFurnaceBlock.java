@@ -21,16 +21,22 @@ import org.jspecify.annotations.Nullable;
 
 public class FastFurnaceBlock extends AbstractFurnaceBlock {
     private final FastFurnaceTier tier;
+    private final boolean fastCrusher;
     private final MapCodec<FastFurnaceBlock> codec;
 
-    public FastFurnaceBlock(BlockBehaviour.Properties properties, FastFurnaceTier tier) {
+    public FastFurnaceBlock(BlockBehaviour.Properties properties, FastFurnaceTier tier, boolean fastCrusher) {
         super(properties);
         this.tier = tier;
-        this.codec = simpleCodec(propertiesCopy -> new FastFurnaceBlock(propertiesCopy, tier));
+        this.fastCrusher = fastCrusher;
+        this.codec = simpleCodec(propertiesCopy -> new FastFurnaceBlock(propertiesCopy, tier, fastCrusher));
     }
 
     public FastFurnaceTier getTier() {
         return this.tier;
+    }
+
+    public boolean isFastCrusher() {
+        return this.fastCrusher;
     }
 
     @Override

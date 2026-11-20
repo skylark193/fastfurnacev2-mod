@@ -73,7 +73,8 @@ final class FastCrusherCategory implements IRecipeCategory<FastCrusherRecipe> {
         builder.addAnimatedRecipeArrow(STANDARD_COOK_TIME).setPosition(58, 18);
         builder.addText(Component.translatable(
                         "jei.fastfurnacev2.crushing_output_chance",
-                        FastFurnaceBlockEntity.FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT,
+                        FastFurnaceTier.FAST.getDoubleBurnChancePercent(),
+                        FastFurnaceTier.DIAMOND.getDoubleBurnChancePercent(),
                         FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT * 2),
                 WIDTH, 10)
                 .setPosition(0, 44)

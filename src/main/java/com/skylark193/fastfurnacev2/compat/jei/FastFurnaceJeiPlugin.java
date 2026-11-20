@@ -75,10 +75,10 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             registration.addIngredientInfo(
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
                     Component.translatable("jei.fastfurnacev2." + tier.getId()));
+            registration.addIngredientInfo(
+                    FastFurnaceV2.getCrusherBlock(tier).get(),
+                    Component.translatable("jei.fastfurnacev2." + tier.getCrusherId()));
         }
-        registration.addIngredientInfo(
-                FastFurnaceV2.FAST_CRUSHER.get(),
-                Component.translatable("jei.fastfurnacev2.fast_crusher"));
 
         registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
 
@@ -130,17 +130,22 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             registration.addCraftingStation(RecipeTypes.SMELTING, FastFurnaceV2.getFurnaceBlock(tier).get());
             registration.addCraftingStation(
                     FastFurnaceFuelCategory.getRecipeType(tier), FastFurnaceV2.getFurnaceBlock(tier).get());
+            registration.addCraftingStation(
+                    FastCrusherCategory.getCrushingRecipeType(), FastFurnaceV2.getCrusherBlock(tier).get());
+            registration.addCraftingStation(
+                    FastFurnaceFuelCategory.getRecipeType(tier), FastFurnaceV2.getCrusherBlock(tier).get());
         }
-        registration.addCraftingStation(
-                FastCrusherCategory.getCrushingRecipeType(), FastFurnaceV2.FAST_CRUSHER.get());
-        registration.addCraftingStation(
-                FastFurnaceFuelCategory.getRecipeType(FastFurnaceTier.FAST), FastFurnaceV2.FAST_CRUSHER.get());
     }
 
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registerSmeltingTransfer(registration, tier);
+            registerFilteredTransfer(
+                    registration,
+                    tier,
+                    FastCrusherCategory.getCrushingRecipeType(),
+                    FastFurnaceMenu::isFastCrusher);
             registration.addRecipeTransferHandler(
                     FastFurnaceMenu.class,
                     FastFurnaceV2.getFurnaceMenu(tier).get(),
@@ -150,11 +155,6 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     3,
                     36);
         }
-        registerFilteredTransfer(
-                registration,
-                FastFurnaceTier.FAST,
-                FastCrusherCategory.getCrushingRecipeType(),
-                FastFurnaceMenu::isFastCrusher);
     }
 
     @Override

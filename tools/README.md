@@ -89,21 +89,27 @@ This writes the animated side/bottom block texture and its `.png.mcmeta` metadat
 
 ## Regenerate the Fast Crusher Blender Top
 
-The top generator draws a metal housing, glass rim, four-blade rotor, and lava-colored contents over the preserved 16×16 Netherrack source. It writes a static idle PNG without animation metadata and a separate eight-frame processing strip with one tick per frame. The rotor completes one revolution per loop; the housing remains unchanged in every frame.
+The top generator draws a metal housing, glass rim, four-blade rotor, and lava-colored contents over the preserved 16×16 Netherrack source. It writes a static idle PNG without animation metadata and a separate eight-frame processing strip with one tick per frame. The rotor completes one revolution per loop; the housing remains unchanged in every frame. The optional `--trim` argument accepts a 16×16 iron, gold, or diamond block source and applies its pixels only to the stationary outer housing around the blender. The Netherrack corners, glass, and animated center remain unchanged.
 
 Windows:
 
 ```bash
 .venv\Scripts\python -I tools\generate_crusher_top_texture.py --input tools\texture_sources\netherrack.png --idle-output src\main\resources\assets\fastfurnacev2\textures\block\fast_crusher_top.png --active-output src\main\resources\assets\fastfurnacev2\textures\block\fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv\Scripts\python -I tools\generate_crusher_top_texture.py --input tools\texture_sources\netherrack.png --trim tools\texture_sources\iron_block.png --idle-output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_crusher_top.png --active-output src\main\resources\assets\fastfurnacev2\textures\block\iron_fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv\Scripts\python -I tools\generate_crusher_top_texture.py --input tools\texture_sources\netherrack.png --trim tools\texture_sources\gold_block.png --idle-output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_crusher_top.png --active-output src\main\resources\assets\fastfurnacev2\textures\block\gold_fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv\Scripts\python -I tools\generate_crusher_top_texture.py --input tools\texture_sources\netherrack.png --trim tools\texture_sources\diamond_block.png --idle-output src\main\resources\assets\fastfurnacev2\textures\block\diamond_fast_crusher_top.png --active-output src\main\resources\assets\fastfurnacev2\textures\block\diamond_fast_crusher_top_on.png --frames 8 --frame-time 1
 ```
 
 macOS/Linux:
 
 ```bash
 .venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --trim tools/texture_sources/iron_block.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/iron_fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/iron_fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --trim tools/texture_sources/gold_block.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/gold_fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/gold_fast_crusher_top_on.png --frames 8 --frame-time 1
+.venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --trim tools/texture_sources/diamond_block.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/diamond_fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/diamond_fast_crusher_top_on.png --frames 8 --frame-time 1
 ```
 
-The crusher blockstate selects the static top for `lit=false` and the animated top for `lit=true`. Keep `fast_crusher_top.png.mcmeta` absent; only `fast_crusher_top_on.png.mcmeta` should exist.
+Each crusher blockstate selects its static top for `lit=false` and animated top for `lit=true`. Keep every `<tier>_fast_crusher_top.png.mcmeta` idle metadata file absent (including `fast_crusher_top.png.mcmeta`); only the corresponding `_top_on.png.mcmeta` files should exist. All four tiers reference the same animated Netherrack `fast_crusher` side and bottom texture.
 
 ## Regenerate Furnace Textures
 
@@ -174,4 +180,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, and the crusher top's stationary housing. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "fastfurnacev2:block/diamond_fast_crusher"
+    },
+    "lit=true": {
+      "model": "fastfurnacev2:block/diamond_fast_crusher_on"
+    }
+  }
+}

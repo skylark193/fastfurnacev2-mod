@@ -34,6 +34,7 @@ def positive_int(value: str) -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="16×16 square Netherrack source PNG")
+    parser.add_argument("--trim", type=Path, help="Optional 16×16 square tier-block source for the housing trim")
     parser.add_argument("--idle-output", required=True, type=Path, help="Destination static PNG")
     parser.add_argument("--active-output", required=True, type=Path, help="Destination animation-strip PNG")
     parser.add_argument("--frames", type=positive_int, default=8, help="Frames per revolution (default: 8)")
@@ -45,7 +46,7 @@ def point_on_circle(radius: float, angle: float) -> tuple[float, float]:
     return CENTER + radius * math.cos(angle), CENTER + radius * math.sin(angle)
 
 
-def create_housing(source: Image.Image) -> Image.Image:
+def create_housing(source: Image.Image, trim_source: Image.Image | None = None) -> Image.Image:
     image = source.copy()
     for y in range(TEXTURE_SIZE):
         for x in range(TEXTURE_SIZE):
@@ -69,6 +70,24 @@ def create_housing(source: Image.Image) -> Image.Image:
         draw.point((x, y), fill=(211, 219, 218, 255))
     for x, y in ((4, 3), (3, 4), (3, 5)):
         draw.point((x, y), fill=(158, 205, 207, 255))
+
+    if trim_source is not None:
+        # Replace only the stationary outer housing; the glass, rotor, and Netherrack corners remain intact.
+        mask = Image.new("L", (TEXTURE_SIZE, TEXTURE_SIZE), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.polygon(
+            [(2, 0), (13, 0), (15, 2), (15, 13), (13, 15), (2, 15), (0, 13), (0, 2)],
+            fill=255,
+        )
+        mask_draw.ellipse((2, 2, 13, 13), fill=0)
+        image.paste(trim_source, (0, 0), mask)
+        draw = ImageDraw.Draw(image)
+        draw.polygon(
+            [(2, 0), (13, 0), (15, 2), (15, 13), (13, 15), (2, 15), (0, 13), (0, 2)],
+            outline=(18, 22, 26, 255),
+        )
+        for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
+            draw.point((x, y), fill=(211, 219, 218, 255))
     return image
 
 
@@ -109,14 +128,19 @@ def render_frame(housing: Image.Image, phase: float) -> Image.Image:
     return image
 
 
-def generate_top_textures(source: Image.Image, frame_count: int) -> tuple[Image.Image, list[Image.Image]]:
+def generate_top_textures(
+    source: Image.Image, frame_count: int, trim_source: Image.Image | None = None
+) -> tuple[Image.Image, list[Image.Image]]:
     base = source.convert("RGBA")
     if base.size != (TEXTURE_SIZE, TEXTURE_SIZE):
         raise ValueError(f"Source must be {TEXTURE_SIZE}×{TEXTURE_SIZE}, got {base.width}×{base.height}")
+    trim = trim_source.convert("RGBA") if trim_source is not None else None
+    if trim is not None and trim.size != (TEXTURE_SIZE, TEXTURE_SIZE):
+        raise ValueError(f"Trim source must be {TEXTURE_SIZE}×{TEXTURE_SIZE}, got {trim.width}×{trim.height}")
     if frame_count < 1:
         raise ValueError("Frame count must be at least 1")
 
-    housing = create_housing(base)
+    housing = create_housing(base, trim)
     idle = render_frame(housing, 0.0)
     frames = [render_frame(housing, frame_index / frame_count) for frame_index in range(frame_count)]
     return idle, frames
@@ -125,11 +149,17 @@ def generate_top_textures(source: Image.Image, frame_count: int) -> tuple[Image.
 def main() -> None:
     args = parse_args()
     paths = (args.input.resolve(), args.idle_output.resolve(), args.active_output.resolve())
+    if args.trim is not None:
+        paths += (args.trim.resolve(),)
     if len(set(paths)) != len(paths):
-        raise SystemExit("Input, idle output, and active output paths must differ.")
+        raise SystemExit("Input, trim, idle output, and active output paths must differ.")
 
     with Image.open(args.input) as source:
-        idle, frames = generate_top_textures(source, args.frames)
+        if args.trim is None:
+            idle, frames = generate_top_textures(source, args.frames)
+        else:
+            with Image.open(args.trim) as trim_source:
+                idle, frames = generate_top_textures(source, args.frames, trim_source)
 
     strip = Image.new("RGBA", (TEXTURE_SIZE, TEXTURE_SIZE * args.frames))
     for frame_index, frame in enumerate(frames):

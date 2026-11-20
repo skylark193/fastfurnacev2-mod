@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:gold_block",
+    "C": "fastfurnacev2:iron_fast_crusher"
+  },
+  "pattern": [
+    "###",
+    "#C#",
+    "###"
+  ],
+  "result": {
+    "id": "fastfurnacev2:gold_fast_crusher"
+  }
+}

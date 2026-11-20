@@ -56,12 +56,18 @@ public class FastFurnaceV2 {
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
     public static final DeferredBlock<FastFurnaceBlock> GOLD_FAST_FURNACE = registerFurnace(FastFurnaceTier.GOLD);
     public static final DeferredBlock<FastFurnaceBlock> DIAMOND_FAST_FURNACE = registerFurnace(FastFurnaceTier.DIAMOND);
-    public static final DeferredBlock<FastFurnaceBlock> FAST_CRUSHER = registerFurnace("fast_crusher", FastFurnaceTier.FAST);
+    public static final DeferredBlock<FastFurnaceBlock> FAST_CRUSHER = registerCrusher(FastFurnaceTier.FAST);
+    public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_CRUSHER = registerCrusher(FastFurnaceTier.IRON);
+    public static final DeferredBlock<FastFurnaceBlock> GOLD_FAST_CRUSHER = registerCrusher(FastFurnaceTier.GOLD);
+    public static final DeferredBlock<FastFurnaceBlock> DIAMOND_FAST_CRUSHER = registerCrusher(FastFurnaceTier.DIAMOND);
     public static final DeferredItem<BlockItem> FAST_FURNACE_ITEM = ITEMS.registerSimpleBlockItem("fast_furnace", FAST_FURNACE);
     public static final DeferredItem<BlockItem> IRON_FAST_FURNACE_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_furnace", IRON_FAST_FURNACE);
     public static final DeferredItem<BlockItem> GOLD_FAST_FURNACE_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_furnace", GOLD_FAST_FURNACE);
     public static final DeferredItem<BlockItem> DIAMOND_FAST_FURNACE_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_furnace", DIAMOND_FAST_FURNACE);
     public static final DeferredItem<BlockItem> FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("fast_crusher", FAST_CRUSHER);
+    public static final DeferredItem<BlockItem> IRON_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_crusher", IRON_FAST_CRUSHER);
+    public static final DeferredItem<BlockItem> GOLD_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_crusher", GOLD_FAST_CRUSHER);
+    public static final DeferredItem<BlockItem> DIAMOND_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_crusher", DIAMOND_FAST_CRUSHER);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastFurnaceBlockEntity>> FAST_FURNACE_BLOCK_ENTITY = BLOCK_ENTITIES.register(
             "fast_furnace",
@@ -71,7 +77,10 @@ public class FastFurnaceV2 {
                     IRON_FAST_FURNACE.get(),
                     GOLD_FAST_FURNACE.get(),
                     DIAMOND_FAST_FURNACE.get(),
-                    FAST_CRUSHER.get()));
+                    FAST_CRUSHER.get(),
+                    IRON_FAST_CRUSHER.get(),
+                    GOLD_FAST_CRUSHER.get(),
+                    DIAMOND_FAST_CRUSHER.get()));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.FAST);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> IRON_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.IRON);
@@ -88,7 +97,9 @@ public class FastFurnaceV2 {
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
                 }
-                output.accept(FAST_CRUSHER_ITEM.get());
+                for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+                    output.accept(getCrusherItem(tier).get());
+                }
                 CrushedOres.addCreative(output);
             })
             .build());
@@ -136,6 +147,24 @@ public class FastFurnaceV2 {
         };
     }
 
+    public static DeferredBlock<FastFurnaceBlock> getCrusherBlock(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_CRUSHER;
+            case IRON -> IRON_FAST_CRUSHER;
+            case GOLD -> GOLD_FAST_CRUSHER;
+            case DIAMOND -> DIAMOND_FAST_CRUSHER;
+        };
+    }
+
+    public static DeferredItem<BlockItem> getCrusherItem(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_CRUSHER_ITEM;
+            case IRON -> IRON_FAST_CRUSHER_ITEM;
+            case GOLD -> GOLD_FAST_CRUSHER_ITEM;
+            case DIAMOND -> DIAMOND_FAST_CRUSHER_ITEM;
+        };
+    }
+
     public static DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> getFurnaceMenu(FastFurnaceTier tier) {
         return switch (tier) {
             case FAST -> FAST_FURNACE_MENU;
@@ -146,11 +175,16 @@ public class FastFurnaceV2 {
     }
 
     private static DeferredBlock<FastFurnaceBlock> registerFurnace(FastFurnaceTier tier) {
-        return registerFurnace(tier.getId(), tier);
+        return registerMachine(tier.getId(), tier, false);
     }
 
-    private static DeferredBlock<FastFurnaceBlock> registerFurnace(String id, FastFurnaceTier tier) {
-        return BLOCKS.registerBlock(id, properties -> new FastFurnaceBlock(properties, tier), properties -> properties
+    private static DeferredBlock<FastFurnaceBlock> registerCrusher(FastFurnaceTier tier) {
+        return registerMachine(tier.getCrusherId(), tier, true);
+    }
+
+    private static DeferredBlock<FastFurnaceBlock> registerMachine(
+            String id, FastFurnaceTier tier, boolean fastCrusher) {
+        return BLOCKS.registerBlock(id, properties -> new FastFurnaceBlock(properties, tier, fastCrusher), properties -> properties
                 .mapColor(MapColor.STONE)
                 .instrument(NoteBlockInstrument.BASEDRUM)
                 .requiresCorrectToolForDrops()
@@ -177,7 +211,9 @@ public class FastFurnaceV2 {
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 event.accept(getFurnaceItem(tier));
             }
-            event.accept(FAST_CRUSHER_ITEM);
+            for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+                event.accept(getCrusherItem(tier));
+            }
         }
     }
 }

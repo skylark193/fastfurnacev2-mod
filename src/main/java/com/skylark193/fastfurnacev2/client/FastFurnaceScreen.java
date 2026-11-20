@@ -1,6 +1,5 @@
 package com.skylark193.fastfurnacev2.client;
 
-import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import java.util.List;
 import java.util.Locale;
@@ -51,8 +50,7 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
         this.doubleBurn = Component.translatable(
                 "gui.fastfurnacev2.double_burn_chance", menu.getTier().getDoubleBurnChancePercent());
         this.doubleOutput = Component.translatable(
-                "gui.fastfurnacev2.double_output_chance",
-                FastFurnaceBlockEntity.FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT);
+                "gui.fastfurnacev2.double_output_chance", menu.getTier().getDoubleBurnChancePercent());
     }
 
     @Override

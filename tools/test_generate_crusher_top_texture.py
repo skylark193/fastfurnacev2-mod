@@ -13,6 +13,11 @@ class CrusherTopTextureGeneratorTests(unittest.TestCase):
         source = Path(__file__).parent / "texture_sources" / "netherrack.png"
         with Image.open(source) as image:
             cls.source = image.convert("RGBA")
+        cls.trims = {}
+        for tier in ("iron", "gold", "diamond"):
+            trim_path = Path(__file__).parent / "texture_sources" / f"{tier}_block.png"
+            with Image.open(trim_path) as image:
+                cls.trims[tier] = image.convert("RGBA")
 
     def test_generation_is_deterministic_and_animated(self) -> None:
         first_idle, first_frames = generate_top_textures(self.source, 8)
@@ -36,6 +41,25 @@ class CrusherTopTextureGeneratorTests(unittest.TestCase):
         for frame in frames:
             for point in stationary_pixels:
                 self.assertEqual(frame.getpixel(point), idle.getpixel(point))
+
+    def test_tier_trim_is_visible_distinct_and_stationary(self) -> None:
+        base_idle, _ = generate_top_textures(self.source, 8)
+        tier_outputs = set()
+        for tier, trim in self.trims.items():
+            original_trim = trim.tobytes()
+            idle, frames = generate_top_textures(self.source, 8, trim)
+            tier_outputs.add(idle.tobytes())
+
+            self.assertNotEqual(idle.tobytes(), base_idle.tobytes(), tier)
+            self.assertEqual(idle.getpixel((1, 6)), trim.getpixel((1, 6)), tier)
+            self.assertEqual(trim.tobytes(), original_trim, tier)
+            for frame in frames:
+                for point in ((1, 6), (14, 6), (6, 1), (6, 14)):
+                    self.assertEqual(frame.getpixel(point), idle.getpixel(point), tier)
+
+        self.assertEqual(len(tier_outputs), len(self.trims))
+        with self.assertRaises(ValueError):
+            generate_top_textures(self.source, 8, Image.new("RGBA", (16, 32)))
 
     def test_source_is_preserved_and_size_is_checked(self) -> None:
         original = self.source.tobytes()
