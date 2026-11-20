@@ -37,7 +37,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 ### Fast Crusher
 
-- Currently behaves exactly like a Fast Furnace: it supports ordinary smelting, runs at 150% speed (200% with active Fast Coal), and has a 10% chance to double each fuel item's adjusted burn time.
+- Supports ordinary smelting at Fast-tier speed: 150% normally and 200% with active Fast Coal. It does not double fuel duration; instead, each completed recipe has a 10% chance to produce twice its normal output when the output slot has room.
 - Uses animated Netherrack textures on its sides and bottom. Its top-down blender has a stationary rotor while idle and animated rotating blades with swirling contents while lit.
 - Requires a pickaxe, drops itself, preserves custom names, and emits light level 13 while lit.
 - Appears in Functional Blocks and the mod's Fast Furnace V2 creative tab. It does not have a crafting recipe or crusher-specific recipes yet.
@@ -61,7 +61,7 @@ Craft the base Fast Furnace from eight Fast Cobblestone using the vanilla furnac
 
 Every tier supports vanilla smelting recipes and fuels, the furnace recipe book, inventory and experience handling, comparator output, directional placement, and familiar furnace sounds and particles. All tiers require a pickaxe, drop themselves, preserve custom names, and emit light level 13 while lit.
 
-Every tier uses the same furnace GUI. Its information fly-out shows the tier's current speed, fuel doubling chance, remaining burn time, and total current-fuel burn time. Timers use exact tick counts and display seconds with one decimal place. All furnaces appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
+Every tier uses the same furnace GUI. Its information fly-out shows the tier's current speed, fuel doubling chance, remaining burn time, and total current-fuel burn time. The Fast Crusher's fly-out instead shows its 10% output doubling chance. Timers use exact tick counts and display seconds with one decimal place. All furnaces appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
 
 Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, Block of Fast Coal, and all furnace textures use animated lava veins. Each upgrade has a furnace-shaped front, side, and top made from its tier material, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
 
@@ -72,7 +72,7 @@ With a compatible JEI release installed:
 - Each furnace's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Fast Crusher is also a catalyst for smelting and Fast-tier fuels.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
 - Recipe transfer supports smelting and fuel insertion for every tier and Fast Crusher.
-- Every furnace and Fast Crusher includes a short speed and fuel-doubling description; Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
+- Every furnace includes a short speed and fuel-doubling description; Fast Crusher instead describes its output doubling. Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
 - JEI reserves space around the furnace information fly-out.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.

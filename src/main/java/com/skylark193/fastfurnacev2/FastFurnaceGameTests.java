@@ -74,7 +74,7 @@ final class FastFurnaceGameTests {
             BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
             TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
             CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting,
-            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCopiesFastFurnace);
+            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherSmeltsAndDoublesOutput);
 
     private FastFurnaceGameTests() {
     }
@@ -107,8 +107,15 @@ final class FastFurnaceGameTests {
         FastFurnaceBlockEntity furnace = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
         furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
         furnace.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
+        FastFurnaceMenu menu = createMenu(helper, furnace);
+        if (menu.isFastCrusher()) {
+            throw helper.assertionException("Fast Furnace incorrectly identified itself as a Fast Crusher");
+        }
 
         for (int tick = 1; tick <= 133; tick++) {
+            if (tick == 133) {
+                level.getRandom().setSeed(findOutputRollSeed(true));
+            }
             FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), furnace);
             if (tick < 133 && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
                 throw helper.assertionException("Fast Furnace smelted before tick 133");
@@ -122,30 +129,58 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
-    private static void fastCrusherCopiesFastFurnace(GameTestHelper helper) {
-        BlockPos relativePos = BlockPos.ZERO;
-        BlockPos pos = helper.absolutePos(relativePos);
+    private static void fastCrusherSmeltsAndDoublesOutput(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        helper.setBlock(relativePos, FastFurnaceV2.FAST_CRUSHER.get());
-        FastFurnaceBlockEntity crusher = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
-        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
-        crusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
-
+        FastFurnaceBlockEntity crusher = placeCrusher(helper, BlockPos.ZERO);
         FastFurnaceMenu menu = createMenu(helper, crusher);
-        if (menu.getTier() != FastFurnaceTier.FAST || !crusher.getDisplayName().getString().equals("Fast Crusher")) {
-            throw helper.assertionException("Fast Crusher did not use Fast-tier behavior and its own display name");
+        if (menu.getTier() != FastFurnaceTier.FAST
+                || !menu.isFastCrusher()
+                || !crusher.getDisplayName().getString().equals("Fast Crusher")) {
+            throw helper.assertionException("Fast Crusher did not synchronize its identity and Fast-tier behavior");
         }
 
-        for (int tick = 1; tick <= 133; tick++) {
-            FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), crusher);
-            if (tick < 133 && !crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+        level.getRandom().setSeed(findFuelRollSeed(true));
+        tickFurnace(helper, crusher, BlockPos.ZERO);
+        if (menu.getCurrentBurnTime() != FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME
+                || menu.getTotalFuelTime() != FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME) {
+            throw helper.assertionException("Fast Crusher incorrectly doubled its fuel duration");
+        }
+        for (int tick = 2; tick <= 132; tick++) {
+            tickFurnace(helper, crusher, BlockPos.ZERO);
+            if (!crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
                 throw helper.assertionException("Fast Crusher smelted before tick 133");
             }
         }
-
+        level.getRandom().setSeed(findOutputRollSeed(false));
+        tickFurnace(helper, crusher, BlockPos.ZERO);
         ItemStack result = crusher.getItem(FastFurnaceMenu.RESULT_SLOT);
         if (!result.is(Items.STONE) || result.getCount() != 1) {
-            throw helper.assertionException("Fast Crusher did not smelt one stone on tick 133");
+            throw helper.assertionException("Fast Crusher did not keep one output on a failed doubling roll");
+        }
+
+        BlockPos doubledPos = new BlockPos(2, 0, 0);
+        FastFurnaceBlockEntity doubledCrusher = placeCrusher(helper, doubledPos);
+        for (int tick = 1; tick <= 132; tick++) {
+            tickFurnace(helper, doubledCrusher, doubledPos);
+        }
+        level.getRandom().setSeed(findOutputRollSeed(true));
+        tickFurnace(helper, doubledCrusher, doubledPos);
+        ItemStack doubledResult = doubledCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!doubledResult.is(Items.STONE) || doubledResult.getCount() != 2) {
+            throw helper.assertionException("Fast Crusher did not double its recipe output on a successful roll");
+        }
+
+        BlockPos fullOutputPos = new BlockPos(4, 0, 0);
+        FastFurnaceBlockEntity fullOutputCrusher = placeCrusher(helper, fullOutputPos);
+        fullOutputCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(Items.STONE, 63));
+        for (int tick = 1; tick <= 132; tick++) {
+            tickFurnace(helper, fullOutputCrusher, fullOutputPos);
+        }
+        level.getRandom().setSeed(findOutputRollSeed(true));
+        tickFurnace(helper, fullOutputCrusher, fullOutputPos);
+        ItemStack fullOutput = fullOutputCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!fullOutput.is(Items.STONE) || fullOutput.getCount() != 64) {
+            throw helper.assertionException("Fast Crusher exceeded the output stack limit on a successful roll");
         }
         helper.succeed();
     }
@@ -241,7 +276,7 @@ final class FastFurnaceGameTests {
             FastFurnaceBlockEntity furnace = placeFurnace(
                     helper, relativePos, new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()), tier);
             FastFurnaceMenu menu = createMenu(helper, furnace);
-            level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), false));
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), false));
             tickFurnace(helper, furnace, relativePos);
 
             if (!menu.isFastCoalActive()
@@ -272,7 +307,7 @@ final class FastFurnaceGameTests {
             FastFurnaceBlockEntity doubledFurnace = placeFurnace(
                     helper, doubledPos, new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()), tier);
             FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
-            level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), true));
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), true));
             tickFurnace(helper, doubledFurnace, doubledPos);
             if (!doubledMenu.isFastCoalActive()
                     || doubledMenu.getCurrentBurnTime() != expectedBurnTime * 2
@@ -315,7 +350,7 @@ final class FastFurnaceGameTests {
                 BlockPos relativePos = new BlockPos(tierIndex * 4 + (fastCoalActive ? 2 : 0), 2, 0);
                 FastFurnaceBlockEntity furnace = placeFurnace(helper, relativePos, fuel, tier);
                 FastFurnaceMenu menu = createMenu(helper, furnace);
-                level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), false));
+                level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), false));
                 tickFurnace(helper, furnace, relativePos);
 
                 if (menu.getTier() != tier
@@ -348,7 +383,7 @@ final class FastFurnaceGameTests {
                 BlockPos doubledPos = relativePos.above(4);
                 FastFurnaceBlockEntity doubledFurnace = placeFurnace(helper, doubledPos, doubledFuel, tier);
                 FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
-                level.getRandom().setSeed(findFuelRollSeed(tier.getDoubleBurnChance(), true));
+                level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), true));
                 tickFurnace(helper, doubledFurnace, doubledPos);
                 if (doubledMenu.getCurrentBurnTime() != expectedBurnTime * 2
                         || doubledMenu.getTotalFuelTime() != expectedBurnTime * 2
@@ -434,6 +469,14 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static FastFurnaceBlockEntity placeCrusher(GameTestHelper helper, BlockPos relativePos) {
+        helper.setBlock(relativePos, FastFurnaceV2.FAST_CRUSHER.get());
+        FastFurnaceBlockEntity crusher = helper.getBlockEntity(relativePos, FastFurnaceBlockEntity.class);
+        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        crusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
+        return crusher;
+    }
+
     private static FastFurnaceBlockEntity placeFurnace(
             GameTestHelper helper, BlockPos relativePos, ItemStack fuel) {
         return placeFurnace(helper, relativePos, fuel, FastFurnaceTier.FAST);
@@ -454,13 +497,17 @@ final class FastFurnaceGameTests {
     }
 
     private static long findFuelRollSeed(boolean doubled) {
-        return findFuelRollSeed(FastFurnaceTier.FAST.getDoubleBurnChance(), doubled);
+        return findChanceRollSeed(FastFurnaceTier.FAST.getDoubleBurnChance(), doubled);
     }
 
-    private static long findFuelRollSeed(double doubleBurnChance, boolean doubled) {
+    private static long findOutputRollSeed(boolean doubled) {
+        return findChanceRollSeed(FastFurnaceBlockEntity.FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT / 100.0, doubled);
+    }
+
+    private static long findChanceRollSeed(double chance, boolean success) {
         for (long seed = 0; ; seed++) {
-            boolean rollDoubles = RandomSource.create(seed).nextFloat() < doubleBurnChance;
-            if (rollDoubles == doubled) {
+            boolean rollSucceeds = RandomSource.create(seed).nextFloat() < chance;
+            if (rollSucceeds == success) {
                 return seed;
             }
         }

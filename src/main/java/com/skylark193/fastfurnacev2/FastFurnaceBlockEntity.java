@@ -26,15 +26,17 @@ import net.minecraft.world.level.storage.ValueOutput;
 public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public static final int VANILLA_COAL_BURN_TIME = 1600;
     public static final int VANILLA_COAL_BLOCK_BURN_TIME = 16000;
+    public static final int FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT = 10;
 
     private final FastFurnaceTier tier;
+    private final boolean fastCrusher;
     private final RecipeManager.CachedCheck<SingleRecipeInput, ? extends AbstractCookingRecipe> quickCheck =
             RecipeManager.createCheck(RecipeType.SMELTING);
     private int currentBurnTime;
     private int totalFuelTime;
     private boolean fastCoalBurning;
 
-    // Four extra split integers preserve exact fuel times; the ninth value identifies the active fuel.
+    // Split integers preserve exact fuel times; the last two values identify active fuel and crusher behavior.
     private final ContainerData menuDataAccess = new ContainerData() {
         @Override
         public int get(int index) {
@@ -44,6 +46,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 case 6 -> totalFuelTime & 0xFFFF;
                 case 7 -> totalFuelTime >>> 16;
                 case 8 -> fastCoalBurning ? 1 : 0;
+                case 9 -> fastCrusher ? 1 : 0;
                 default -> dataAccess.get(index);
             };
         }
@@ -56,6 +59,9 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 case 6 -> totalFuelTime = (totalFuelTime & 0xFFFF0000) | (value & 0xFFFF);
                 case 7 -> totalFuelTime = (totalFuelTime & 0xFFFF) | (value << 16);
                 case 8 -> fastCoalBurning = value != 0;
+                case 9 -> {
+                    // Crusher identity comes from the immutable block type, not client-supplied data.
+                }
                 default -> dataAccess.set(index, value);
             }
         }
@@ -69,6 +75,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public FastFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get(), pos, state, RecipeType.SMELTING);
         this.tier = ((FastFurnaceBlock) state.getBlock()).getTier();
+        this.fastCrusher = state.getBlock() == FastFurnaceV2.FAST_CRUSHER.get();
     }
 
     @Override
@@ -103,7 +110,10 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         if (burnTime > 0 && FastFurnaceV2.isFastCoalFuel(fuel)) {
             burnTime = this.tier.scaleFastCoalBurnTime(burnTime);
         }
-        if (burnTime > 0 && this.level != null && this.level.getRandom().nextFloat() < this.tier.getDoubleBurnChance()) {
+        if (burnTime > 0
+                && !this.fastCrusher
+                && this.level != null
+                && this.level.getRandom().nextFloat() < this.tier.getDoubleBurnChance()) {
             return (int) Math.min(Integer.MAX_VALUE, burnTime * 2L);
         }
         return burnTime;
@@ -167,7 +177,9 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                             if (cookingTimer >= entity.dataAccess.get(DATA_COOKING_TOTAL_TIME)) {
                                 entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
                                 entity.dataAccess.set(DATA_COOKING_TOTAL_TIME, expectedCookTime);
-                                burn(entity.items, ingredient, burnResult);
+                                ItemStack recipeOutput = entity.rollCrusherOutput(
+                                        level, entity.items, maxStackSize, burnResult);
+                                burn(entity.items, ingredient, recipeOutput);
                                 entity.setRecipeUsed(recipe);
                                 changed = true;
                             } else {
@@ -229,6 +241,23 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
 
     private int scaleCookTime(int vanillaCookTime, boolean fastCoalActive) {
         return this.tier.scaleCookTime(vanillaCookTime, fastCoalActive);
+    }
+
+    private ItemStack rollCrusherOutput(
+            ServerLevel level, NonNullList<ItemStack> items, int maxStackSize, ItemStack burnResult) {
+        if (!this.fastCrusher
+                || level.getRandom().nextFloat() >= FAST_CRUSHER_DOUBLE_OUTPUT_CHANCE_PERCENT / 100.0F) {
+            return burnResult;
+        }
+
+        long doubledCount = burnResult.getCount() * 2L;
+        if (doubledCount > Math.min(maxStackSize, burnResult.getMaxStackSize())) {
+            return burnResult;
+        }
+
+        ItemStack doubledResult = burnResult.copy();
+        doubledResult.setCount((int) doubledCount);
+        return canBurn(items, maxStackSize, doubledResult) ? doubledResult : burnResult;
     }
 
     private static void consumeFuel(NonNullList<ItemStack> items, ItemStack fuel) {
