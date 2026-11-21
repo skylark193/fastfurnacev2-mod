@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -52,6 +53,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_crusher");
     private static final Identifier FUEL_PAUSE_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fuel_pause");
+    private static final Identifier ACCELERATOR_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -70,6 +73,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_CRUSHER_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_PAUSE_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_PAUSE_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> ACCELERATOR_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, ACCELERATOR_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
             SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
             FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
@@ -79,7 +84,8 @@ final class FastFurnaceGameTests {
             TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
             CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting,
             FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCrushesAndDoublesOutput,
-            FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork);
+            FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork,
+            ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts);
 
     private FastFurnaceGameTests() {
     }
@@ -103,6 +109,7 @@ final class FastFurnaceGameTests {
         event.registerTest(CRUSHED_ORE_TEST_ID, new DirectGameTestInstance(CRUSHED_ORE_FUNCTION, testData));
         event.registerTest(FAST_CRUSHER_TEST_ID, new DirectGameTestInstance(FAST_CRUSHER_FUNCTION, testData));
         event.registerTest(FUEL_PAUSE_TEST_ID, new DirectGameTestInstance(FUEL_PAUSE_FUNCTION, testData));
+        event.registerTest(ACCELERATOR_TEST_ID, new DirectGameTestInstance(ACCELERATOR_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -694,6 +701,195 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void acceleratorConvertsCoalWithLavaAndBoosts(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        AcceleratorBlockEntity normal = placeAccelerator(
+                helper, BlockPos.ZERO, new ItemStack(Items.COAL), ItemStack.EMPTY);
+        AcceleratorMenu normalMenu = createAcceleratorMenu(helper, normal);
+        if (!normal.getDisplayName().getString().equals("Accelerator")
+                || normal.canPlaceItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()))
+                || normal.canPlaceItem(AcceleratorMenu.FUEL_SLOT, new ItemStack(Items.COAL))
+                || !normal.canPlaceItem(AcceleratorMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()))
+                || normalMenu.getSlot(AcceleratorMenu.FUEL_SLOT).mayPlace(new ItemStack(Items.COAL))
+                || normalMenu.getSlot(AcceleratorMenu.RESULT_SLOT).mayPlace(new ItemStack(Items.COAL))
+                || normal.getSlotsForFace(Direction.UP)[0] != AcceleratorMenu.INPUT_SLOT
+                || normal.getSlotsForFace(Direction.DOWN)[0] != AcceleratorMenu.RESULT_SLOT) {
+            throw helper.assertionException("Accelerator slots or automation accepted unsupported items");
+        }
+
+        for (int tick = 1; tick <= AcceleratorBlockEntity.COAL_RECIPE_TICKS; tick++) {
+            tickAccelerator(helper, normal, BlockPos.ZERO);
+            if (tick < AcceleratorBlockEntity.COAL_RECIPE_TICKS
+                    && !normal.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Accelerator converted coal before 100 ticks");
+            }
+            if (tick == 50 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
+                    .getValue(AcceleratorBlock.BOLT_LEVEL) != 5) {
+                throw helper.assertionException("Accelerator lightning bolt was not half full at 50% progress");
+            }
+            if (tick == 99 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
+                    .getValue(AcceleratorBlock.BOLT_LEVEL) != 10) {
+                throw helper.assertionException("Accelerator lightning bolt was not full near completion");
+            }
+        }
+        if (!normal.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
+                || normal.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 1
+                || !normal.getItem(AcceleratorMenu.INPUT_SLOT).isEmpty()
+                || normalMenu.getLavaSideCount() != AcceleratorBlockEntity.REQUIRED_LAVA_SIDES
+                || level.getBlockState(helper.absolutePos(BlockPos.ZERO))
+                        .getValue(AcceleratorBlock.BOLT_LEVEL) != 0) {
+            throw helper.assertionException("Accelerator did not convert coal in five seconds without fuel");
+        }
+
+        BlockPos coalBlockPos = new BlockPos(4, 0, 0);
+        AcceleratorBlockEntity coalBlock = placeAccelerator(
+                helper, coalBlockPos, new ItemStack(Items.COAL_BLOCK), ItemStack.EMPTY);
+        tickAccelerator(helper, coalBlock, coalBlockPos, AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS - 1);
+        if (!coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Accelerator converted a coal block before 900 ticks");
+        }
+        tickAccelerator(helper, coalBlock, coalBlockPos);
+        if (!coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
+                || coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Accelerator did not convert a coal block in 45 seconds");
+        }
+
+        BlockPos missingLavaPos = new BlockPos(8, 0, 0);
+        AcceleratorBlockEntity missingLava = placeAccelerator(
+                helper, missingLavaPos, new ItemStack(Items.COAL),
+                new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        helper.setBlock(missingLavaPos.north(), Blocks.AIR);
+        AcceleratorMenu missingLavaMenu = createAcceleratorMenu(helper, missingLava);
+        tickAccelerator(helper, missingLava, missingLavaPos, 20);
+        if (missingLavaMenu.getWorkProgress() != 0 || missingLavaMenu.getBoostWork() != 0
+                || missingLava.getItem(AcceleratorMenu.FUEL_SLOT).getCount() != 1
+                || missingLavaMenu.getLavaSideCount() != 3) {
+            throw helper.assertionException("Accelerator processed or consumed boost without all four lava sides");
+        }
+        helper.setBlock(missingLavaPos.north(), Blocks.LAVA);
+        tickAccelerator(helper, missingLava, missingLavaPos, 34);
+        if (!missingLava.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
+                || missingLavaMenu.getBoostWork() != 800) {
+            throw helper.assertionException("Accelerator did not resume at triple speed after lava was restored");
+        }
+
+        BlockPos pausedPos = new BlockPos(0, 4, 0);
+        AcceleratorBlockEntity paused = placeAccelerator(
+                helper, pausedPos, new ItemStack(Items.COAL),
+                new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        AcceleratorMenu pausedMenu = createAcceleratorMenu(helper, paused);
+        tickAccelerator(helper, paused, pausedPos, 10);
+        int savedWork = pausedMenu.getWorkProgress();
+        int savedBoost = pausedMenu.getBoostWork();
+        helper.setBlock(pausedPos.east(), Blocks.AIR);
+        tickAccelerator(helper, paused, pausedPos, 20);
+        if (pausedMenu.getWorkProgress() != savedWork || pausedMenu.getBoostWork() != savedBoost) {
+            throw helper.assertionException("Accelerator lost progress or boost while lava was missing");
+        }
+        helper.setBlock(pausedPos.east(), Blocks.LAVA);
+        paused.setItem(AcceleratorMenu.RESULT_SLOT, new ItemStack(Items.DIRT));
+        tickAccelerator(helper, paused, pausedPos, 20);
+        if (pausedMenu.getWorkProgress() != savedWork || pausedMenu.getBoostWork() != savedBoost) {
+            throw helper.assertionException("Accelerator lost progress or boost while its output was blocked");
+        }
+        paused.setItem(AcceleratorMenu.RESULT_SLOT, ItemStack.EMPTY);
+        tickAccelerator(helper, paused, pausedPos, 24);
+        if (!paused.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
+                || pausedMenu.getBoostWork() != 800) {
+            throw helper.assertionException("Accelerator did not resume its saved boosted operation");
+        }
+        paused.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL));
+        tickAccelerator(helper, paused, pausedPos, 5);
+        paused.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL_BLOCK));
+        if (pausedMenu.getWorkProgress() != 0
+                || pausedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS) {
+            throw helper.assertionException("Accelerator did not reset progress when its input type changed");
+        }
+
+        BlockPos invalidPos = new BlockPos(4, 4, 0);
+        AcceleratorBlockEntity invalid = placeAccelerator(
+                helper, invalidPos, new ItemStack(Items.DIRT), new ItemStack(Items.COAL));
+        AcceleratorMenu invalidMenu = createAcceleratorMenu(helper, invalid);
+        tickAccelerator(helper, invalid, invalidPos, 20);
+        if (invalidMenu.getWorkProgress() != 0 || invalidMenu.getBoostWork() != 0
+                || invalid.getItem(AcceleratorMenu.FUEL_SLOT).getCount() != 1
+                || !invalid.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Accelerator processed an unsupported input or consumed ordinary fuel");
+        }
+
+        acceleratorBoostCapacities(helper);
+        helper.succeed();
+    }
+
+    private static void acceleratorBoostCapacities(GameTestHelper helper) {
+        BlockPos fastCoalPos = new BlockPos(0, 8, 0);
+        AcceleratorBlockEntity fastCoal = placeAccelerator(
+                helper, fastCoalPos, new ItemStack(Items.COAL, 10),
+                new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        AcceleratorMenu fastCoalMenu = createAcceleratorMenu(helper, fastCoal);
+        tickAccelerator(helper, fastCoal, fastCoalPos, 305);
+        if (fastCoal.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 8) {
+            throw helper.assertionException("Fast Coal completed its ninth coal conversion too early");
+        }
+        tickAccelerator(helper, fastCoal, fastCoalPos);
+        if (fastCoal.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 9
+                || fastCoal.getItem(AcceleratorMenu.INPUT_SLOT).getCount() != 1
+                || fastCoalMenu.getBoostWork() != 0
+                || !fastCoal.getItem(AcceleratorMenu.FUEL_SLOT).isEmpty()) {
+            throw helper.assertionException("Fast Coal did not boost exactly nine coal conversions");
+        }
+        tickAccelerator(helper, fastCoal, fastCoalPos);
+        if (fastCoal.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 9
+                || fastCoalMenu.getWorkProgress() != 1) {
+            throw helper.assertionException("Accelerator did not return to normal speed after Fast Coal expired");
+        }
+
+        BlockPos fastCoalBlockPos = new BlockPos(4, 8, 0);
+        AcceleratorBlockEntity fastCoalBlock = placeAccelerator(
+                helper, fastCoalBlockPos, new ItemStack(Items.COAL, 11),
+                new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()));
+        AcceleratorMenu fastCoalBlockMenu = createAcceleratorMenu(helper, fastCoalBlock);
+        tickAccelerator(helper, fastCoalBlock, fastCoalBlockPos, 340);
+        if (fastCoalBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 10
+                || fastCoalBlock.getItem(AcceleratorMenu.INPUT_SLOT).getCount() != 1
+                || fastCoalBlockMenu.getBoostWork() != 0) {
+            throw helper.assertionException("Block of Fast Coal did not boost exactly ten coal conversions");
+        }
+
+        BlockPos boostedBlockPos = new BlockPos(8, 8, 0);
+        AcceleratorBlockEntity boostedBlock = placeAccelerator(
+                helper, boostedBlockPos, new ItemStack(Items.COAL_BLOCK),
+                new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        AcceleratorMenu boostedBlockMenu = createAcceleratorMenu(helper, boostedBlock);
+        tickAccelerator(helper, boostedBlock, boostedBlockPos, 299);
+        if (!boostedBlock.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Fast Coal converted a coal block before 300 boosted ticks");
+        }
+        tickAccelerator(helper, boostedBlock, boostedBlockPos);
+        if (!boostedBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
+                || boostedBlockMenu.getBoostWork() != 0) {
+            throw helper.assertionException("Fast Coal did not complete exactly one boosted coal-block conversion");
+        }
+
+        BlockPos boostedByBlockPos = new BlockPos(12, 8, 0);
+        AcceleratorBlockEntity boostedByBlock = placeAccelerator(
+                helper, boostedByBlockPos, new ItemStack(Items.COAL_BLOCK),
+                new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()));
+        AcceleratorMenu boostedByBlockMenu = createAcceleratorMenu(helper, boostedByBlock);
+        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 300);
+        if (!boostedByBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
+                || boostedByBlockMenu.getBoostWork() != 100) {
+            throw helper.assertionException("Block of Fast Coal did not boost one coal-block conversion");
+        }
+        boostedByBlock.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL));
+        boostedByBlock.setItem(AcceleratorMenu.RESULT_SLOT, ItemStack.EMPTY);
+        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 34);
+        if (!boostedByBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
+                || boostedByBlockMenu.getBoostWork() != 0) {
+            throw helper.assertionException("Block of Fast Coal did not retain its remaining boosted work");
+        }
+    }
+
     private static void fortuneIncreasesBonusDropChance(GameTestHelper helper) {
         float[] expectedChances = {0.10F, 0.15F, 0.20F, 0.25F};
         for (int fortuneLevel = 0; fortuneLevel < expectedChances.length; fortuneLevel++) {
@@ -707,6 +903,40 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Nonstandard Fortune levels did not cap the bonus-drop chance at 100%");
         }
         helper.succeed();
+    }
+
+    private static AcceleratorBlockEntity placeAccelerator(
+            GameTestHelper helper, BlockPos relativePos, ItemStack input, ItemStack fuel) {
+        helper.setBlock(relativePos, FastFurnaceV2.ACCELERATOR.get());
+        helper.setBlock(relativePos.above(), Blocks.STONE);
+        helper.setBlock(relativePos.below(), Blocks.STONE);
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            helper.setBlock(relativePos.relative(direction), Blocks.LAVA);
+        }
+        AcceleratorBlockEntity accelerator = helper.getBlockEntity(relativePos, AcceleratorBlockEntity.class);
+        accelerator.setItem(AcceleratorMenu.INPUT_SLOT, input);
+        accelerator.setItem(AcceleratorMenu.FUEL_SLOT, fuel);
+        return accelerator;
+    }
+
+    private static AcceleratorMenu createAcceleratorMenu(
+            GameTestHelper helper, AcceleratorBlockEntity accelerator) {
+        return (AcceleratorMenu) accelerator.createMenu(
+                0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
+    }
+
+    private static void tickAccelerator(
+            GameTestHelper helper, AcceleratorBlockEntity accelerator, BlockPos relativePos) {
+        BlockPos pos = helper.absolutePos(relativePos);
+        AcceleratorBlockEntity.serverTick(
+                helper.getLevel(), pos, helper.getLevel().getBlockState(pos), accelerator);
+    }
+
+    private static void tickAccelerator(
+            GameTestHelper helper, AcceleratorBlockEntity accelerator, BlockPos relativePos, int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            tickAccelerator(helper, accelerator, relativePos);
+        }
     }
 
     private static FastFurnaceBlockEntity placeCrusher(GameTestHelper helper, BlockPos relativePos) {

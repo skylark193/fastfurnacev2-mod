@@ -51,6 +51,14 @@ public class FastFurnaceV2 {
             .requiresCorrectToolForDrops()
             .strength(5.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_COAL_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("fast_coal_block", FAST_COAL_BLOCK);
+    public static final DeferredBlock<AcceleratorBlock> ACCELERATOR = BLOCKS.registerBlock(
+            "accelerator", AcceleratorBlock::new, properties -> properties
+                    .mapColor(MapColor.STONE)
+                    .instrument(NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops()
+                    .strength(3.5F));
+    public static final DeferredItem<BlockItem> ACCELERATOR_ITEM =
+            ITEMS.registerSimpleBlockItem("accelerator", ACCELERATOR);
 
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = registerFurnace(FastFurnaceTier.FAST);
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
@@ -81,11 +89,16 @@ public class FastFurnaceV2 {
                     IRON_FAST_CRUSHER.get(),
                     GOLD_FAST_CRUSHER.get(),
                     DIAMOND_FAST_CRUSHER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AcceleratorBlockEntity>> ACCELERATOR_BLOCK_ENTITY =
+            BLOCK_ENTITIES.register("accelerator", () -> new BlockEntityType<>(
+                    AcceleratorBlockEntity::new, ACCELERATOR.get()));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.FAST);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> IRON_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.IRON);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> GOLD_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.GOLD);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> DIAMOND_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.DIAMOND);
+    public static final DeferredHolder<MenuType<?>, MenuType<AcceleratorMenu>> ACCELERATOR_MENU = MENUS.register(
+            "accelerator", () -> new MenuType<>(AcceleratorMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FAST_FURNACE_V2_TAB = CREATIVE_MODE_TABS.register("fast_furnace_v2_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.fastfurnacev2"))
@@ -94,6 +107,7 @@ public class FastFurnaceV2 {
                 output.accept(FAST_COBBLESTONE_ITEM.get());
                 output.accept(FAST_COAL.get());
                 output.accept(FAST_COAL_BLOCK_ITEM.get());
+                output.accept(ACCELERATOR_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
                 }
@@ -208,6 +222,7 @@ public class FastFurnaceV2 {
             CrushedOres.addCreative(event);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
+            event.accept(ACCELERATOR_ITEM);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 event.accept(getFurnaceItem(tier));
             }

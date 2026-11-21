@@ -10,7 +10,7 @@ The lava-vein generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, coal block, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_block.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -70,6 +70,26 @@ macOS/Linux:
 ```
 
 This writes the animated block texture and its `.png.mcmeta` metadata. The block and item definitions reference the same `cube_all` block model automatically.
+
+## Regenerate Accelerator Textures
+
+The Accelerator uses seed **418** for its smooth-stone side/top and all eleven front stages. Reusing the seed gives the fronts the same animated vein layout as the body. The front generator loads the lava generator directly from its sibling file so it also works under Python's isolated `-I` mode.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\smooth_stone.png --output src\main\resources\assets\fastfurnacev2\textures\block\accelerator.png --seed 418 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_accelerator_front_texture.py --input tools\texture_sources\smooth_stone.png --output-prefix src\main\resources\assets\fastfurnacev2\textures\block\accelerator_front_ --seed 418 --frames 8 --frame-time 2 --veins 2
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/smooth_stone.png --output src/main/resources/assets/fastfurnacev2/textures/block/accelerator.png --seed 418 --frames 8 --frame-time 2 --veins 2
+.venv/bin/python -I tools/generate_accelerator_front_texture.py --input tools/texture_sources/smooth_stone.png --output-prefix src/main/resources/assets/fastfurnacev2/textures/block/accelerator_front_ --seed 418 --frames 8 --frame-time 2 --veins 2
+```
+
+The first command writes the eight-frame body texture. The second writes `accelerator_front_0.png` through `accelerator_front_10.png`, each with eight frames and sibling animation metadata. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state.
 
 ## Regenerate Fast Crusher Sides and Bottom
 
@@ -180,4 +200,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
