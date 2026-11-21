@@ -73,23 +73,23 @@ This writes the animated block texture and its `.png.mcmeta` metadata. The block
 
 ## Regenerate Accelerator Textures
 
-The Accelerator uses seed **418** for its smooth-stone side/top and all eleven front stages. Reusing the seed gives the fronts the same animated vein layout as the body. The front generator loads the lava generator directly from its sibling file so it also works under Python's isolated `-I` mode.
+The Accelerator uses seed **418** for its smooth-stone body and all eleven top stages. Reusing the seed gives the tops the same animated vein layout as the body. The top generator loads the lava generator directly from its sibling file so it also works under Python's isolated `-I` mode.
 
 Windows:
 
 ```bash
 .venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\smooth_stone.png --output src\main\resources\assets\fastfurnacev2\textures\block\accelerator.png --seed 418 --frames 8 --frame-time 2 --veins 2
-.venv\Scripts\python -I tools\generate_accelerator_front_texture.py --input tools\texture_sources\smooth_stone.png --output-prefix src\main\resources\assets\fastfurnacev2\textures\block\accelerator_front_ --seed 418 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_accelerator_top_texture.py --input tools\texture_sources\smooth_stone.png --output-prefix src\main\resources\assets\fastfurnacev2\textures\block\accelerator_top_ --seed 418 --frames 8 --frame-time 2 --veins 2
 ```
 
 macOS/Linux:
 
 ```bash
 .venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/smooth_stone.png --output src/main/resources/assets/fastfurnacev2/textures/block/accelerator.png --seed 418 --frames 8 --frame-time 2 --veins 2
-.venv/bin/python -I tools/generate_accelerator_front_texture.py --input tools/texture_sources/smooth_stone.png --output-prefix src/main/resources/assets/fastfurnacev2/textures/block/accelerator_front_ --seed 418 --frames 8 --frame-time 2 --veins 2
+.venv/bin/python -I tools/generate_accelerator_top_texture.py --input tools/texture_sources/smooth_stone.png --output-prefix src/main/resources/assets/fastfurnacev2/textures/block/accelerator_top_ --seed 418 --frames 8 --frame-time 2 --veins 2
 ```
 
-The first command writes the eight-frame body texture. The second writes `accelerator_front_0.png` through `accelerator_front_10.png`, each with eight frames and sibling animation metadata. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state.
+The first command writes the eight-frame body texture. The second writes `accelerator_top_0.png` through `accelerator_top_10.png`, each with eight frames and sibling animation metadata. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state. Each model puts its stage texture on the top face only and retains the body texture on the front, sides, and bottom.
 
 ## Regenerate Fast Crusher Sides and Bottom
 

@@ -1,8 +1,9 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/orientable_with_bottom",
   "textures": {
-    "front": "fastfurnacev2:block/accelerator_front_10",
+    "front": "fastfurnacev2:block/accelerator",
     "side": "fastfurnacev2:block/accelerator",
-    "top": "fastfurnacev2:block/accelerator"
+    "top": "fastfurnacev2:block/accelerator_top_10",
+    "bottom": "fastfurnacev2:block/accelerator"
   }
 }

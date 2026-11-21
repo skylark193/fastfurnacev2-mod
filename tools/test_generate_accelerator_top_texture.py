@@ -3,14 +3,14 @@ import unittest
 
 from PIL import Image
 
-from generate_accelerator_front_texture import (
+from generate_accelerator_top_texture import (
     bolt_geometry,
     filled_bolt_points,
-    generate_front_textures,
+    generate_top_textures,
 )
 
 
-class AcceleratorFrontTextureGeneratorTests(unittest.TestCase):
+class AcceleratorTopTextureGeneratorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         source = Path(__file__).parent / "texture_sources" / "smooth_stone.png"
@@ -18,7 +18,7 @@ class AcceleratorFrontTextureGeneratorTests(unittest.TestCase):
             cls.source = image.convert("RGBA")
 
     def generate(self, frames: int = 8) -> list[list[Image.Image]]:
-        return generate_front_textures(self.source, frames, 2, 22, 5, 418)
+        return generate_top_textures(self.source, frames, 2, 22, 5, 418)
 
     def test_generation_is_deterministic_and_animated(self) -> None:
         first = self.generate()
@@ -61,7 +61,7 @@ class AcceleratorFrontTextureGeneratorTests(unittest.TestCase):
         self.assertEqual(self.source.tobytes(), original)
         self.assertTrue(all(frame.size == self.source.size for stage in stages for frame in stage))
         with self.assertRaises(ValueError):
-            generate_front_textures(Image.new("RGBA", (16, 32)), 2, 2, 22, 5, 418)
+            generate_top_textures(Image.new("RGBA", (16, 32)), 2, 2, 22, 5, 418)
 
 
 if __name__ == "__main__":

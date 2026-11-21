@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate animated Accelerator fronts with a bottom-up lightning-bolt fill."""
+"""Generate animated Accelerator tops with a bottom-up lightning-bolt fill."""
 
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ BOLT_POLYGON = ((9, 1), (4, 9), (8, 9), (6, 15), (13, 6), (9, 6), (11, 1))
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="Square smooth-stone source PNG")
-    parser.add_argument("--output-prefix", required=True, type=Path, help="Output path ending in the front filename prefix")
+    parser.add_argument("--output-prefix", required=True, type=Path, help="Output path ending in the top filename prefix")
     parser.add_argument("--frames", type=positive_int, default=8, help="Animation frames (default: 8)")
     parser.add_argument("--frame-time", type=positive_int, default=2, help="Game ticks per frame (default: 2)")
     parser.add_argument("--seed", type=int, default=418, help="Lava layout seed (default: 418)")
@@ -92,7 +92,7 @@ def apply_bolt(base: Image.Image, level: int, max_level: int = 10) -> Image.Imag
     return frame
 
 
-def generate_front_textures(
+def generate_top_textures(
     base: Image.Image,
     frame_count: int,
     vein_count: int,
@@ -124,7 +124,7 @@ def main() -> None:
     size = base.width
     length = args.length or max(1, round(size * 1.4))
     branch_length = args.branch_length or max(1, size // 3)
-    stages = generate_front_textures(
+    stages = generate_top_textures(
         base,
         frame_count=args.frames,
         vein_count=args.veins,
