@@ -29,11 +29,11 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 ### Accelerator
 
-- Converts coal into Fast Coal in 100 ticks (5 seconds) and coal blocks into Blocks of Fast Coal in 900 ticks (45 seconds). It has no other processing recipes and currently has no crafting recipe.
+- Converts coal into Fast Coal in 400 ticks (20 seconds) and coal blocks into Blocks of Fast Coal in 3,600 ticks (180 seconds). It has no other processing recipes and currently has no crafting recipe.
 - Requires lava on all four horizontal sides. Source or flowing lava works, and no lava is required above or below. Missing lava pauses processing without losing progress or stored boost.
 - Runs at normal speed without fuel. Its fuel slot accepts only Fast Coal and Blocks of Fast Coal; ordinary furnace fuels are not accepted. Fuel is consumed only when valid work can proceed.
-- Fast Coal supplies 900 boosted work units, exactly nine coal conversions or one coal-block conversion. A Block of Fast Coal supplies 1,000 units, exactly ten coal conversions or one coal-block conversion with enough left over for one coal conversion.
-- Boosted work advances three units per tick instead of one. Coal therefore takes 34 ticks and a coal block takes 300 ticks (15 seconds). Work is clamped to the remaining recipe and boost, so partial final ticks do not waste fuel.
+- Fast Coal supplies 3,600 boosted work units, exactly nine coal conversions or one coal-block conversion. A Block of Fast Coal supplies 4,000 units, exactly ten coal conversions or one coal-block conversion with enough left over for one coal conversion.
+- Boosted work advances three units per tick instead of one. Coal therefore takes 134 ticks and a coal block takes 1,200 ticks (60 seconds). Work is clamped to the remaining recipe and boost, so partial final ticks do not waste fuel.
 - Missing lava and a blocked output pause processing without losing stored boost or recipe progress. Empty or unsupported input resets progress, as does changing between coal and coal blocks; stored boost survives these resets and is saved with the block.
 - Uses animated smooth stone with lava veins. Its top face has a lightning bolt that fills from bottom to top through eleven block-state stages as recipe progress advances; the front and other faces retain the smooth-stone body texture.
 - Requires a pickaxe, drops itself, preserves custom names, supports directional placement and comparator output, and appears in Functional Blocks and the mod's creative tab. Its furnace-style GUI has no ordinary smelting recipe book and includes an information fly-out for lava, boost, and recipe timing.

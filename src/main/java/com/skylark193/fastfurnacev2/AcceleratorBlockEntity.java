@@ -21,10 +21,10 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.Nullable;
 
 public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer {
-    public static final int COAL_RECIPE_TICKS = 100;
-    public static final int COAL_BLOCK_RECIPE_TICKS = 900;
-    public static final int FAST_COAL_BOOST_WORK = 900;
-    public static final int FAST_COAL_BLOCK_BOOST_WORK = 1000;
+    public static final int COAL_RECIPE_TICKS = 400;
+    public static final int COAL_BLOCK_RECIPE_TICKS = 3600;
+    public static final int FAST_COAL_BOOST_WORK = 3600;
+    public static final int FAST_COAL_BLOCK_BOOST_WORK = 4000;
     public static final int BOOSTED_WORK_PER_TICK = 3;
     public static final int REQUIRED_LAVA_SIDES = 4;
     private static final int[] INPUT_SLOTS = {AcceleratorMenu.INPUT_SLOT};

@@ -721,13 +721,13 @@ final class FastFurnaceGameTests {
             tickAccelerator(helper, normal, BlockPos.ZERO);
             if (tick < AcceleratorBlockEntity.COAL_RECIPE_TICKS
                     && !normal.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
-                throw helper.assertionException("Accelerator converted coal before 100 ticks");
+                throw helper.assertionException("Accelerator converted coal before 400 ticks");
             }
-            if (tick == 50 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
+            if (tick == 200 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
                     .getValue(AcceleratorBlock.BOLT_LEVEL) != 5) {
                 throw helper.assertionException("Accelerator lightning bolt was not half full at 50% progress");
             }
-            if (tick == 99 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
+            if (tick == 399 && level.getBlockState(helper.absolutePos(BlockPos.ZERO))
                     .getValue(AcceleratorBlock.BOLT_LEVEL) != 10) {
                 throw helper.assertionException("Accelerator lightning bolt was not full near completion");
             }
@@ -738,7 +738,7 @@ final class FastFurnaceGameTests {
                 || normalMenu.getLavaSideCount() != AcceleratorBlockEntity.REQUIRED_LAVA_SIDES
                 || level.getBlockState(helper.absolutePos(BlockPos.ZERO))
                         .getValue(AcceleratorBlock.BOLT_LEVEL) != 0) {
-            throw helper.assertionException("Accelerator did not convert coal in five seconds without fuel");
+            throw helper.assertionException("Accelerator did not convert coal in twenty seconds without fuel");
         }
 
         BlockPos coalBlockPos = new BlockPos(4, 0, 0);
@@ -746,12 +746,12 @@ final class FastFurnaceGameTests {
                 helper, coalBlockPos, new ItemStack(Items.COAL_BLOCK), ItemStack.EMPTY);
         tickAccelerator(helper, coalBlock, coalBlockPos, AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS - 1);
         if (!coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
-            throw helper.assertionException("Accelerator converted a coal block before 900 ticks");
+            throw helper.assertionException("Accelerator converted a coal block before 3600 ticks");
         }
         tickAccelerator(helper, coalBlock, coalBlockPos);
         if (!coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
                 || coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 1) {
-            throw helper.assertionException("Accelerator did not convert a coal block in 45 seconds");
+            throw helper.assertionException("Accelerator did not convert a coal block in 180 seconds");
         }
 
         BlockPos missingLavaPos = new BlockPos(8, 0, 0);
@@ -767,9 +767,9 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Accelerator processed or consumed boost without all four lava sides");
         }
         helper.setBlock(missingLavaPos.north(), Blocks.LAVA);
-        tickAccelerator(helper, missingLava, missingLavaPos, 34);
+        tickAccelerator(helper, missingLava, missingLavaPos, 134);
         if (!missingLava.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
-                || missingLavaMenu.getBoostWork() != 800) {
+                || missingLavaMenu.getBoostWork() != 3200) {
             throw helper.assertionException("Accelerator did not resume at triple speed after lava was restored");
         }
 
@@ -793,9 +793,9 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Accelerator lost progress or boost while its output was blocked");
         }
         paused.setItem(AcceleratorMenu.RESULT_SLOT, ItemStack.EMPTY);
-        tickAccelerator(helper, paused, pausedPos, 24);
+        tickAccelerator(helper, paused, pausedPos, 124);
         if (!paused.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
-                || pausedMenu.getBoostWork() != 800) {
+                || pausedMenu.getBoostWork() != 3200) {
             throw helper.assertionException("Accelerator did not resume its saved boosted operation");
         }
         paused.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL));
@@ -827,7 +827,7 @@ final class FastFurnaceGameTests {
                 helper, fastCoalPos, new ItemStack(Items.COAL, 10),
                 new ItemStack(FastFurnaceV2.FAST_COAL.get()));
         AcceleratorMenu fastCoalMenu = createAcceleratorMenu(helper, fastCoal);
-        tickAccelerator(helper, fastCoal, fastCoalPos, 305);
+        tickAccelerator(helper, fastCoal, fastCoalPos, 1205);
         if (fastCoal.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 8) {
             throw helper.assertionException("Fast Coal completed its ninth coal conversion too early");
         }
@@ -849,7 +849,7 @@ final class FastFurnaceGameTests {
                 helper, fastCoalBlockPos, new ItemStack(Items.COAL, 11),
                 new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()));
         AcceleratorMenu fastCoalBlockMenu = createAcceleratorMenu(helper, fastCoalBlock);
-        tickAccelerator(helper, fastCoalBlock, fastCoalBlockPos, 340);
+        tickAccelerator(helper, fastCoalBlock, fastCoalBlockPos, 1340);
         if (fastCoalBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 10
                 || fastCoalBlock.getItem(AcceleratorMenu.INPUT_SLOT).getCount() != 1
                 || fastCoalBlockMenu.getBoostWork() != 0) {
@@ -861,9 +861,9 @@ final class FastFurnaceGameTests {
                 helper, boostedBlockPos, new ItemStack(Items.COAL_BLOCK),
                 new ItemStack(FastFurnaceV2.FAST_COAL.get()));
         AcceleratorMenu boostedBlockMenu = createAcceleratorMenu(helper, boostedBlock);
-        tickAccelerator(helper, boostedBlock, boostedBlockPos, 299);
+        tickAccelerator(helper, boostedBlock, boostedBlockPos, 1199);
         if (!boostedBlock.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
-            throw helper.assertionException("Fast Coal converted a coal block before 300 boosted ticks");
+            throw helper.assertionException("Fast Coal converted a coal block before 1200 boosted ticks");
         }
         tickAccelerator(helper, boostedBlock, boostedBlockPos);
         if (!boostedBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
@@ -876,14 +876,14 @@ final class FastFurnaceGameTests {
                 helper, boostedByBlockPos, new ItemStack(Items.COAL_BLOCK),
                 new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()));
         AcceleratorMenu boostedByBlockMenu = createAcceleratorMenu(helper, boostedByBlock);
-        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 300);
+        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 1200);
         if (!boostedByBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
-                || boostedByBlockMenu.getBoostWork() != 100) {
+                || boostedByBlockMenu.getBoostWork() != 400) {
             throw helper.assertionException("Block of Fast Coal did not boost one coal-block conversion");
         }
         boostedByBlock.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL));
         boostedByBlock.setItem(AcceleratorMenu.RESULT_SLOT, ItemStack.EMPTY);
-        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 34);
+        tickAccelerator(helper, boostedByBlock, boostedByBlockPos, 134);
         if (!boostedByBlock.getItem(AcceleratorMenu.RESULT_SLOT).is(FastFurnaceV2.FAST_COAL.get())
                 || boostedByBlockMenu.getBoostWork() != 0) {
             throw helper.assertionException("Block of Fast Coal did not retain its remaining boosted work");
