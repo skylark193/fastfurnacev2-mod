@@ -1,10 +1,13 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
+import com.skylark193.fastfurnacev2.AcceleratorBlockEntity;
+import com.skylark193.fastfurnacev2.AcceleratorMenu;
 import com.skylark193.fastfurnacev2.CrushedOres;
 import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
+import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
 import com.skylark193.fastfurnacev2.client.DiamondFastFurnaceScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
 import com.skylark193.fastfurnacev2.client.GoldFastFurnaceScreen;
@@ -38,6 +41,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.FuelValues;
 
@@ -53,7 +57,9 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(
-                new FastCrusherCategory(registration.getJeiHelpers().getGuiHelper()));
+                new FastCrusherCategory(registration.getJeiHelpers().getGuiHelper()),
+                new AcceleratorCategory(registration.getJeiHelpers().getGuiHelper()),
+                new AcceleratorFuelCategory(registration.getJeiHelpers().getGuiHelper()));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addRecipeCategories(
                     new FastFurnaceFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier));
@@ -71,6 +77,9 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.FAST_COAL_BLOCK.get(),
                 Component.translatable("jei.fastfurnacev2.fast_coal_block"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.ACCELERATOR.get(),
+                Component.translatable("jei.fastfurnacev2.accelerator_info"));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addIngredientInfo(
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
@@ -81,6 +90,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         }
 
         registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
+        registration.addRecipes(AcceleratorCategory.getAcceleratorRecipeType(), createAcceleratorRecipes());
+        registration.addRecipes(AcceleratorFuelCategory.getAcceleratorFuelRecipeType(), createAcceleratorFuels());
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
@@ -124,8 +135,32 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         return recipes;
     }
 
+    private static List<AcceleratorRecipe> createAcceleratorRecipes() {
+        return List.of(
+                new AcceleratorRecipe(
+                        new ItemStack(Items.COAL),
+                        new ItemStack(FastFurnaceV2.FAST_COAL.get()),
+                        AcceleratorBlockEntity.COAL_RECIPE_TICKS),
+                new AcceleratorRecipe(
+                        new ItemStack(Items.COAL_BLOCK),
+                        new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK.get()),
+                        AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS));
+    }
+
+    private static List<AcceleratorFuelRecipe> createAcceleratorFuels() {
+        ItemStack fastCoal = new ItemStack(FastFurnaceV2.FAST_COAL.get());
+        ItemStack fastCoalBlock = new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK.get());
+        return List.of(
+                new AcceleratorFuelRecipe(fastCoal, AcceleratorBlockEntity.getBoostWork(fastCoal)),
+                new AcceleratorFuelRecipe(fastCoalBlock, AcceleratorBlockEntity.getBoostWork(fastCoalBlock)));
+    }
+
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
+        registration.addCraftingStation(
+                AcceleratorCategory.getAcceleratorRecipeType(), FastFurnaceV2.ACCELERATOR.get());
+        registration.addCraftingStation(
+                AcceleratorFuelCategory.getAcceleratorFuelRecipeType(), FastFurnaceV2.ACCELERATOR.get());
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addCraftingStation(RecipeTypes.SMELTING, FastFurnaceV2.getFurnaceBlock(tier).get());
             registration.addCraftingStation(
@@ -139,6 +174,22 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
+        registration.addRecipeTransferHandler(
+                AcceleratorMenu.class,
+                FastFurnaceV2.ACCELERATOR_MENU.get(),
+                AcceleratorCategory.getAcceleratorRecipeType(),
+                AcceleratorMenu.INPUT_SLOT,
+                1,
+                AcceleratorMenu.SLOT_COUNT,
+                36);
+        registration.addRecipeTransferHandler(
+                AcceleratorMenu.class,
+                FastFurnaceV2.ACCELERATOR_MENU.get(),
+                AcceleratorFuelCategory.getAcceleratorFuelRecipeType(),
+                AcceleratorMenu.FUEL_SLOT,
+                1,
+                AcceleratorMenu.SLOT_COUNT,
+                36);
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registerSmeltingTransfer(registration, tier);
             registerFilteredTransfer(
@@ -159,6 +210,22 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        registration.addGuiContainerHandler(AcceleratorScreen.class, new IGuiContainerHandler<AcceleratorScreen>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(AcceleratorScreen screen) {
+                return screen.getJeiExtraAreas();
+            }
+
+            @Override
+            public List<IGuiClickableArea> getGuiClickableAreas(
+                    AcceleratorScreen screen, double guiMouseX, double guiMouseY) {
+                return List.of(
+                        IGuiClickableArea.createBasic(
+                                78, 32, 28, 23, AcceleratorCategory.getAcceleratorRecipeType()),
+                        IGuiClickableArea.createBasic(
+                                56, 36, 14, 14, AcceleratorFuelCategory.getAcceleratorFuelRecipeType()));
+            }
+        });
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registerGuiHandlers(registration, getScreenClass(tier), FastFurnaceFuelCategory.getRecipeType(tier));
         }

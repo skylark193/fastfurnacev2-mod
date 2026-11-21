@@ -94,11 +94,13 @@ Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast C
 With a compatible JEI release installed:
 
 - Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Every crusher's progress arrow opens the dedicated crushing category, and each is a catalyst for crushing and its own tier's fuel category, not smelting.
+- The Accelerator's progress arrow opens its coal and coal-block conversions, while its fire icon opens the accepted Fast Coal boosts and explains their triple speed, exact boosted work, and conversion capacities. The Accelerator is a catalyst for both categories.
+- Looking up Fast Coal or a Block of Fast Coal shows its Accelerator conversion recipe alongside its other crafting sources. The conversion category also displays normal and boosted durations and the four-side lava requirement.
 - The crushing category contains one recipe per discovered vanilla or modded raw ore, showing two of its selected generated or external crushed item and the tier-dependent 10–25% chance for four. Looking up that crushed item shows how it is made, while looking up a raw ore shows its crushing use.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
-- Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, and fuel insertion for every machine. Smelting transfers and click areas remain disabled for crushers.
+- Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, Accelerator conversions, and fuel or boost insertion for every machine. Smelting transfers and click areas remain disabled for crushers.
 - Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's raw-ore crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
-- JEI reserves space around the furnace information fly-out.
+- JEI reserves space around the furnace and Accelerator information fly-outs.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.
 

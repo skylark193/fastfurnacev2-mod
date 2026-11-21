@@ -2,9 +2,11 @@ package com.skylark193.fastfurnacev2.client;
 
 import com.skylark193.fastfurnacev2.AcceleratorBlockEntity;
 import com.skylark193.fastfurnacev2.AcceleratorMenu;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -46,6 +48,17 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
     protected void init() {
         super.init();
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
+    }
+
+    public List<Rect2i> getJeiExtraAreas() {
+        if (!this.infoVisible) {
+            return List.of();
+        }
+        return List.of(new Rect2i(
+                this.leftPos + this.imageWidth + 3,
+                this.topPos + INFO_BUTTON_Y - 1,
+                INFO_PANEL_WIDTH + 2,
+                INFO_PANEL_HEIGHT + 2));
     }
 
     @Override

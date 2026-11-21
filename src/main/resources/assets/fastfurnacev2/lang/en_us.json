@@ -30,6 +30,14 @@
   "gui.fastfurnacev2.accelerator.block_recipe": "Coal Block: 45 seconds",
   "gui.fastfurnacev2.accelerator.fast_coal_capacity": "Fast Coal: 9 coal / 1 block",
   "gui.fastfurnacev2.accelerator.fast_coal_block_capacity": "Fast Coal Block: 10 coal / 1 block",
+  "jei.fastfurnacev2.accelerator": "Accelerator Conversions",
+  "jei.fastfurnacev2.accelerator_fuel": "Accelerator Boosts",
+  "jei.fastfurnacev2.accelerator_duration": "%s ticks / %s boosted",
+  "jei.fastfurnacev2.accelerator_lava": "Lava on all 4 horizontal sides",
+  "jei.fastfurnacev2.accelerator_boost_speed": "3× processing speed",
+  "jei.fastfurnacev2.accelerator_boost_work": "%s boosted work units",
+  "jei.fastfurnacev2.accelerator_fast_coal_capacity": "9 coal or 1 coal block",
+  "jei.fastfurnacev2.accelerator_fast_coal_block_capacity": "10 coal or 1 block + 1 coal",
   "jei.fastfurnacev2.crushing": "Ore Crushing",
   "jei.fastfurnacev2.crushing_output_chance": "%s–%s%% chance for %s by crusher tier",
   "jei.fastfurnacev2.fast_furnace_fuel": "Fast Furnace Fuels",
@@ -45,6 +53,7 @@
   "jei.fastfurnacev2.gold_fast_crusher": "Crushes raw ore into two crushed ore at 250% speed (300% with Fast Coal), with a 20% chance for four. A blocked doubled result waits for room. Fuel duration is not doubled.",
   "jei.fastfurnacev2.diamond_fast_crusher": "Crushes raw ore into two crushed ore at 300% speed (350% with Fast Coal), with a 25% chance for four. A blocked doubled result waits for room. Fuel duration is not doubled.",
   "jei.fastfurnacev2.fast_cobblestone": "Mine stone with a correct tool and no Silk Touch: 10% chance of a bonus alongside normal drops, +5% per Fortune level. Also drops itself when mined with a pickaxe.",
-  "jei.fastfurnacev2.fast_coal": "Mine coal ore or deepslate coal ore with a correct tool and no Silk Touch: 10% chance of a bonus alongside normal drops, +5% per Fortune level. Burns like coal normally; in Fast Furnaces, lasts 50–125% longer and adds 50 percentage points to speed.",
-  "jei.fastfurnacev2.fast_coal_block": "Craft 9 Fast Coal into this block and unpack it back into 9. Burns like a coal block normally; receives Fast Coal bonuses in Fast Furnaces."
+  "jei.fastfurnacev2.fast_coal": "Mine coal ore or deepslate coal ore with a correct tool and no Silk Touch: 10% chance of a bonus alongside normal drops, +5% per Fortune level, or convert coal in an Accelerator. Burns like coal normally; in Fast Furnaces, lasts 50–125% longer and adds 50 percentage points to speed.",
+  "jei.fastfurnacev2.fast_coal_block": "Craft 9 Fast Coal into this block and unpack it back into 9, or convert a coal block in an Accelerator. Burns like a coal block normally; receives Fast Coal bonuses in Fast Furnaces.",
+  "jei.fastfurnacev2.accelerator_info": "Converts coal into Fast Coal and coal blocks into Blocks of Fast Coal. Requires lava on all four horizontal sides. Fast Coal and its block optionally triple processing speed."
 }
