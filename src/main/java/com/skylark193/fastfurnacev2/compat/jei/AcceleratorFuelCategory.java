@@ -67,10 +67,15 @@ final class AcceleratorFuelCategory implements IRecipeCategory<AcceleratorFuelRe
     public void createRecipeExtras(
             IRecipeExtrasBuilder builder, AcceleratorFuelRecipe recipe, IFocusGroup focuses) {
         builder.addAnimatedRecipeFlame(recipe.boostWork()).setPosition(1, 0);
-        addCenteredText(builder, Component.translatable("jei.fastfurnacev2.accelerator_boost_speed"), 0);
-        Component capacity = recipe.input().is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
-                ? Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_block_capacity")
-                : Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_capacity");
+        boolean extreme = FastFurnaceV2.isExtremeCoalFuel(recipe.input());
+        addCenteredText(builder, Component.translatable(extreme
+                ? "jei.fastfurnacev2.accelerator_extreme_boost_speed"
+                : "jei.fastfurnacev2.accelerator_boost_speed"), 0);
+        Component capacity = extreme
+                ? Component.translatable("jei.fastfurnacev2.accelerator_extreme_coal_capacity")
+                : recipe.input().is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
+                        ? Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_block_capacity")
+                        : Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_capacity");
         addCenteredText(builder, capacity, 16);
         addCenteredText(builder, Component.translatable(
                 "jei.fastfurnacev2.accelerator_boost_work", recipe.boostWork()), 32);

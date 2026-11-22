@@ -60,6 +60,10 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
         return this.data.get(DATA_FAST_COAL_ACTIVE) != 0;
     }
 
+    public boolean isExtremeCoalActive() {
+        return this.data.get(DATA_FAST_COAL_ACTIVE) == 2;
+    }
+
     public boolean isFastCrusher() {
         return this.data.get(DATA_FAST_CRUSHER) != 0;
     }

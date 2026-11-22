@@ -26,7 +26,14 @@ record AcceleratorRecipe(ItemStack input, ItemStack output, int workTicks) {
     }
 
     int boostedTicks() {
-        return (this.workTicks + AcceleratorBlockEntity.BOOSTED_WORK_PER_TICK - 1)
-                / AcceleratorBlockEntity.BOOSTED_WORK_PER_TICK;
+        return boostedTicks(AcceleratorBlockEntity.BOOSTED_WORK_PER_TICK);
+    }
+
+    int extremeBoostedTicks() {
+        return boostedTicks(AcceleratorBlockEntity.EXTREME_COAL_BOOSTED_WORK_PER_TICK);
+    }
+
+    private int boostedTicks(int workPerTick) {
+        return (this.workTicks + workPerTick - 1) / workPerTick;
     }
 }

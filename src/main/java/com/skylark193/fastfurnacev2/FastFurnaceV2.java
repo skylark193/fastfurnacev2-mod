@@ -1,5 +1,6 @@
 package com.skylark193.fastfurnacev2;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestInstance;
@@ -17,12 +18,14 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 @Mod(FastFurnaceV2.MODID)
 public class FastFurnaceV2 {
@@ -35,6 +38,8 @@ public class FastFurnaceV2 {
     public static final DeferredRegister<MapCodec<? extends GameTestInstance>> GAME_TEST_INSTANCE_TYPES =
             DeferredRegister.create(Registries.TEST_INSTANCE_TYPE, MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
 
     // Matches vanilla cobblestone's block properties, including hardness, blast resistance, and tool requirement.
     public static final DeferredBlock<Block> FAST_COBBLESTONE = BLOCKS.registerSimpleBlock("fast_cobblestone", properties -> properties
@@ -44,6 +49,16 @@ public class FastFurnaceV2 {
             .strength(2.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_COBBLESTONE_ITEM = ITEMS.registerSimpleBlockItem("fast_cobblestone", FAST_COBBLESTONE);
     public static final DeferredItem<Item> FAST_COAL = ITEMS.registerSimpleItem("fast_coal");
+    // Matches vanilla coal ore without copying its loot-table key or description ID.
+    public static final DeferredBlock<Block> EXTREME_COAL_ORE = BLOCKS.registerSimpleBlock(
+            "extreme_coal_ore", properties -> properties
+                    .mapColor(MapColor.STONE)
+                    .instrument(NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops()
+                    .strength(3.0F, 3.0F));
+    public static final DeferredItem<BlockItem> EXTREME_COAL_ORE_ITEM =
+            ITEMS.registerSimpleBlockItem("extreme_coal_ore", EXTREME_COAL_ORE);
+    public static final DeferredItem<Item> EXTREME_COAL = ITEMS.registerSimpleItem("extreme_coal");
     // Matches vanilla coal blocks without copying their loot-table key or description ID.
     public static final DeferredBlock<Block> FAST_COAL_BLOCK = BLOCKS.registerSimpleBlock("fast_coal_block", properties -> properties
             .mapColor(MapColor.COLOR_BLACK)
@@ -106,6 +121,8 @@ public class FastFurnaceV2 {
             .displayItems((parameters, output) -> {
                 output.accept(FAST_COBBLESTONE_ITEM.get());
                 output.accept(FAST_COAL.get());
+                output.accept(EXTREME_COAL_ORE_ITEM.get());
+                output.accept(EXTREME_COAL.get());
                 output.accept(FAST_COAL_BLOCK_ITEM.get());
                 output.accept(ACCELERATOR_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -121,6 +138,10 @@ public class FastFurnaceV2 {
     public static final DeferredHolder<MapCodec<? extends GameTestInstance>, MapCodec<FastFurnaceGameTests.DirectGameTestInstance>>
             GAME_TEST_INSTANCE = GAME_TEST_INSTANCE_TYPES.register(
                     "function", () -> FastFurnaceGameTests.DirectGameTestInstance.CODEC);
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> EXTREME_COAL_CHUNK_PROCESSED =
+            ATTACHMENT_TYPES.register("extreme_coal_chunk_processed", () -> AttachmentType.builder(() -> false)
+                    .serialize(Codec.BOOL.fieldOf("processed"))
+                    .build());
 
     public FastFurnaceV2(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);
@@ -129,6 +150,7 @@ public class FastFurnaceV2 {
         MENUS.register(modEventBus);
         GAME_TEST_INSTANCE_TYPES.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
+        ATTACHMENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
         modEventBus.addListener(CrushedOres::registerDiscovery);
@@ -137,10 +159,15 @@ public class FastFurnaceV2 {
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
         NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
         NeoForge.EVENT_BUS.addListener(CrushedOres::generateRecipes);
+        NeoForge.EVENT_BUS.addListener(ExtremeCoalOreGeneration::onChunkLoad);
     }
 
     public static boolean isFastCoalFuel(ItemStack stack) {
         return stack.is(FAST_COAL.get()) || stack.is(FAST_COAL_BLOCK_ITEM.get());
+    }
+
+    public static boolean isExtremeCoalFuel(ItemStack stack) {
+        return stack.is(EXTREME_COAL.get());
     }
 
     public static DeferredBlock<FastFurnaceBlock> getFurnaceBlock(FastFurnaceTier tier) {
@@ -217,8 +244,12 @@ public class FastFurnaceV2 {
             event.accept(FAST_COBBLESTONE_ITEM);
             event.accept(FAST_COAL_BLOCK_ITEM);
         }
+        if (event.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
+            event.accept(EXTREME_COAL_ORE_ITEM);
+        }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(FAST_COAL);
+            event.accept(EXTREME_COAL);
             CrushedOres.addCreative(event);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {

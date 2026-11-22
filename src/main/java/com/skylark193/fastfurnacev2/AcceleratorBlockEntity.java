@@ -25,7 +25,9 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     public static final int COAL_BLOCK_RECIPE_TICKS = 3600;
     public static final int FAST_COAL_BOOST_WORK = 3600;
     public static final int FAST_COAL_BLOCK_BOOST_WORK = 4000;
+    public static final int EXTREME_COAL_BOOST_WORK = FAST_COAL_BOOST_WORK * 2;
     public static final int BOOSTED_WORK_PER_TICK = 3;
+    public static final int EXTREME_COAL_BOOSTED_WORK_PER_TICK = BOOSTED_WORK_PER_TICK * 2 - 1;
     public static final int REQUIRED_LAVA_SIDES = 4;
     private static final int[] INPUT_SLOTS = {AcceleratorMenu.INPUT_SLOT};
     private static final int[] FUEL_SLOTS = {AcceleratorMenu.FUEL_SLOT};
@@ -40,6 +42,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     private int recipeTicks;
     private int boostWork;
     private int totalBoostWork;
+    private boolean extremeBoost;
     private int lavaSideCount;
     private boolean processing;
 
@@ -53,6 +56,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                 case 3 -> totalBoostWork;
                 case 4 -> lavaSideCount;
                 case 5 -> processing ? 1 : 0;
+                case 6 -> extremeBoost ? 1 : 0;
                 default -> throw new IllegalArgumentException("Invalid Accelerator data index: " + index);
             };
         }
@@ -66,6 +70,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                 case 3 -> totalBoostWork = value;
                 case 4 -> lavaSideCount = value;
                 case 5 -> processing = value != 0;
+                case 6 -> extremeBoost = value != 0;
                 default -> throw new IllegalArgumentException("Invalid Accelerator data index: " + index);
             }
         }
@@ -85,10 +90,13 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     }
 
     public static boolean isAcceleratorFuel(ItemStack stack) {
-        return FastFurnaceV2.isFastCoalFuel(stack);
+        return FastFurnaceV2.isFastCoalFuel(stack) || FastFurnaceV2.isExtremeCoalFuel(stack);
     }
 
     public static int getBoostWork(ItemStack fuel) {
+        if (FastFurnaceV2.isExtremeCoalFuel(fuel)) {
+            return EXTREME_COAL_BOOST_WORK;
+        }
         if (fuel.is(FastFurnaceV2.FAST_COAL.get())) {
             return FAST_COAL_BOOST_WORK;
         }
@@ -96,6 +104,15 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
             return FAST_COAL_BLOCK_BOOST_WORK;
         }
         return 0;
+    }
+
+    public static int getBoostWorkPerTick(ItemStack fuel) {
+        if (!isAcceleratorFuel(fuel)) {
+            return 0;
+        }
+        return FastFurnaceV2.isExtremeCoalFuel(fuel)
+                ? EXTREME_COAL_BOOSTED_WORK_PER_TICK
+                : BOOSTED_WORK_PER_TICK;
     }
 
     @Override
@@ -131,6 +148,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         this.recipeTicks = input.getIntOr("accelerator_recipe_ticks", 0);
         this.boostWork = input.getIntOr("accelerator_boost_work", 0);
         this.totalBoostWork = input.getIntOr("accelerator_total_boost_work", 0);
+        this.extremeBoost = this.boostWork > 0 && input.getBooleanOr("accelerator_extreme_boost", false);
         this.lavaSideCount = 0;
         this.processing = false;
     }
@@ -143,6 +161,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         output.putInt("accelerator_recipe_ticks", this.recipeTicks);
         output.putInt("accelerator_boost_work", this.boostWork);
         output.putInt("accelerator_total_boost_work", this.totalBoostWork);
+        output.putBoolean("accelerator_extreme_boost", this.extremeBoost);
     }
 
     @Override
@@ -203,11 +222,13 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
             }
             if (entity.lavaSideCount == REQUIRED_LAVA_SIDES && canAcceptResult(entity.items, recipe.result())) {
                 if (entity.boostWork == 0) {
+                    entity.extremeBoost = false;
                     ItemStack fuel = entity.getItem(AcceleratorMenu.FUEL_SLOT);
                     int fuelWork = getBoostWork(fuel);
                     if (fuelWork > 0) {
                         entity.boostWork = fuelWork;
                         entity.totalBoostWork = fuelWork;
+                        entity.extremeBoost = FastFurnaceV2.isExtremeCoalFuel(fuel);
                         fuel.shrink(1);
                         if (fuel.isEmpty()) {
                             entity.items.set(AcceleratorMenu.FUEL_SLOT, ItemStack.EMPTY);
@@ -217,12 +238,17 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                 }
 
                 int remainingRecipeWork = recipe.ticks() - entity.workProgress;
+                int boostedWorkPerTick = entity.extremeBoost
+                        ? EXTREME_COAL_BOOSTED_WORK_PER_TICK : BOOSTED_WORK_PER_TICK;
                 int step = Math.min(
-                        entity.boostWork > 0 ? BOOSTED_WORK_PER_TICK : 1,
+                        entity.boostWork > 0 ? boostedWorkPerTick : 1,
                         remainingRecipeWork);
                 if (entity.boostWork > 0) {
                     step = Math.min(step, entity.boostWork);
                     entity.boostWork -= step;
+                    if (entity.boostWork == 0) {
+                        entity.extremeBoost = false;
+                    }
                 }
                 entity.workProgress += step;
                 entity.processing = step > 0;

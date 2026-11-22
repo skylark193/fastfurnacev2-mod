@@ -10,7 +10,7 @@ The lava-vein generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -54,6 +54,26 @@ macOS/Linux:
 ```
 
 This writes the animated item texture and its `.png.mcmeta` metadata. The existing Fast Coal item model references the texture automatically.
+
+## Regenerate Extreme Coal Ore and Extreme Coal
+
+Extreme Coal Ore uses the standard lava-vein generator with seed **419**. Extreme Coal uses seed **420** and a separate generator that preserves the coal silhouette and alpha channel while replacing every visible pixel with an animated lava-palette color. It loads the shared palette directly from the sibling lava generator so it works under Python's isolated `-I` mode.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\coal_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\extreme_coal_ore.png --seed 419 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\coal.png --output src\main\resources\assets\fastfurnacev2\textures\item\extreme_coal.png --seed 420 --frames 8 --frame-time 2
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/coal_ore.png --output src/main/resources/assets/fastfurnacev2/textures/block/extreme_coal_ore.png --seed 419 --frames 8 --frame-time 2 --veins 2
+.venv/bin/python -I tools/generate_extreme_coal_texture.py --input tools/texture_sources/coal.png --output src/main/resources/assets/fastfurnacev2/textures/item/extreme_coal.png --seed 420 --frames 8 --frame-time 2
+```
+
+Both commands write eight-frame vertical strips and sibling `.png.mcmeta` files with two ticks per frame and no interpolation. The Extreme Coal generator's `--seed`, `--frames`, and `--frame-time` options control deterministic heat variation and animation timing.
 
 ## Regenerate Block of Fast Coal
 
@@ -200,4 +220,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, Extreme Coal's all-lava visible pixels and preserved silhouette, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

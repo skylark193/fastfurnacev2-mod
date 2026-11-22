@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, a Block of Fast Coal, a lava-powered Accelerator, four tiers of accelerated furnaces, four tiers of raw-ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal Ore and Extreme Coal, a Block of Fast Coal, a lava-powered Accelerator, four tiers of accelerated furnaces, four tiers of raw-ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
 
 ## Features
 
@@ -18,6 +18,15 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 - Adds 50 percentage points to the active furnace's smelting speed and receives a tier-dependent burn-time bonus while actively burning.
 - Appears in Ingredients and the mod's Fast Furnace V2 creative tab.
 
+### Extreme Coal Ore and Extreme Coal
+
+- Each regular coal-ore block in a newly generated chunk has an independent 5% chance to become Extreme Coal Ore. When the mod is added to an existing world, each previously generated chunk is processed once as it loads; a persistent per-chunk marker prevents later rerolls. Deepslate coal ore is not replaced.
+- Extreme Coal Ore uses coal ore's mining properties and requires a pickaxe. It drops Extreme Coal, with Fortune increasing the drop quantity through vanilla's ore-drop formula. Silk Touch drops the ore itself.
+- Extreme Coal burns for 1,600 ticks in ordinary furnaces, exactly like vanilla coal. Where Fast Coal receives a bonus, Extreme Coal doubles the added effect: it adds 100 percentage points to furnace or crusher speed and receives twice Fast Coal's added tier-dependent burn duration.
+- Its Fast / Iron / Gold / Diamond Fast Furnace burn times are 3,200 / 4,000 / 4,800 / 5,600 ticks before the independent fuel-doubling roll, or 6,400 / 8,000 / 9,600 / 11,200 ticks after doubling. Fast Crushers receive its speed and duration bonuses without rolling for doubled fuel duration.
+- In an Accelerator, one Extreme Coal supplies 7,200 boosted work units at five work units per tick: exactly 18 coal conversions or two coal-block conversions, taking 80 or 720 ticks each respectively.
+- Extreme Coal Ore looks like coal ore with animated lava veins; Extreme Coal preserves coal's silhouette with every visible pixel colored as animated lava. The ore appears in Natural Blocks, the item appears in Ingredients, and both appear in the mod's creative tab.
+
 ### Block of Fast Coal
 
 - Crafted from a full 3×3 grid of Fast Coal and can be unpacked back into nine Fast Coal.
@@ -31,9 +40,9 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 - Converts coal into Fast Coal in 400 ticks (20 seconds) and coal blocks into Blocks of Fast Coal in 3,600 ticks (180 seconds). It has no other processing recipes and currently has no crafting recipe.
 - Requires lava on all four horizontal sides. Source or flowing lava works, and no lava is required above or below. Missing lava pauses processing without losing progress or stored boost.
-- Runs at normal speed without fuel. Its fuel slot accepts only Fast Coal and Blocks of Fast Coal; ordinary furnace fuels are not accepted. Fuel is consumed only when valid work can proceed.
-- Fast Coal supplies 3,600 boosted work units, exactly nine coal conversions or one coal-block conversion. A Block of Fast Coal supplies 4,000 units, exactly ten coal conversions or one coal-block conversion with enough left over for one coal conversion.
-- Boosted work advances three units per tick instead of one. Coal therefore takes 134 ticks and a coal block takes 1,200 ticks (60 seconds). Work is clamped to the remaining recipe and boost, so partial final ticks do not waste fuel.
+- Runs at normal speed without fuel. Its fuel slot accepts only Fast Coal, Blocks of Fast Coal, and Extreme Coal; ordinary furnace fuels are not accepted. Fuel is consumed only when valid work can proceed.
+- Fast Coal supplies 3,600 boosted work units, exactly nine coal conversions or one coal-block conversion. A Block of Fast Coal supplies 4,000 units, exactly ten coal conversions or one coal-block conversion with enough left over for one coal conversion. Extreme Coal supplies 7,200 units, exactly 18 coal conversions or two coal-block conversions.
+- Fast Coal and its block advance boosted work three units per tick instead of one. Coal therefore takes 134 ticks and a coal block takes 1,200 ticks (60 seconds). Extreme Coal advances five units per tick, giving 80-tick coal and 720-tick coal-block conversions. Work is clamped to the remaining recipe and boost, so partial final ticks do not waste fuel.
 - Missing lava and a blocked output pause processing without losing stored boost or recipe progress. Empty or unsupported input resets progress, as does changing between coal and coal blocks; stored boost survives these resets and is saved with the block.
 - Uses animated smooth stone with lava veins. Its top face has a lightning bolt that fills from bottom to top through eleven block-state stages as recipe progress advances; the front and other faces retain the smooth-stone body texture.
 - Requires a pickaxe, drops itself, preserves custom names, supports directional placement and comparator output, and appears in Functional Blocks and the mod's creative tab. Its furnace-style GUI has no ordinary smelting recipe book and includes an information fly-out for lava, boost, and recipe timing.
@@ -50,14 +59,14 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 ### Fast Crushers
 
 - Fast Crusher, Iron Fast Crusher, Gold Fast Crusher, and Diamond Fast Crusher process raw ores through the dynamic crushed-ore system instead of performing ordinary smelting. Each raw ore produces two matching crushed ore items; ordinary furnace inputs such as cobblestone are not accepted.
-- A raw ore's ordinary smelting time supplies the operation duration when present, with 200 ticks as the fallback. Every crusher tier uses the corresponding furnace tier's normal and Fast Coal speed, but never doubles fuel duration.
+- A raw ore's ordinary smelting time supplies the operation duration when present, with 200 ticks as the fallback. Every crusher tier uses the corresponding furnace tier's normal, Fast Coal, and Extreme Coal speed, but never doubles fuel duration.
 
-| Crusher | Normal speed | With Fast Coal | Standard operation, normal / Fast Coal | Four-item output chance |
-|---|---:|---:|---:|---:|
-| Fast Crusher | 150% | 200% | 133 / 100 ticks | 10% |
-| Iron Fast Crusher | 200% | 250% | 100 / 80 ticks | 15% |
-| Gold Fast Crusher | 250% | 300% | 80 / 66 ticks | 20% |
-| Diamond Fast Crusher | 300% | 350% | 66 / 57 ticks | 25% |
+| Crusher | Normal speed | With Fast Coal | With Extreme Coal | Standard operation, normal / Fast / Extreme | Four-item output chance |
+|---|---:|---:|---:|---:|---:|
+| Fast Crusher | 150% | 200% | 250% | 133 / 100 / 80 ticks | 10% |
+| Iron Fast Crusher | 200% | 250% | 300% | 100 / 80 / 66 ticks | 15% |
+| Gold Fast Crusher | 250% | 300% | 350% | 80 / 66 / 57 ticks | 20% |
+| Diamond Fast Crusher | 300% | 350% | 400% | 66 / 57 / 50 ticks | 25% |
 
 - Each completed operation independently rolls its tier's chance to double output from two crushed items to four. If a successful doubled result cannot fit, processing and fuel countdown pause without consuming the input until all four fit; the crusher never falls back to the two-item result for that operation.
 - Every tier uses animated Netherrack textures on its sides and bottom. Its top-down blender has a stationary rotor while idle and animated rotating blades with swirling contents while lit. Iron, gold, and diamond tops show the corresponding block texture in the stationary housing around the blender.
@@ -66,16 +75,16 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone
 
 ### Fast Furnace Tiers
 
-| Furnace | Normal speed | With Fast Coal | Standard recipe, normal / Fast Coal | Fuel doubling chance | Fast Coal burn time |
-|---|---:|---:|---:|---:|---:|
-| Fast Furnace | 150% | 200% | 133 / 100 ticks | 10% | 2,400 ticks |
-| Iron Fast Furnace | 200% | 250% | 100 / 80 ticks | 15% | 2,800 ticks |
-| Gold Fast Furnace | 250% | 300% | 80 / 66 ticks | 20% | 3,200 ticks |
-| Diamond Fast Furnace | 300% | 350% | 66 / 57 ticks | 25% | 3,600 ticks |
+| Furnace | Normal speed | With Fast Coal | With Extreme Coal | Standard recipe, normal / Fast / Extreme | Fuel doubling chance | Fast / Extreme Coal burn time |
+|---|---:|---:|---:|---:|---:|---:|
+| Fast Furnace | 150% | 200% | 250% | 133 / 100 / 80 ticks | 10% | 2,400 / 3,200 ticks |
+| Iron Fast Furnace | 200% | 250% | 300% | 100 / 80 / 66 ticks | 15% | 2,800 / 4,000 ticks |
+| Gold Fast Furnace | 250% | 300% | 350% | 80 / 66 / 57 ticks | 20% | 3,200 / 4,800 ticks |
+| Diamond Fast Furnace | 300% | 350% | 400% | 66 / 57 / 50 ticks | 25% | 3,600 / 5,600 ticks |
 
-Standard recipes take 200 ticks in a vanilla furnace. Each consumed fuel item independently rolls the listed chance to double its adjusted burn time. Fast Coal's listed burn times are before that roll; doubled values are 4,800, 5,600, 6,400, and 7,200 ticks respectively.
+Standard recipes take 200 ticks in a vanilla furnace. Each consumed fuel item independently rolls the listed chance to double its adjusted burn time. Listed Fast Coal and Extreme Coal burn times are before that roll; doubled Fast Coal values are 4,800, 5,600, 6,400, and 7,200 ticks, while doubled Extreme Coal values are 6,400, 8,000, 9,600, and 11,200 ticks respectively.
 
-Every Fast Furnace and Fast Crusher tier pauses its active fuel countdown when there is no processable work, including empty or unprocessable input and an output slot that cannot accept the required result. For crushers, this includes waiting for a pending doubled result to fit. The countdown resumes when valid work returns, preserving any active Fast Coal bonus. If fuel runs out during an operation, recipe progress is preserved instead of cooling down or resetting; adding fuel resumes the same operation from its saved progress.
+Every Fast Furnace and Fast Crusher tier pauses its active fuel countdown when there is no processable work, including empty or unprocessable input and an output slot that cannot accept the required result. For crushers, this includes waiting for a pending doubled result to fit. The countdown resumes when valid work returns, preserving any active Fast Coal or Extreme Coal bonus. If fuel runs out during an operation, recipe progress is preserved instead of cooling down or resetting; adding fuel resumes the same operation from its saved progress.
 
 Craft the base Fast Furnace from eight Fast Cobblestone using the vanilla furnace pattern, then upgrade it in order:
 
@@ -87,19 +96,19 @@ Every tier supports vanilla smelting recipes and fuels, the furnace recipe book,
 
 Every tier uses the same furnace-style GUI. Its information fly-out shows the tier's current speed, fuel doubling chance, remaining burn time, and total current-fuel burn time. Crusher fly-outs instead show their tier's 10% / 15% / 20% / 25% output-doubling chance. Timers use exact tick counts and display seconds with one decimal place. All furnaces and crushers appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
 
-Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, Block of Fast Coal, and all furnace textures use animated lava veins. Each upgrade has a furnace-shaped front, side, and top made from its tier material, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
+Fast Cobblestone is the icon of the mod's creative tab. Fast Cobblestone, Fast Coal, Extreme Coal Ore, Extreme Coal, Block of Fast Coal, and all furnace textures use animated lava visuals. Each upgrade has a furnace-shaped front, side, and top made from its tier material, with distinct unlit and burning front models. All furnace textures share one vein layout so adjacent furnace tiers tile together.
 
 ## Optional JEI Integration
 
 With a compatible JEI release installed:
 
 - Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Every crusher's progress arrow opens the dedicated crushing category, and each is a catalyst for crushing and its own tier's fuel category, not smelting.
-- The Accelerator's progress arrow opens its coal and coal-block conversions, while its fire icon opens the accepted Fast Coal boosts and explains their triple speed, exact boosted work, and conversion capacities. The Accelerator is a catalyst for both categories.
-- Looking up Fast Coal or a Block of Fast Coal shows its Accelerator conversion recipe alongside its other crafting sources. The conversion category also displays normal and boosted durations and the four-side lava requirement.
+- The Accelerator's progress arrow opens its coal and coal-block conversions, while its fire icon opens the accepted Fast Coal, Fast Coal Block, and Extreme Coal boosts and explains their 3× or 5× speed, exact boosted work, and conversion capacities. The Accelerator is a catalyst for both categories.
+- Looking up Fast Coal or a Block of Fast Coal shows its Accelerator conversion recipe alongside its other crafting sources. The conversion category displays normal, Fast Coal-boosted, and Extreme Coal-boosted durations and the four-side lava requirement.
 - The crushing category contains one recipe per discovered vanilla or modded raw ore, showing two of its selected generated or external crushed item and the tier-dependent 10–25% chance for four. Looking up that crushed item shows how it is made, while looking up a raw ore shows its crushing use.
-- Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal and Fast Coal Block speed and duration bonuses.
+- Fuel categories calculate items smelted from each tier's actual cooking speed, including Fast Coal, Fast Coal Block, and Extreme Coal speed and duration bonuses.
 - Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, Accelerator conversions, and fuel or boost insertion for every machine. Smelting transfers and click areas remain disabled for crushers.
-- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's raw-ore crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, and Block of Fast Coal includes crafting and fuel information.
+- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's raw-ore crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, Extreme Coal Ore explains new and retroactive generation, Extreme Coal explains its doubled bonuses, and Block of Fast Coal includes crafting and fuel information.
 - JEI reserves space around the furnace and Accelerator information fly-outs.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.

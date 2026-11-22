@@ -16,7 +16,7 @@ final class AcceleratorCategory implements IRecipeCategory<AcceleratorRecipe> {
     private static final IRecipeType<AcceleratorRecipe> RECIPE_TYPE =
             IRecipeType.create(FastFurnaceV2.MODID, "accelerator", AcceleratorRecipe.class);
     private static final int WIDTH = 170;
-    private static final int HEIGHT = 70;
+    private static final int HEIGHT = 94;
 
     private final Component title;
     private final IDrawable icon;
@@ -69,13 +69,22 @@ final class AcceleratorCategory implements IRecipeCategory<AcceleratorRecipe> {
     public void createRecipeExtras(IRecipeExtrasBuilder builder, AcceleratorRecipe recipe, IFocusGroup focuses) {
         builder.addAnimatedRecipeArrow(recipe.workTicks()).setPosition(60, 17);
         builder.addText(Component.translatable(
-                        "jei.fastfurnacev2.accelerator_duration", recipe.workTicks(), recipe.boostedTicks()),
-                WIDTH, 12)
+                        "jei.fastfurnacev2.accelerator_duration", recipe.workTicks()), WIDTH, 12)
                 .setPosition(0, 42)
                 .setTextAlignment(HorizontalAlignment.CENTER)
                 .setColor(0xFF808080);
+        builder.addText(Component.translatable(
+                        "jei.fastfurnacev2.accelerator_fast_duration", recipe.boostedTicks()), WIDTH, 12)
+                .setPosition(0, 53)
+                .setTextAlignment(HorizontalAlignment.CENTER)
+                .setColor(0xFF808080);
+        builder.addText(Component.translatable(
+                        "jei.fastfurnacev2.accelerator_extreme_duration", recipe.extremeBoostedTicks()), WIDTH, 12)
+                .setPosition(0, 64)
+                .setTextAlignment(HorizontalAlignment.CENTER)
+                .setColor(0xFF808080);
         builder.addText(Component.translatable("jei.fastfurnacev2.accelerator_lava"), WIDTH, 12)
-                .setPosition(0, 56)
+                .setPosition(0, 80)
                 .setTextAlignment(HorizontalAlignment.CENTER)
                 .setColor(0xFF808080);
     }

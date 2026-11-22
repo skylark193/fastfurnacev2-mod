@@ -7,6 +7,7 @@ public enum FastFurnaceTier {
     DIAMOND("diamond_fast_furnace", 300, 25, 225);
 
     public static final int FAST_COAL_SPEED_BONUS_PERCENT = 50;
+    public static final int EXTREME_COAL_SPEED_BONUS_PERCENT = FAST_COAL_SPEED_BONUS_PERCENT * 2;
     public static final int VANILLA_COOK_TIME = 200;
 
     private final String id;
@@ -37,6 +38,13 @@ public enum FastFurnaceTier {
         return this.speedPercent + (fastCoalActive ? FAST_COAL_SPEED_BONUS_PERCENT : 0);
     }
 
+    public int getSpeedPercent(boolean fastCoalActive, boolean extremeCoalActive) {
+        if (extremeCoalActive) {
+            return this.speedPercent + EXTREME_COAL_SPEED_BONUS_PERCENT;
+        }
+        return this.getSpeedPercent(fastCoalActive);
+    }
+
     public int getDoubleBurnChancePercent() {
         return this.doubleBurnChancePercent;
     }
@@ -46,14 +54,28 @@ public enum FastFurnaceTier {
     }
 
     public int scaleCookTime(int vanillaCookTime, boolean fastCoalActive) {
-        return Math.max(1, (int) (vanillaCookTime * 100L / getSpeedPercent(fastCoalActive)));
+        return this.scaleCookTime(vanillaCookTime, fastCoalActive, false);
+    }
+
+    public int scaleCookTime(int vanillaCookTime, boolean fastCoalActive, boolean extremeCoalActive) {
+        return Math.max(1, (int) (vanillaCookTime * 100L / getSpeedPercent(fastCoalActive, extremeCoalActive)));
     }
 
     public int scaleFastCoalBurnTime(int burnTime) {
         return (int) Math.min(Integer.MAX_VALUE, burnTime * (long) this.fastCoalBurnTimePercent / 100L);
     }
 
+    public int scaleExtremeCoalBurnTime(int burnTime) {
+        // Double Fast Coal's added duration, rather than doubling its total adjusted duration.
+        long extremeBurnTime = burnTime + 2L * (this.scaleFastCoalBurnTime(burnTime) - (long) burnTime);
+        return (int) Math.min(Integer.MAX_VALUE, extremeBurnTime);
+    }
+
     public float getSmeltCount(int burnTime, boolean fastCoalActive) {
-        return burnTime / (float) scaleCookTime(VANILLA_COOK_TIME, fastCoalActive);
+        return this.getSmeltCount(burnTime, fastCoalActive, false);
+    }
+
+    public float getSmeltCount(int burnTime, boolean fastCoalActive, boolean extremeCoalActive) {
+        return burnTime / (float) this.scaleCookTime(VANILLA_COOK_TIME, fastCoalActive, extremeCoalActive);
     }
 }

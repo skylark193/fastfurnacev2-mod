@@ -38,6 +38,7 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
 
     private final Component speed;
     private final Component fastCoalSpeed;
+    private final Component extremeCoalSpeed;
     private final Component doubleBurn;
     private final Component doubleOutput;
     private boolean infoVisible;
@@ -47,6 +48,8 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
         this.speed = Component.translatable("gui.fastfurnacev2.speed", menu.getTier().getSpeedPercent());
         this.fastCoalSpeed = Component.translatable(
                 "gui.fastfurnacev2.speed", menu.getTier().getSpeedPercent(true));
+        this.extremeCoalSpeed = Component.translatable(
+                "gui.fastfurnacev2.speed", menu.getTier().getSpeedPercent(false, true));
         this.doubleBurn = Component.translatable(
                 "gui.fastfurnacev2.double_burn_chance", menu.getTier().getDoubleBurnChancePercent());
         this.doubleOutput = Component.translatable(
@@ -79,8 +82,9 @@ public class FastFurnaceScreen extends AbstractFurnaceScreen<FastFurnaceMenu> {
             graphics.fill(x - 1, y - 1, x + INFO_PANEL_WIDTH + 1, y + INFO_PANEL_HEIGHT + 1, 0xFFC6C6C6);
             graphics.fill(x, y, x + INFO_PANEL_WIDTH, y + INFO_PANEL_HEIGHT, 0xF0181818);
             graphics.text(this.font, INFO_TITLE, x + 6, y + 6, 0xFFFFFFFF, false);
-            graphics.text(this.font, this.menu.isFastCoalActive() ? this.fastCoalSpeed : this.speed,
-                    x + 6, y + 20, 0xFFE0E0E0, false);
+            Component activeSpeed = this.menu.isExtremeCoalActive() ? this.extremeCoalSpeed
+                    : this.menu.isFastCoalActive() ? this.fastCoalSpeed : this.speed;
+            graphics.text(this.font, activeSpeed, x + 6, y + 20, 0xFFE0E0E0, false);
             graphics.text(this.font, this.menu.isFastCrusher() ? this.doubleOutput : this.doubleBurn,
                     x + 6, y + 31, 0xFFE0E0E0, false);
             this.drawTime(graphics, CURRENT_BURN, this.menu.getCurrentBurnTime(), x, y + 44);

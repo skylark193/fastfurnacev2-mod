@@ -55,6 +55,10 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fuel_pause");
     private static final Identifier ACCELERATOR_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator");
+    private static final Identifier EXTREME_COAL_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal");
+    private static final Identifier EXTREME_COAL_GENERATION_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal_generation");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -75,17 +79,23 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_PAUSE_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> ACCELERATOR_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, ACCELERATOR_TEST_ID);
-    private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
-            SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent,
-            FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime,
-            FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime,
-            FAST_COAL_BLOCK_FUNCTION, FastFurnaceGameTests::fastCoalBlockActsAsFastCoalFuel,
-            BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance,
-            TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel,
-            CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting,
-            FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCrushesAndDoublesOutput,
-            FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork,
-            ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts);
+    private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_GENERATION_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_GENERATION_TEST_ID);
+    private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
+            Map.entry(SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent),
+            Map.entry(FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime),
+            Map.entry(FAST_COAL_FUNCTION, FastFurnaceGameTests::fastCoalAcceleratesAndExtendsBurnTime),
+            Map.entry(FAST_COAL_BLOCK_FUNCTION, FastFurnaceGameTests::fastCoalBlockActsAsFastCoalFuel),
+            Map.entry(BONUS_DROP_FUNCTION, FastFurnaceGameTests::fortuneIncreasesBonusDropChance),
+            Map.entry(TIER_FUNCTION, FastFurnaceGameTests::furnaceTiersScaleSpeedAndFuel),
+            Map.entry(CRUSHED_ORE_FUNCTION, FastFurnaceGameTests::crushedOresMatchRawOreSmelting),
+            Map.entry(FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCrushesAndDoublesOutput),
+            Map.entry(FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork),
+            Map.entry(ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts),
+            Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
+            Map.entry(EXTREME_COAL_GENERATION_FUNCTION, FastFurnaceGameTests::extremeCoalReplacesCoalOreOnce));
 
     private FastFurnaceGameTests() {
     }
@@ -110,6 +120,9 @@ final class FastFurnaceGameTests {
         event.registerTest(FAST_CRUSHER_TEST_ID, new DirectGameTestInstance(FAST_CRUSHER_FUNCTION, testData));
         event.registerTest(FUEL_PAUSE_TEST_ID, new DirectGameTestInstance(FUEL_PAUSE_FUNCTION, testData));
         event.registerTest(ACCELERATOR_TEST_ID, new DirectGameTestInstance(ACCELERATOR_FUNCTION, testData));
+        event.registerTest(EXTREME_COAL_TEST_ID, new DirectGameTestInstance(EXTREME_COAL_FUNCTION, testData));
+        event.registerTest(EXTREME_COAL_GENERATION_TEST_ID,
+                new DirectGameTestInstance(EXTREME_COAL_GENERATION_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -254,19 +267,26 @@ final class FastFurnaceGameTests {
         ServerLevel level = helper.getLevel();
         int[] normalCookTimes = {133, 100, 80, 66};
         int[] fastCoalCookTimes = {100, 80, 66, 57};
+        int[] extremeCoalCookTimes = {80, 66, 57, 50};
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
-            for (boolean fastCoalActive : new boolean[] {false, true}) {
-                int expectedCookTime = fastCoalActive
-                        ? fastCoalCookTimes[tier.ordinal()]
-                        : normalCookTimes[tier.ordinal()];
-                int expectedBurnTime = fastCoalActive
-                        ? tier.scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
-                        : FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
-                ItemStack fuel = fastCoalActive
-                        ? new ItemStack(FastFurnaceV2.FAST_COAL.get())
-                        : new ItemStack(Items.COAL);
+            for (int fuelMode = 0; fuelMode < 3; fuelMode++) {
+                int expectedCookTime = switch (fuelMode) {
+                    case 2 -> extremeCoalCookTimes[tier.ordinal()];
+                    case 1 -> fastCoalCookTimes[tier.ordinal()];
+                    default -> normalCookTimes[tier.ordinal()];
+                };
+                int expectedBurnTime = switch (fuelMode) {
+                    case 2 -> tier.scaleExtremeCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME);
+                    case 1 -> tier.scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME);
+                    default -> FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
+                };
+                ItemStack fuel = switch (fuelMode) {
+                    case 2 -> new ItemStack(FastFurnaceV2.EXTREME_COAL.get());
+                    case 1 -> new ItemStack(FastFurnaceV2.FAST_COAL.get());
+                    default -> new ItemStack(Items.COAL);
+                };
                 FastFurnaceBlock block = FastFurnaceV2.getCrusherBlock(tier).get();
-                BlockPos relativePos = new BlockPos(tier.ordinal() * 4, fastCoalActive ? 16 : 12, 0);
+                BlockPos relativePos = new BlockPos(tier.ordinal() * 4, 12 + fuelMode * 4, 0);
                 FastFurnaceBlockEntity crusher = placeFurnace(helper, relativePos, fuel, block);
                 FastFurnaceMenu menu = createMenu(helper, crusher);
 
@@ -275,8 +295,8 @@ final class FastFurnaceGameTests {
                 if (!block.isFastCrusher() || menu.getTier() != tier || !menu.isFastCrusher()) {
                     throw helper.assertionException(tier + " crusher did not retain its tier and crusher identity");
                 }
-                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoalActive,
-                        tier + " crusher doubled its fuel or applied the wrong Fast Coal duration");
+                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fuelMode != 0, fuelMode == 2,
+                        tier + " crusher doubled its fuel or applied the wrong special-coal duration");
 
                 for (int tick = 2; tick <= expectedCookTime; tick++) {
                     if (tick == expectedCookTime) {
@@ -339,19 +359,30 @@ final class FastFurnaceGameTests {
                 FastFurnaceV2.GOLD_FAST_CRUSHER.get(),
                 FastFurnaceV2.DIAMOND_FAST_CRUSHER.get()
         };
-        for (boolean fastCoal : new boolean[] {false, true}) {
+        for (int fuelMode = 0; fuelMode < 3; fuelMode++) {
             for (int index = 0; index < blocks.length; index++) {
                 FastFurnaceBlock block = blocks[index];
-                String description = BuiltInRegistries.BLOCK.getKey(block)
-                        + (fastCoal ? " with Fast Coal" : " with coal");
-                BlockPos relativePos = new BlockPos(index * 2, fastCoal ? 8 : 4, 0);
-                Item fuelItem = fastCoal ? FastFurnaceV2.FAST_COAL.get() : Items.COAL;
+                String description = BuiltInRegistries.BLOCK.getKey(block) + switch (fuelMode) {
+                    case 2 -> " with Extreme Coal";
+                    case 1 -> " with Fast Coal";
+                    default -> " with coal";
+                };
+                BlockPos relativePos = new BlockPos(index * 2, 4 + fuelMode * 4, 0);
+                Item fuelItem = switch (fuelMode) {
+                    case 2 -> FastFurnaceV2.EXTREME_COAL.get();
+                    case 1 -> FastFurnaceV2.FAST_COAL.get();
+                    default -> Items.COAL;
+                };
                 FastFurnaceBlockEntity furnace = placeFurnace(
                         helper, relativePos, new ItemStack(fuelItem), block);
                 FastFurnaceMenu menu = createMenu(helper, furnace);
-                int expectedBurnTime = fastCoal
-                        ? block.getTier().scaleFastCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
-                        : FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
+                int expectedBurnTime = switch (fuelMode) {
+                    case 2 -> block.getTier().scaleExtremeCoalBurnTime(
+                            FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME);
+                    case 1 -> block.getTier().scaleFastCoalBurnTime(
+                            FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME);
+                    default -> FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME;
+                };
                 level.getRandom().setSeed(findChanceRollSeed(block.getTier().getDoubleBurnChance(), false));
 
                 furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, ItemStack.EMPTY);
@@ -370,10 +401,10 @@ final class FastFurnaceGameTests {
 
                 furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
                 tickFurnace(helper, furnace, relativePos);
-                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " did not start with the correct fuel state");
                 tickFurnace(helper, furnace, relativePos);
-                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " did not count down during valid work");
                 if (!furnace.getItem(FastFurnaceMenu.FUEL_SLOT).isEmpty()) {
                     throw helper.assertionException(description + " did not consume exactly one fuel item");
@@ -383,14 +414,14 @@ final class FastFurnaceGameTests {
                 for (int tick = 0; tick < 20; tick++) {
                     tickFurnace(helper, furnace, relativePos);
                 }
-                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " wasted fuel with empty input");
 
                 furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.DIRT));
                 for (int tick = 0; tick < 5; tick++) {
                     tickFurnace(helper, furnace, relativePos);
                 }
-                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " wasted fuel with unsmeltable input");
 
                 furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
@@ -398,12 +429,12 @@ final class FastFurnaceGameTests {
                 for (int tick = 0; tick < 5; tick++) {
                     tickFurnace(helper, furnace, relativePos);
                 }
-                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime - 1, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " wasted fuel with blocked output");
 
                 furnace.setItem(FastFurnaceMenu.RESULT_SLOT, ItemStack.EMPTY);
                 tickFurnace(helper, furnace, relativePos);
-                assertBurnState(helper, menu, expectedBurnTime - 2, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime - 2, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " did not resume its paused fuel countdown");
 
                 while (menu.getCurrentBurnTime() > 20) {
@@ -431,7 +462,7 @@ final class FastFurnaceGameTests {
                 furnace.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(fuelItem));
                 level.getRandom().setSeed(findChanceRollSeed(block.getTier().getDoubleBurnChance(), false));
                 tickFurnace(helper, furnace, relativePos);
-                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fastCoal,
+                assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " did not restart with replacement fuel");
                 if (menu.getBurnProgress() <= savedProgress) {
                     throw helper.assertionException(description + " restarted instead of resuming saved recipe progress");
@@ -620,6 +651,109 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void extremeCoalDoublesFastCoalBonuses(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ItemStack extremeCoal = new ItemStack(FastFurnaceV2.EXTREME_COAL.get());
+        if (extremeCoal.getBurnTime(RecipeType.SMELTING, level.fuelValues())
+                != FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME) {
+            throw helper.assertionException("Extreme Coal did not retain coal's ordinary 1600-tick fuel value");
+        }
+
+        int[] expectedCookTimes = {80, 66, 57, 50};
+        int[] expectedSpeeds = {250, 300, 350, 400};
+        int[] expectedBurnTimes = {3200, 4000, 4800, 5600};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int tierIndex = tier.ordinal();
+            int expectedCookTime = expectedCookTimes[tierIndex];
+            int expectedBurnTime = expectedBurnTimes[tierIndex];
+            if (tier.getSpeedPercent(false, true) != expectedSpeeds[tierIndex]
+                    || tier.scaleCookTime(200, false, true) != expectedCookTime
+                    || tier.scaleExtremeCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME)
+                            != expectedBurnTime) {
+                throw helper.assertionException("Incorrect configured Extreme Coal stats for " + tier);
+            }
+
+            BlockPos relativePos = new BlockPos(tierIndex * 4, 0, 0);
+            FastFurnaceBlockEntity furnace = placeFurnace(helper, relativePos, extremeCoal.copy(), tier);
+            FastFurnaceMenu menu = createMenu(helper, furnace);
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), false));
+            tickFurnace(helper, furnace, relativePos);
+            assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, true, true,
+                    tier + " did not synchronize Extreme Coal");
+
+            for (int tick = 2; tick <= expectedCookTime; tick++) {
+                tickFurnace(helper, furnace, relativePos);
+                if (tick < expectedCookTime && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                    throw helper.assertionException(tier + " smelted before Extreme Coal tick " + expectedCookTime);
+                }
+            }
+            ItemStack result = furnace.getItem(FastFurnaceMenu.RESULT_SLOT);
+            if (!result.is(Items.STONE) || result.getCount() != 1) {
+                throw helper.assertionException(tier + " did not smelt on Extreme Coal tick " + expectedCookTime);
+            }
+            float expectedSmelts = expectedBurnTime / (float) expectedCookTime;
+            if (Math.abs(tier.getSmeltCount(expectedBurnTime, false, true) - expectedSmelts) > 0.0001F) {
+                throw helper.assertionException("Incorrect Extreme Coal JEI smelt count for " + tier);
+            }
+
+            BlockPos doubledPos = relativePos.above(4);
+            FastFurnaceBlockEntity doubledFurnace = placeFurnace(helper, doubledPos, extremeCoal.copy(), tier);
+            FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), true));
+            tickFurnace(helper, doubledFurnace, doubledPos);
+            assertBurnState(helper, doubledMenu, expectedBurnTime * 2, expectedBurnTime * 2, true, true,
+                    tier + " did not independently double Extreme Coal duration");
+        }
+        helper.succeed();
+    }
+
+    private static void extremeCoalReplacesCoalOreOnce(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        var chunkPos = new net.minecraft.world.level.ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
+        BlockPos replacedPos = null;
+        BlockPos retainedPos = null;
+        for (int x = 0; x < 16 && (replacedPos == null || retainedPos == null); x++) {
+            for (int z = 0; z < 16; z++) {
+                BlockPos pos = new BlockPos(
+                        chunkPos.getMinBlockX() + x, origin.getY(), chunkPos.getMinBlockZ() + z);
+                if (ExtremeCoalOreGeneration.shouldReplace(level.getSeed(), pos) && replacedPos == null) {
+                    replacedPos = pos;
+                } else if (!ExtremeCoalOreGeneration.shouldReplace(level.getSeed(), pos) && retainedPos == null) {
+                    retainedPos = pos;
+                }
+                if (replacedPos != null && retainedPos != null) {
+                    break;
+                }
+            }
+        }
+        if (replacedPos == null || retainedPos == null) {
+            throw helper.assertionException("Could not establish deterministic 5% Extreme Coal replacement positions");
+        }
+
+        level.setBlock(replacedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
+        level.setBlock(retainedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
+        BlockPos deepslatePos = retainedPos.above();
+        level.setBlock(deepslatePos, Blocks.DEEPSLATE_COAL_ORE.defaultBlockState(), 0);
+        net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(chunkPos.x(), chunkPos.z());
+        chunk.setData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED, false);
+        int replacements = ExtremeCoalOreGeneration.processChunk(level.getSeed(), chunk);
+        if (replacements < 1
+                || !level.getBlockState(replacedPos).is(FastFurnaceV2.EXTREME_COAL_ORE.get())
+                || !level.getBlockState(retainedPos).is(Blocks.COAL_ORE)
+                || !level.getBlockState(deepslatePos).is(Blocks.DEEPSLATE_COAL_ORE)
+                || !chunk.getData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED)) {
+            throw helper.assertionException("Extreme Coal did not replace only selected regular coal ore and mark the chunk");
+        }
+
+        level.setBlock(replacedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
+        int repeatedReplacements = ExtremeCoalOreGeneration.processChunk(level.getSeed(), chunk);
+        if (repeatedReplacements != 0 || !level.getBlockState(replacedPos).is(Blocks.COAL_ORE)) {
+            throw helper.assertionException("A processed chunk rolled for Extreme Coal more than once");
+        }
+        helper.succeed();
+    }
+
     private static void crushedOresMatchRawOreSmelting(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Item crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
@@ -710,6 +844,9 @@ final class FastFurnaceGameTests {
                 || normal.canPlaceItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()))
                 || normal.canPlaceItem(AcceleratorMenu.FUEL_SLOT, new ItemStack(Items.COAL))
                 || !normal.canPlaceItem(AcceleratorMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()))
+                || !normal.canPlaceItem(AcceleratorMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.EXTREME_COAL.get()))
+                || !normalMenu.getSlot(AcceleratorMenu.FUEL_SLOT).mayPlace(
+                        new ItemStack(FastFurnaceV2.EXTREME_COAL.get()))
                 || normalMenu.getSlot(AcceleratorMenu.FUEL_SLOT).mayPlace(new ItemStack(Items.COAL))
                 || normalMenu.getSlot(AcceleratorMenu.RESULT_SLOT).mayPlace(new ItemStack(Items.COAL))
                 || normal.getSlotsForFace(Direction.UP)[0] != AcceleratorMenu.INPUT_SLOT
@@ -888,6 +1025,55 @@ final class FastFurnaceGameTests {
                 || boostedByBlockMenu.getBoostWork() != 0) {
             throw helper.assertionException("Block of Fast Coal did not retain its remaining boosted work");
         }
+
+        BlockPos extremePos = new BlockPos(0, 12, 0);
+        AcceleratorBlockEntity extreme = placeAccelerator(
+                helper, extremePos, new ItemStack(Items.COAL, 19),
+                new ItemStack(FastFurnaceV2.EXTREME_COAL.get()));
+        AcceleratorMenu extremeMenu = createAcceleratorMenu(helper, extreme);
+        tickAccelerator(helper, extreme, extremePos);
+        if (!extremeMenu.isExtremeBoosted()
+                || extremeMenu.getBoostWork() != AcceleratorBlockEntity.EXTREME_COAL_BOOST_WORK
+                        - AcceleratorBlockEntity.EXTREME_COAL_BOOSTED_WORK_PER_TICK
+                || AcceleratorBlockEntity.getBoostWorkPerTick(new ItemStack(FastFurnaceV2.EXTREME_COAL.get())) != 5) {
+            throw helper.assertionException("Accelerator did not synchronize its 5x Extreme Coal boost");
+        }
+        tickAccelerator(helper, extreme, extremePos, 1438);
+        if (extreme.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 17) {
+            throw helper.assertionException("Extreme Coal completed its eighteenth coal conversion too early");
+        }
+        tickAccelerator(helper, extreme, extremePos);
+        if (extreme.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 18
+                || extreme.getItem(AcceleratorMenu.INPUT_SLOT).getCount() != 1
+                || extremeMenu.getBoostWork() != 0 || extremeMenu.isExtremeBoosted()
+                || !extreme.getItem(AcceleratorMenu.FUEL_SLOT).isEmpty()) {
+            throw helper.assertionException("Extreme Coal did not boost exactly eighteen coal conversions");
+        }
+        tickAccelerator(helper, extreme, extremePos);
+        if (extreme.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 18
+                || extremeMenu.getWorkProgress() != 1) {
+            throw helper.assertionException("Accelerator did not return to normal speed after Extreme Coal expired");
+        }
+
+        BlockPos extremeBlocksPos = new BlockPos(4, 12, 0);
+        AcceleratorBlockEntity extremeBlocks = placeAccelerator(
+                helper, extremeBlocksPos, new ItemStack(Items.COAL_BLOCK, 2),
+                new ItemStack(FastFurnaceV2.EXTREME_COAL.get()));
+        AcceleratorMenu extremeBlocksMenu = createAcceleratorMenu(helper, extremeBlocks);
+        tickAccelerator(helper, extremeBlocks, extremeBlocksPos, 719);
+        if (!extremeBlocks.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Extreme Coal converted a coal block before 720 boosted ticks");
+        }
+        tickAccelerator(helper, extremeBlocks, extremeBlocksPos);
+        if (extremeBlocks.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 1
+                || extremeBlocksMenu.getBoostWork() != 3600) {
+            throw helper.assertionException("Extreme Coal did not complete its first 720-tick coal-block conversion");
+        }
+        tickAccelerator(helper, extremeBlocks, extremeBlocksPos, 720);
+        if (extremeBlocks.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 2
+                || extremeBlocksMenu.getBoostWork() != 0) {
+            throw helper.assertionException("Extreme Coal did not boost exactly two coal-block conversions");
+        }
     }
 
     private static void fortuneIncreasesBonusDropChance(GameTestHelper helper) {
@@ -988,12 +1174,15 @@ final class FastFurnaceGameTests {
             int expectedRemaining,
             int expectedTotal,
             boolean expectedFastCoal,
+            boolean expectedExtremeCoal,
             String context) {
         if (menu.getCurrentBurnTime() != expectedRemaining
                 || menu.getTotalFuelTime() != expectedTotal
-                || menu.isFastCoalActive() != expectedFastCoal) {
+                || menu.isFastCoalActive() != expectedFastCoal
+                || menu.isExtremeCoalActive() != expectedExtremeCoal) {
             throw helper.assertionException(context + ": remaining=" + menu.getCurrentBurnTime()
-                    + ", total=" + menu.getTotalFuelTime() + ", Fast Coal=" + menu.isFastCoalActive());
+                    + ", total=" + menu.getTotalFuelTime() + ", Fast Coal=" + menu.isFastCoalActive()
+                    + ", Extreme Coal=" + menu.isExtremeCoalActive());
         }
     }
 

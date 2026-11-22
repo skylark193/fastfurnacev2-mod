@@ -23,12 +23,14 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
     private static final int INFO_BUTTON_Y = 4;
     private static final int INFO_BUTTON_SIZE = 12;
     private static final int INFO_PANEL_WIDTH = 176;
-    private static final int INFO_PANEL_HEIGHT = 100;
+    private static final int INFO_PANEL_HEIGHT = 111;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.accelerator.info");
     private static final Component NORMAL_SPEED =
             Component.translatable("gui.fastfurnacev2.speed", 100);
     private static final Component BOOSTED_SPEED =
             Component.translatable("gui.fastfurnacev2.speed", 300);
+    private static final Component EXTREME_BOOSTED_SPEED =
+            Component.translatable("gui.fastfurnacev2.speed", 500);
     private static final Component COAL_RECIPE =
             Component.translatable("gui.fastfurnacev2.accelerator.coal_recipe");
     private static final Component BLOCK_RECIPE =
@@ -37,6 +39,8 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
             Component.translatable("gui.fastfurnacev2.accelerator.fast_coal_capacity");
     private static final Component FAST_COAL_BLOCK_CAPACITY =
             Component.translatable("gui.fastfurnacev2.accelerator.fast_coal_block_capacity");
+    private static final Component EXTREME_COAL_CAPACITY =
+            Component.translatable("gui.fastfurnacev2.accelerator.extreme_coal_capacity");
 
     private boolean infoVisible;
 
@@ -110,8 +114,9 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
             graphics.text(this.font, lava, x + 6, y + 20,
                     this.menu.getLavaSideCount() == AcceleratorBlockEntity.REQUIRED_LAVA_SIDES
                             ? 0xFF80FF80 : 0xFFFF8080, false);
-            graphics.text(this.font, this.menu.isBoosted() ? BOOSTED_SPEED : NORMAL_SPEED,
-                    x + 6, y + 31, 0xFFE0E0E0, false);
+            Component speed = this.menu.isExtremeBoosted() ? EXTREME_BOOSTED_SPEED
+                    : this.menu.isBoosted() ? BOOSTED_SPEED : NORMAL_SPEED;
+            graphics.text(this.font, speed, x + 6, y + 31, 0xFFE0E0E0, false);
             graphics.text(this.font, Component.translatable(
                             "gui.fastfurnacev2.accelerator.boost_work", this.menu.getBoostWork()),
                     x + 6, y + 42, 0xFFE0E0E0, false);
@@ -119,6 +124,7 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
             graphics.text(this.font, BLOCK_RECIPE, x + 6, y + 67, 0xFFE0E0E0, false);
             graphics.text(this.font, FAST_COAL_CAPACITY, x + 6, y + 78, 0xFFE0E0E0, false);
             graphics.text(this.font, FAST_COAL_BLOCK_CAPACITY, x + 6, y + 89, 0xFFE0E0E0, false);
+            graphics.text(this.font, EXTREME_COAL_CAPACITY, x + 6, y + 100, 0xFFE0E0E0, false);
         }
     }
 }

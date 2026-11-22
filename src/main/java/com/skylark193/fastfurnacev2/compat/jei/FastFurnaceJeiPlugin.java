@@ -78,6 +78,12 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 FastFurnaceV2.FAST_COAL_BLOCK.get(),
                 Component.translatable("jei.fastfurnacev2.fast_coal_block"));
         registration.addIngredientInfo(
+                FastFurnaceV2.EXTREME_COAL_ORE.get(),
+                Component.translatable("jei.fastfurnacev2.extreme_coal_ore"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.EXTREME_COAL.get(),
+                Component.translatable("jei.fastfurnacev2.extreme_coal"));
+        registration.addIngredientInfo(
                 FastFurnaceV2.ACCELERATOR.get(),
                 Component.translatable("jei.fastfurnacev2.accelerator_info"));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -107,9 +113,11 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             if (burnTime <= 0) {
                 continue;
             }
+            boolean extremeCoal = FastFurnaceV2.isExtremeCoalFuel(stack);
             boolean fastCoal = FastFurnaceV2.isFastCoalFuel(stack);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
-                int adjustedBurnTime = fastCoal ? tier.scaleFastCoalBurnTime(burnTime) : burnTime;
+                int adjustedBurnTime = extremeCoal ? tier.scaleExtremeCoalBurnTime(burnTime)
+                        : fastCoal ? tier.scaleFastCoalBurnTime(burnTime) : burnTime;
                 fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(List.of(stack), adjustedBurnTime));
             }
         }
@@ -150,9 +158,11 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
     private static List<AcceleratorFuelRecipe> createAcceleratorFuels() {
         ItemStack fastCoal = new ItemStack(FastFurnaceV2.FAST_COAL.get());
         ItemStack fastCoalBlock = new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK.get());
+        ItemStack extremeCoal = new ItemStack(FastFurnaceV2.EXTREME_COAL.get());
         return List.of(
                 new AcceleratorFuelRecipe(fastCoal, AcceleratorBlockEntity.getBoostWork(fastCoal)),
-                new AcceleratorFuelRecipe(fastCoalBlock, AcceleratorBlockEntity.getBoostWork(fastCoalBlock)));
+                new AcceleratorFuelRecipe(fastCoalBlock, AcceleratorBlockEntity.getBoostWork(fastCoalBlock)),
+                new AcceleratorFuelRecipe(extremeCoal, AcceleratorBlockEntity.getBoostWork(extremeCoal)));
     }
 
     @Override

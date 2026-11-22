@@ -16,7 +16,7 @@ public class AcceleratorMenu extends AbstractContainerMenu {
     public static final int FUEL_SLOT = 1;
     public static final int RESULT_SLOT = 2;
     public static final int SLOT_COUNT = 3;
-    public static final int DATA_COUNT = 6;
+    public static final int DATA_COUNT = 7;
     private static final int INVENTORY_SLOT_START = 3;
     private static final int INVENTORY_SLOT_END = 30;
     private static final int HOTBAR_SLOT_START = 30;
@@ -144,5 +144,9 @@ public class AcceleratorMenu extends AbstractContainerMenu {
 
     public boolean isBoosted() {
         return this.getBoostWork() > 0;
+    }
+
+    public boolean isExtremeBoosted() {
+        return this.isBoosted() && this.data.get(6) != 0;
     }
 }
