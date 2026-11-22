@@ -178,13 +178,18 @@ public final class CrushedOres {
         LOGGER.info("Generated {} crushed-ore smelting recipes", generated);
     }
 
-    private static void discover(Registry<Item> registry, Identifier rawOreId, Item rawOre) {
-        if (rawOre instanceof BlockItem) {
-            return;
+    static boolean isDiscoverableRawOre(Identifier rawOreId, Item rawOre) {
+        // Generated IDs can retain a source's _raw_ore suffix; never feed them back into discovery.
+        if (rawOre instanceof BlockItem || FastFurnaceV2.MODID.equals(rawOreId.getNamespace())) {
+            return false;
         }
-        if (!rawOreId.getPath().startsWith("raw_") && !rawOreId.getPath().contains("/raw_")
-                && !rawOreId.getPath().endsWith("_raw") && !rawOreId.getPath().endsWith("_raw_ore")
-                && !TAGGED_RAW_ORES.contains(rawOreId)) {
+        return rawOreId.getPath().startsWith("raw_") || rawOreId.getPath().contains("/raw_")
+                || rawOreId.getPath().endsWith("_raw") || rawOreId.getPath().endsWith("_raw_ore")
+                || TAGGED_RAW_ORES.contains(rawOreId);
+    }
+
+    private static void discover(Registry<Item> registry, Identifier rawOreId, Item rawOre) {
+        if (!isDiscoverableRawOre(rawOreId, rawOre)) {
             return;
         }
         if (BY_RAW_ORE.containsKey(rawOreId)) {

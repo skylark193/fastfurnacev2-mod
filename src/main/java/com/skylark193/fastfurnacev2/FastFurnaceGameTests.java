@@ -877,6 +877,15 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("A modded raw-ore suffix did not receive its English fallback name");
         }
 
+        Identifier generatedRawSuffixedId = Identifier.fromNamespaceAndPath(
+                FastFurnaceV2.MODID, "crushed_examplemod_tin_raw_ore");
+        if (!CrushedOres.isDiscoverableRawOre(
+                        Identifier.fromNamespaceAndPath("examplemod", "tin_raw_ore"), Items.IRON_INGOT)
+                || CrushedOres.isDiscoverableRawOre(generatedRawSuffixedId, Items.IRON_INGOT)) {
+            throw helper.assertionException(
+                    "Raw-ore discovery accepted a generated item or rejected an external raw ore");
+        }
+
         if (!CrushedOres.isCrushedOreForMaterial(
                         Identifier.fromNamespaceAndPath("ftbmaterials", "tin_dust"), "tin_raw_ore")
                 || !CrushedOres.isCrushedOreForMaterial(
