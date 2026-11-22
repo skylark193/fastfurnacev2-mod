@@ -27,9 +27,9 @@ public class FastFurnaceV2Client {
 
     private void registerScreens(RegisterMenuScreensEvent event) {
         event.register(FastFurnaceV2.FAST_FURNACE_MENU.get(), FastFurnaceScreen::new);
-        event.register(FastFurnaceV2.IRON_FAST_FURNACE_MENU.get(), IronFastFurnaceScreen::new);
-        event.register(FastFurnaceV2.GOLD_FAST_FURNACE_MENU.get(), GoldFastFurnaceScreen::new);
-        event.register(FastFurnaceV2.DIAMOND_FAST_FURNACE_MENU.get(), DiamondFastFurnaceScreen::new);
+        event.register(FastFurnaceV2.IRON_FAST_FURNACE_MENU.get(), FastFurnaceScreen::new);
+        event.register(FastFurnaceV2.GOLD_FAST_FURNACE_MENU.get(), FastFurnaceScreen::new);
+        event.register(FastFurnaceV2.DIAMOND_FAST_FURNACE_MENU.get(), FastFurnaceScreen::new);
         event.register(FastFurnaceV2.ACCELERATOR_MENU.get(), AcceleratorScreen::new);
     }
 }

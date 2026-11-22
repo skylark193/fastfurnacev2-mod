@@ -109,7 +109,7 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_accelerator_top_texture.py --input tools/texture_sources/smooth_stone.png --output-prefix src/main/resources/assets/fastfurnacev2/textures/block/accelerator_top_ --seed 418 --frames 8 --frame-time 2 --veins 2
 ```
 
-The first command writes the eight-frame body texture. The second writes `accelerator_top_0.png` through `accelerator_top_10.png`, each with eight frames and sibling animation metadata. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state. Each model puts its stage texture on the top face only and retains the body texture on the front, sides, and bottom.
+The first command writes the eight-frame body texture. The second writes `accelerator_top_0.png` through `accelerator_top_10.png`, each with eight frames and sibling animation metadata. It rejects an input path that collides with any generated PNG or metadata path before writing, protecting the square source artwork. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state. Each model puts its stage texture on the top face only and retains the body texture on the front, sides, and bottom.
 
 ## Regenerate Fast Crusher Sides and Bottom
 
@@ -149,7 +149,7 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_crusher_top_texture.py --input tools/texture_sources/netherrack.png --trim tools/texture_sources/diamond_block.png --idle-output src/main/resources/assets/fastfurnacev2/textures/block/diamond_fast_crusher_top.png --active-output src/main/resources/assets/fastfurnacev2/textures/block/diamond_fast_crusher_top_on.png --frames 8 --frame-time 1
 ```
 
-Each crusher blockstate selects its static top for `lit=false` and animated top for `lit=true`. Keep every `<tier>_fast_crusher_top.png.mcmeta` idle metadata file absent (including `fast_crusher_top.png.mcmeta`); only the corresponding `_top_on.png.mcmeta` files should exist. All four tiers reference the same animated Netherrack `fast_crusher` side and bottom texture.
+Each crusher blockstate selects its static top for `lit=false` and animated top for `lit=true`. Keep every `<tier>_fast_crusher_top.png.mcmeta` idle metadata file absent (including `fast_crusher_top.png.mcmeta`); only the corresponding `_top_on.png.mcmeta` files should exist. The generator removes stale idle metadata when it writes the static PNG. All four tiers reference the same animated Netherrack `fast_crusher` side and bottom texture.
 
 ## Regenerate Furnace Textures
 
@@ -192,7 +192,7 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_dust_texture.py --input tools/texture_sources/gunpowder.png --output src/main/resources/assets/fastfurnacev2/textures/item/crushed_ore.png
 ```
 
-The generator preserves the source silhouette and transparency while remapping visible pixels to an 80–255 grayscale range.
+The generator preserves the source silhouette and transparency while remapping visible pixels to an 80–255 grayscale range. It removes any stale `.png.mcmeta` beside the static output so an earlier animated result cannot leave the dust animated.
 
 ## Generate Another Lava-Vein Texture
 
@@ -220,4 +220,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, Extreme Coal's all-lava visible pixels and preserved silhouette, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, Extreme Coal's all-lava visible pixels and preserved silhouette, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

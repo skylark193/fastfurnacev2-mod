@@ -8,10 +8,7 @@ import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
 import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
-import com.skylark193.fastfurnacev2.client.DiamondFastFurnaceScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
-import com.skylark193.fastfurnacev2.client.GoldFastFurnaceScreen;
-import com.skylark193.fastfurnacev2.client.IronFastFurnaceScreen;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -200,13 +197,10 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 1,
                 AcceleratorMenu.SLOT_COUNT,
                 36);
+        registerFilteredTransfer(registration, RecipeTypes.SMELTING, menu -> !menu.isFastCrusher());
+        registerFilteredTransfer(
+                registration, FastCrusherCategory.getCrushingRecipeType(), FastFurnaceMenu::isFastCrusher);
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
-            registerSmeltingTransfer(registration, tier);
-            registerFilteredTransfer(
-                    registration,
-                    tier,
-                    FastCrusherCategory.getCrushingRecipeType(),
-                    FastFurnaceMenu::isFastCrusher);
             registration.addRecipeTransferHandler(
                     FastFurnaceMenu.class,
                     FastFurnaceV2.getFurnaceMenu(tier).get(),
@@ -236,26 +230,17 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                                 56, 36, 14, 14, AcceleratorFuelCategory.getAcceleratorFuelRecipeType()));
             }
         });
-        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
-            registerGuiHandlers(registration, getScreenClass(tier), FastFurnaceFuelCategory.getRecipeType(tier));
-        }
-    }
-
-    private static void registerSmeltingTransfer(
-            IRecipeTransferRegistration registration, FastFurnaceTier tier) {
-        registerFilteredTransfer(
-                registration, tier, RecipeTypes.SMELTING, menu -> !menu.isFastCrusher());
+        registerFurnaceGuiHandler(registration);
     }
 
     private static <R> void registerFilteredTransfer(
             IRecipeTransferRegistration registration,
-            FastFurnaceTier tier,
             IRecipeType<R> recipeType,
             Predicate<FastFurnaceMenu> menuFilter) {
         IRecipeTransferInfo<FastFurnaceMenu, R> delegate =
                 registration.getTransferHelper().createBasicRecipeTransferInfo(
                         FastFurnaceMenu.class,
-                        FastFurnaceV2.getFurnaceMenu(tier).get(),
+                        null,
                         recipeType,
                         0,
                         1,
@@ -294,27 +279,16 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         });
     }
 
-    private static Class<? extends FastFurnaceScreen> getScreenClass(FastFurnaceTier tier) {
-        return switch (tier) {
-            case FAST -> FastFurnaceScreen.class;
-            case IRON -> IronFastFurnaceScreen.class;
-            case GOLD -> GoldFastFurnaceScreen.class;
-            case DIAMOND -> DiamondFastFurnaceScreen.class;
-        };
-    }
-
-    private static <S extends FastFurnaceScreen> void registerGuiHandlers(
-            IGuiHandlerRegistration registration,
-            Class<S> screenClass,
-            IRecipeType<IJeiFuelingRecipe> fuelType) {
-        registration.addGuiContainerHandler(screenClass, new IGuiContainerHandler<S>() {
+    private static void registerFurnaceGuiHandler(IGuiHandlerRegistration registration) {
+        registration.addGuiContainerHandler(FastFurnaceScreen.class, new IGuiContainerHandler<FastFurnaceScreen>() {
             @Override
-            public List<Rect2i> getGuiExtraAreas(S screen) {
+            public List<Rect2i> getGuiExtraAreas(FastFurnaceScreen screen) {
                 return screen.getJeiExtraAreas();
             }
 
             @Override
-            public List<IGuiClickableArea> getGuiClickableAreas(S screen, double guiMouseX, double guiMouseY) {
+            public List<IGuiClickableArea> getGuiClickableAreas(
+                    FastFurnaceScreen screen, double guiMouseX, double guiMouseY) {
                 List<IGuiClickableArea> areas = new ArrayList<>();
                 if (screen.getMenu().isFastCrusher()) {
                     areas.add(IGuiClickableArea.createBasic(
@@ -322,7 +296,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 } else {
                     areas.add(IGuiClickableArea.createBasic(78, 32, 28, 23, RecipeTypes.SMELTING));
                 }
-                areas.add(IGuiClickableArea.createBasic(56, 36, 14, 14, fuelType));
+                areas.add(IGuiClickableArea.createBasic(56, 36, 14, 14,
+                        FastFurnaceFuelCategory.getRecipeType(screen.getMenu().getTier())));
                 return areas;
             }
         });

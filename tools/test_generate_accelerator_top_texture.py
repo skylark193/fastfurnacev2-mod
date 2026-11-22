@@ -1,4 +1,7 @@
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from PIL import Image
@@ -62,6 +65,31 @@ class AcceleratorTopTextureGeneratorTests(unittest.TestCase):
         self.assertTrue(all(frame.size == self.source.size for stage in stages for frame in stage))
         with self.assertRaises(ValueError):
             generate_top_textures(Image.new("RGBA", (16, 32)), 2, 2, 22, 5, 418)
+
+    def test_cli_rejects_an_output_that_would_overwrite_its_input(self) -> None:
+        script = Path(__file__).with_name("generate_accelerator_top_texture.py")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "stage0.png"
+            self.source.save(source)
+            original = source.read_bytes()
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    str(script),
+                    "--input",
+                    str(source),
+                    "--output-prefix",
+                    str(root / "stage"),
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(source.read_bytes(), original)
 
 
 if __name__ == "__main__":

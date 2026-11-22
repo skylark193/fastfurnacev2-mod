@@ -169,6 +169,7 @@ def main() -> None:
     args.active_output.parent.mkdir(parents=True, exist_ok=True)
     idle.save(args.idle_output, format="PNG", optimize=True)
     strip.save(args.active_output, format="PNG", optimize=True)
+    Path(f"{args.idle_output}.mcmeta").unlink(missing_ok=True)
 
     metadata = {
         "animation": {

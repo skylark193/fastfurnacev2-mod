@@ -1,5 +1,8 @@
 import math
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from PIL import Image
@@ -70,6 +73,34 @@ class CrusherTopTextureGeneratorTests(unittest.TestCase):
         self.assertTrue(all(frame.size == self.source.size for frame in frames))
         with self.assertRaises(ValueError):
             generate_top_textures(Image.new("RGBA", (16, 32)), 8)
+
+    def test_cli_removes_stale_idle_animation_metadata(self) -> None:
+        script = Path(__file__).with_name("generate_crusher_top_texture.py")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            idle = root / "idle.png"
+            active = root / "active.png"
+            stale_metadata = Path(f"{idle}.mcmeta")
+            stale_metadata.write_text('{"animation": {"frames": [0, 1]}}', encoding="utf-8")
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    str(script),
+                    "--input",
+                    str(Path(__file__).parent / "texture_sources" / "netherrack.png"),
+                    "--idle-output",
+                    str(idle),
+                    "--active-output",
+                    str(active),
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertFalse(stale_metadata.exists())
+            self.assertTrue(Path(f"{active}.mcmeta").is_file())
 
 
 if __name__ == "__main__":

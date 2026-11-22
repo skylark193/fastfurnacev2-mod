@@ -20,6 +20,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -33,6 +34,10 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 final class FastFurnaceGameTests {
     private static final Identifier SPEED_TEST_ID =
@@ -59,6 +64,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal");
     private static final Identifier EXTREME_COAL_GENERATION_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal_generation");
+    private static final Identifier MINING_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "mining_tags");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -83,6 +90,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_GENERATION_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_GENERATION_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> MINING_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, MINING_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
             Map.entry(SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent),
             Map.entry(FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime),
@@ -95,7 +104,8 @@ final class FastFurnaceGameTests {
             Map.entry(FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork),
             Map.entry(ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts),
             Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
-            Map.entry(EXTREME_COAL_GENERATION_FUNCTION, FastFurnaceGameTests::extremeCoalReplacesCoalOreOnce));
+            Map.entry(EXTREME_COAL_GENERATION_FUNCTION, FastFurnaceGameTests::extremeCoalReplacesCoalOreOnce),
+            Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable));
 
     private FastFurnaceGameTests() {
     }
@@ -123,6 +133,7 @@ final class FastFurnaceGameTests {
         event.registerTest(EXTREME_COAL_TEST_ID, new DirectGameTestInstance(EXTREME_COAL_FUNCTION, testData));
         event.registerTest(EXTREME_COAL_GENERATION_TEST_ID,
                 new DirectGameTestInstance(EXTREME_COAL_GENERATION_FUNCTION, testData));
+        event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -139,9 +150,6 @@ final class FastFurnaceGameTests {
         }
 
         for (int tick = 1; tick <= 133; tick++) {
-            if (tick == 133) {
-                level.getRandom().setSeed(findOutputRollSeed(true));
-            }
             FastFurnaceBlockEntity.serverTick(level, pos, level.getBlockState(pos), furnace);
             if (tick < 133 && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
                 throw helper.assertionException("Fast Furnace smelted before tick 133");
@@ -243,6 +251,61 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Fast Crusher did not resume the same pending doubled output");
         }
 
+        BlockPos abortedPos = new BlockPos(10, 0, 0);
+        FastFurnaceBlockEntity abortedCrusher = createPendingDoubleOutput(helper, abortedPos, crushedIron);
+        ResourceHandler<ItemResource> abortedItems = VanillaContainerWrapper.of(abortedCrusher);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = abortedItems.extract(
+                    FastFurnaceMenu.INGREDIENT_SLOT, ItemResource.of(Items.RAW_IRON), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract crusher input for the aborted-transaction test");
+            }
+        }
+        if (!abortedCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).is(Items.RAW_IRON)
+                || abortedCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Aborting a transaction did not restore the crusher input");
+        }
+        abortedCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(crushedIron, 60));
+        level.getRandom().setSeed(findOutputRollSeed(false));
+        tickFurnace(helper, abortedCrusher, abortedPos);
+        if (abortedCrusher.getItem(FastFurnaceMenu.RESULT_SLOT).getCount() != 64) {
+            throw helper.assertionException("An aborted input extraction discarded the pending four-item crusher result");
+        }
+
+        BlockPos committedPos = new BlockPos(12, 0, 0);
+        FastFurnaceBlockEntity committedCrusher = createPendingDoubleOutput(helper, committedPos, crushedIron);
+        ResourceHandler<ItemResource> committedItems = VanillaContainerWrapper.of(committedCrusher);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = committedItems.extract(
+                    FastFurnaceMenu.INGREDIENT_SLOT, ItemResource.of(Items.RAW_IRON), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract crusher input for the committed-transaction test");
+            }
+            transaction.commit();
+        }
+        if (!committedCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()) {
+            throw helper.assertionException("Committing a transaction did not remove the crusher input");
+        }
+        committedCrusher.setItem(FastFurnaceMenu.RESULT_SLOT, ItemStack.EMPTY);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int inserted = committedItems.insert(
+                    FastFurnaceMenu.INGREDIENT_SLOT, ItemResource.of(Items.RAW_IRON), 1, transaction);
+            if (inserted != 1) {
+                throw helper.assertionException("Could not restore crusher input transactionally");
+            }
+            transaction.commit();
+        }
+        for (int tick = 1; tick <= 133; tick++) {
+            if (tick == 133) {
+                level.getRandom().setSeed(findOutputRollSeed(false));
+            }
+            tickFurnace(helper, committedCrusher, committedPos);
+        }
+        ItemStack committedResult = committedCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!committedResult.is(crushedIron) || committedResult.getCount() != 2) {
+            throw helper.assertionException("A committed empty/fill transition retained stale doubled crusher output");
+        }
+
         BlockPos fastCoalPos = new BlockPos(8, 0, 0);
         FastFurnaceBlockEntity fastCoalCrusher = placeCrusher(helper, fastCoalPos);
         fastCoalCrusher.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.FAST_COAL.get()));
@@ -261,6 +324,22 @@ final class FastFurnaceGameTests {
 
         crusherTiersScaleSpeedAndOutputChance(helper, crushedIron);
         helper.succeed();
+    }
+
+    private static FastFurnaceBlockEntity createPendingDoubleOutput(
+            GameTestHelper helper, BlockPos relativePos, Item crushedIron) {
+        FastFurnaceBlockEntity crusher = placeCrusher(helper, relativePos);
+        crusher.setItem(FastFurnaceMenu.RESULT_SLOT, new ItemStack(crushedIron, 61));
+        for (int tick = 1; tick <= 132; tick++) {
+            tickFurnace(helper, crusher, relativePos);
+        }
+        helper.getLevel().getRandom().setSeed(findOutputRollSeed(true));
+        tickFurnace(helper, crusher, relativePos);
+        if (crusher.getItem(FastFurnaceMenu.RESULT_SLOT).getCount() != 61
+                || crusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Could not create a blocked pending crusher double");
+        }
+        return crusher;
     }
 
     private static void crusherTiersScaleSpeedAndOutputChance(GameTestHelper helper, Item crushedIron) {
@@ -311,6 +390,31 @@ final class FastFurnaceGameTests {
                 if (!result.is(crushedIron) || result.getCount() != 4
                         || !crusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()) {
                     throw helper.assertionException(tier + " crusher did not use its tier's output-doubling chance");
+                }
+
+                if (fuelMode == 0) {
+                    FastFurnaceTier failedTier = tier == FastFurnaceTier.FAST
+                            ? FastFurnaceTier.DIAMOND
+                            : FastFurnaceTier.values()[tier.ordinal() - 1];
+                    long failedSeed = tier == FastFurnaceTier.FAST
+                            ? findChanceRollSeed(FastFurnaceTier.DIAMOND.getDoubleBurnChance(), false)
+                            : findTierOutputRollSeed(tier);
+                    BlockPos failedPos = relativePos.above(2);
+                    FastFurnaceBlockEntity failedCrusher = placeFurnace(
+                            helper, failedPos, new ItemStack(Items.COAL),
+                            FastFurnaceV2.getCrusherBlock(failedTier).get());
+                    int failedCookTime = normalCookTimes[failedTier.ordinal()];
+                    for (int tick = 1; tick <= failedCookTime; tick++) {
+                        if (tick == failedCookTime) {
+                            level.getRandom().setSeed(failedSeed);
+                        }
+                        tickFurnace(helper, failedCrusher, failedPos);
+                    }
+                    ItemStack failedResult = failedCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+                    if (!failedResult.is(crushedIron) || failedResult.getCount() != 2) {
+                        throw helper.assertionException(failedTier
+                                + " crusher doubled output for a roll outside its configured chance");
+                    }
                 }
             }
         }
@@ -777,9 +881,22 @@ final class FastFurnaceGameTests {
                         Identifier.fromNamespaceAndPath("ftbmaterials", "tin_dust"), "tin_raw_ore")
                 || !CrushedOres.isCrushedOreForMaterial(
                         Identifier.fromNamespaceAndPath("create", "crushed_raw_iron"), "iron")
+                || !CrushedOres.isCrushedOreForMaterial(
+                        Identifier.fromNamespaceAndPath("examplemod", "tin_crushed_raw_ore"), "tin_raw_ore")
                 || CrushedOres.isCrushedOreForMaterial(
                         Identifier.fromNamespaceAndPath("ftbmaterials", "tin_ore"), "tin_raw_ore")) {
             throw helper.assertionException("Conventional external crushed ores were not matched to their raw materials");
+        }
+
+        Identifier firstCollision = CrushedOres.generatedRecipeId(
+                Identifier.fromNamespaceAndPath("foo_bar", "baz"), Identifier.withDefaultNamespace("smelting"));
+        Identifier secondCollision = CrushedOres.generatedRecipeId(
+                Identifier.fromNamespaceAndPath("foo", "bar_baz"), Identifier.withDefaultNamespace("smelting"));
+        if (firstCollision.equals(secondCollision)
+                || !firstCollision.equals(CrushedOres.generatedRecipeId(
+                        Identifier.fromNamespaceAndPath("foo_bar", "baz"),
+                        Identifier.withDefaultNamespace("smelting")))) {
+            throw helper.assertionException("Generated crushed recipe IDs collided or were not deterministic");
         }
 
         for (Identifier rawOreId : CrushedOres.rawOres()) {
@@ -954,6 +1071,56 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Accelerator processed an unsupported input or consumed ordinary fuel");
         }
 
+        BlockPos abortedTransactionPos = new BlockPos(8, 4, 0);
+        AcceleratorBlockEntity aborted = placeAccelerator(
+                helper, abortedTransactionPos, new ItemStack(Items.COAL), ItemStack.EMPTY);
+        AcceleratorMenu abortedMenu = createAcceleratorMenu(helper, aborted);
+        tickAccelerator(helper, aborted, abortedTransactionPos, 25);
+        ResourceHandler<ItemResource> abortedItems = VanillaContainerWrapper.of(aborted);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = abortedItems.extract(
+                    AcceleratorMenu.INPUT_SLOT, ItemResource.of(Items.COAL), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract Accelerator input for the abort test");
+            }
+        }
+        if (!aborted.getItem(AcceleratorMenu.INPUT_SLOT).is(Items.COAL)
+                || abortedMenu.getWorkProgress() != 25
+                || abortedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_RECIPE_TICKS) {
+            throw helper.assertionException("An aborted Accelerator extraction erased progress or failed to restore coal");
+        }
+
+        BlockPos committedTransactionPos = new BlockPos(12, 4, 0);
+        AcceleratorBlockEntity committed = placeAccelerator(
+                helper, committedTransactionPos, new ItemStack(Items.COAL), ItemStack.EMPTY);
+        AcceleratorMenu committedMenu = createAcceleratorMenu(helper, committed);
+        tickAccelerator(helper, committed, committedTransactionPos, 25);
+        ResourceHandler<ItemResource> committedItems = VanillaContainerWrapper.of(committed);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = committedItems.extract(
+                    AcceleratorMenu.INPUT_SLOT, ItemResource.of(Items.COAL), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract Accelerator input for the commit test");
+            }
+            transaction.commit();
+        }
+        if (!committed.getItem(AcceleratorMenu.INPUT_SLOT).isEmpty()
+                || committedMenu.getWorkProgress() != 0 || committedMenu.getRecipeTicks() != 0) {
+            throw helper.assertionException("A committed Accelerator extraction did not reset its completed input state");
+        }
+        try (Transaction transaction = Transaction.openRoot()) {
+            int inserted = committedItems.insert(
+                    AcceleratorMenu.INPUT_SLOT, ItemResource.of(Items.COAL_BLOCK), 1, transaction);
+            if (inserted != 1) {
+                throw helper.assertionException("Could not insert a coal block transactionally");
+            }
+            transaction.commit();
+        }
+        if (committedMenu.getWorkProgress() != 0
+                || committedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS) {
+            throw helper.assertionException("A committed Accelerator refill did not select the new conversion duration");
+        }
+
         acceleratorBoostCapacities(helper);
         helper.succeed();
     }
@@ -1074,6 +1241,25 @@ final class FastFurnaceGameTests {
                 || extremeBlocksMenu.getBoostWork() != 0) {
             throw helper.assertionException("Extreme Coal did not boost exactly two coal-block conversions");
         }
+    }
+
+    private static void allToolRequiredBlocksArePickaxeMineable(GameTestHelper helper) {
+        int registeredBlocks = 0;
+        for (var entry : BuiltInRegistries.BLOCK.entrySet()) {
+            Identifier id = entry.getKey().identifier();
+            if (!FastFurnaceV2.MODID.equals(id.getNamespace())) {
+                continue;
+            }
+            registeredBlocks++;
+            var state = entry.getValue().defaultBlockState();
+            if (state.requiresCorrectToolForDrops() && !state.is(BlockTags.MINEABLE_WITH_PICKAXE)) {
+                throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
+            }
+        }
+        if (registeredBlocks != 12) {
+            throw helper.assertionException("Expected to audit all 12 registered mod blocks, found " + registeredBlocks);
+        }
+        helper.succeed();
     }
 
     private static void fortuneIncreasesBonusDropChance(GameTestHelper helper) {

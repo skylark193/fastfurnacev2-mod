@@ -18,6 +18,8 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
 public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer {
@@ -45,6 +47,27 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     private boolean extremeBoost;
     private int lavaSideCount;
     private boolean processing;
+    private boolean needsProgressReset;
+    private final SnapshotJournal<Boolean> progressResetJournal = new SnapshotJournal<>() {
+        @Override
+        protected Boolean createSnapshot() {
+            return needsProgressReset;
+        }
+
+        @Override
+        protected void revertToSnapshot(Boolean snapshot) {
+            needsProgressReset = snapshot;
+        }
+
+        @Override
+        protected void onRootCommit(Boolean originalState) {
+            if (needsProgressReset) {
+                resetProgressForInput();
+                needsProgressReset = false;
+                setChanged();
+            }
+        }
+    };
 
     private final ContainerData menuDataAccess = new ContainerData() {
         @Override
@@ -169,11 +192,27 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         ItemStack oldStack = this.getItem(slot);
         boolean sameInput = !stack.isEmpty() && ItemStack.isSameItemSameComponents(oldStack, stack);
         super.setItem(slot, stack, insideTransaction);
-        if (slot == AcceleratorMenu.INPUT_SLOT && !sameInput) {
-            this.workProgress = 0;
-            ConversionRecipe recipe = getRecipe(stack);
-            this.recipeTicks = recipe == null ? 0 : recipe.ticks();
+        if (slot == AcceleratorMenu.INPUT_SLOT && !sameInput && !insideTransaction) {
+            this.resetProgressForInput();
         }
+    }
+
+    @Override
+    public void onTransfer(int slot, int amountChange, TransactionContext transaction) {
+        if (slot == AcceleratorMenu.INPUT_SLOT) {
+            int currentAmount = this.getItem(slot).getCount();
+            if (currentAmount == 0 || currentAmount == amountChange) {
+                // Preserve progress when an item transaction aborts, but reset it after a committed empty/fill transition.
+                this.progressResetJournal.updateSnapshots(transaction);
+                this.needsProgressReset = true;
+            }
+        }
+    }
+
+    private void resetProgressForInput() {
+        this.workProgress = 0;
+        ConversionRecipe recipe = getRecipe(this.getItem(AcceleratorMenu.INPUT_SLOT));
+        this.recipeTicks = recipe == null ? 0 : recipe.ticks();
     }
 
     @Override

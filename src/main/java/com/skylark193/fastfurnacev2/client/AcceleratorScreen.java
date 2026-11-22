@@ -59,10 +59,22 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
             return List.of();
         }
         return List.of(new Rect2i(
-                this.leftPos + this.imageWidth + 3,
+                this.leftPos + this.getInfoPanelX() - 1,
                 this.topPos + INFO_BUTTON_Y - 1,
                 INFO_PANEL_WIDTH + 2,
                 INFO_PANEL_HEIGHT + 2));
+    }
+
+    private int getInfoPanelX() {
+        int rightX = this.imageWidth + 4;
+        if (this.leftPos + rightX + INFO_PANEL_WIDTH + 1 <= this.width) {
+            return rightX;
+        }
+        int leftX = -INFO_PANEL_WIDTH - 4;
+        if (this.leftPos + leftX - 1 >= 0) {
+            return leftX;
+        }
+        return Math.max(1 - this.leftPos, this.width - this.leftPos - INFO_PANEL_WIDTH - 1);
     }
 
     @Override
@@ -104,7 +116,7 @@ public class AcceleratorScreen extends AbstractContainerScreen<AcceleratorMenu> 
         graphics.text(this.font, "i", INFO_BUTTON_X + 5, INFO_BUTTON_Y + 2, 0xFFFFFFFF, false);
 
         if (this.infoVisible) {
-            int x = this.imageWidth + 4;
+            int x = this.getInfoPanelX();
             int y = INFO_BUTTON_Y;
             graphics.fill(x - 1, y - 1, x + INFO_PANEL_WIDTH + 1, y + INFO_PANEL_HEIGHT + 1, 0xFFC6C6C6);
             graphics.fill(x, y, x + INFO_PANEL_WIDTH, y + INFO_PANEL_HEIGHT, 0xF0181818);

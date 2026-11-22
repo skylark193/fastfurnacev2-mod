@@ -9,6 +9,9 @@
     "fastfurnacev2:iron_fast_furnace",
     "fastfurnacev2:gold_fast_furnace",
     "fastfurnacev2:diamond_fast_furnace",
-    "fastfurnacev2:fast_crusher"
+    "fastfurnacev2:fast_crusher",
+    "fastfurnacev2:iron_fast_crusher",
+    "fastfurnacev2:gold_fast_crusher",
+    "fastfurnacev2:diamond_fast_crusher"
   ]
 }

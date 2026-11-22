@@ -51,6 +51,7 @@ def main() -> None:
         result = normalize_dust(source)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     result.save(args.output)
+    Path(f"{args.output}.mcmeta").unlink(missing_ok=True)
     print(f"Generated neutral {result.width}x{result.height} dust texture: {args.output}")
 
 

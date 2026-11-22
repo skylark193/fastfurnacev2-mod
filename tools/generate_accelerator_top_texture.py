@@ -119,6 +119,11 @@ def generate_top_textures(
 
 def main() -> None:
     args = parse_args()
+    outputs = [Path(f"{args.output_prefix}{level}.png") for level in range(11)]
+    output_paths = {path.resolve() for output in outputs for path in (output, Path(f"{output}.mcmeta"))}
+    if args.input.resolve() in output_paths:
+        raise SystemExit("Input path must differ from every generated texture and metadata path.")
+
     with Image.open(args.input) as source:
         base = source.convert("RGBA")
     size = base.width
@@ -142,7 +147,7 @@ def main() -> None:
         }
     }
     for level, frames in enumerate(stages):
-        output = Path(f"{args.output_prefix}{level}.png")
+        output = outputs[level]
         strip = Image.new("RGBA", (size, size * args.frames))
         for frame_index, frame in enumerate(frames):
             strip.paste(frame, (0, frame_index * size))

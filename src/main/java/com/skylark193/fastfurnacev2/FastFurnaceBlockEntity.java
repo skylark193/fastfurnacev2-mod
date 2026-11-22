@@ -23,6 +23,8 @@ import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     public static final int VANILLA_COAL_BURN_TIME = 1600;
@@ -38,6 +40,27 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     private boolean fastCoalBurning;
     private boolean extremeCoalBurning;
     private boolean crusherDoubleOutputPending;
+    private boolean needsCrusherDoubleReset;
+    private final SnapshotJournal<Boolean> crusherDoubleResetJournal = new SnapshotJournal<>() {
+        @Override
+        protected Boolean createSnapshot() {
+            return needsCrusherDoubleReset;
+        }
+
+        @Override
+        protected void revertToSnapshot(Boolean snapshot) {
+            needsCrusherDoubleReset = snapshot;
+        }
+
+        @Override
+        protected void onRootCommit(Boolean originalState) {
+            if (needsCrusherDoubleReset) {
+                crusherDoubleOutputPending = false;
+                needsCrusherDoubleReset = false;
+                setChanged();
+            }
+        }
+    };
 
     // Split integers preserve exact fuel times; the last two values identify active fuel and crusher behavior.
     private final ContainerData menuDataAccess = new ContainerData() {
@@ -144,6 +167,19 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
             if (this.level instanceof ServerLevel serverLevel) {
                 this.dataAccess.set(DATA_COOKING_TOTAL_TIME, this.getTotalCookTime(serverLevel));
                 this.dataAccess.set(DATA_COOKING_PROGRESS, 0);
+            }
+        }
+    }
+
+    @Override
+    public void onTransfer(int slot, int amountChange, TransactionContext transaction) {
+        super.onTransfer(slot, amountChange, transaction);
+        if (this.fastCrusher && slot == SLOT_INPUT) {
+            int currentAmount = this.getItem(slot).getCount();
+            if (currentAmount == 0 || currentAmount == amountChange) {
+                // Item snapshots cannot restore custom pending state; defer its reset until the root commit.
+                this.crusherDoubleResetJournal.updateSnapshots(transaction);
+                this.needsCrusherDoubleReset = true;
             }
         }
     }

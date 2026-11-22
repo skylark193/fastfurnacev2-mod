@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -36,6 +37,7 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.event.ModifyRecipeJsonsEvent;
 import net.neoforged.neoforge.registries.IRegistryExtension;
 import net.neoforged.neoforge.registries.ModifyRegistriesEvent;
@@ -60,7 +62,7 @@ public final class CrushedOres {
 
     public static void registerDiscovery(ModifyRegistriesEvent event) {
         Registry<Item> registry = event.getRegistry(Registries.ITEM);
-        scanPackagedTagsAndItemDefinitions();
+        scanPackagedTags();
         vanillaItems = new ArrayList<>(registry.entrySet());
         AddCallback<Item> callback = (addedRegistry, id, key, item) -> {
             rememberExistingCrushedOre(key.identifier(), item);
@@ -126,6 +128,7 @@ public final class CrushedOres {
         List<ParsedSmeltingRecipe> sources = new ArrayList<>();
         for (Map.Entry<Identifier, JsonElement> entry : new ArrayList<>(recipes.entrySet())) {
             if (!(entry.getValue() instanceof JsonObject source)
+                    || !ICondition.conditionsMatched(event.getOps(), source)
                     || !source.has("type") || !source.get("type").isJsonPrimitive()
                     || !"minecraft:smelting".equals(source.get("type").getAsString())
                     || !source.has("ingredient")) {
@@ -202,6 +205,9 @@ public final class CrushedOres {
                 : "crushed_" + rawOreId.getNamespace() + "_" + material;
         Identifier id = Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, path.replace('/', '_'));
         if (registry.containsKey(id)) {
+            id = Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, id.getPath() + "_" + stableSuffix(rawOreId));
+        }
+        if (registry.containsKey(id)) {
             LOGGER.warn("Cannot create crushed ore for {} because {} is already registered", rawOreId, id);
             return;
         }
@@ -215,8 +221,24 @@ public final class CrushedOres {
 
     private static void rememberExistingCrushedOre(Identifier itemId, Item item) {
         if (!(item instanceof BlockItem) && !FastFurnaceV2.MODID.equals(itemId.getNamespace())
-                && isPotentialCrushedOrePath(itemId.getPath())) {
-            KNOWN_CRUSHED_ORES.add(itemId);
+                && isPotentialCrushedOrePath(itemId.getPath())
+                && KNOWN_CRUSHED_ORES.add(itemId)) {
+            preferRegisteredCrushedOres();
+        }
+    }
+
+    private static void preferRegisteredCrushedOres() {
+        for (Map.Entry<Identifier, Identifier> entry : BY_RAW_ORE.entrySet()) {
+            Identifier rawOreId = entry.getKey();
+            String rawPath = rawOreId.getPath();
+            String material = materialName(rawPath.substring(rawPath.lastIndexOf('/') + 1));
+            Identifier registered = findExistingCrushedOre(rawOreId, material);
+            if (registered != null && !registered.equals(entry.getValue())) {
+                Identifier previous = entry.setValue(registered);
+                BY_ID.remove(previous);
+                LOGGER.debug("Replaced provisional or lower-priority {} with registered crushed ore {} for {}",
+                        previous, registered, rawOreId);
+            }
         }
     }
 
@@ -244,6 +266,7 @@ public final class CrushedOres {
                 || path.equals("crushed_" + material + "_ore")
                 || path.equals(material + "_crushed")
                 || path.equals(material + "_crushed_raw")
+                || path.equals(material + "_crushed_raw_ore")
                 || path.equals(material + "_crushed_ore")
                 || path.equals("dust_" + material)
                 || path.equals("dust_" + material + "_ore")
@@ -256,7 +279,7 @@ public final class CrushedOres {
         return fileName.contains("crushed") || fileName.contains("dust");
     }
 
-    private static void scanPackagedTagsAndItemDefinitions() {
+    private static void scanPackagedTags() {
         PackLocationInfo location = new PackLocationInfo(
                 FastFurnaceV2.MODID + ":raw_tag_scan", Component.empty(), PackSource.DEFAULT, Optional.empty());
         for (var modFile : ModList.get().getModFiles()) {
@@ -264,8 +287,7 @@ public final class CrushedOres {
                 for (String namespace : pack.getNamespaces(PackType.SERVER_DATA)) {
                     Map<Identifier, IoSupplier<InputStream>> resources = new HashMap<>();
                     pack.listResources(PackType.SERVER_DATA, namespace, "tags/item", (id, resource) -> {
-                        if (id.getPath().matches(
-                                "tags/item/(?:raw_materials|dusts|crushed_ores)(?:/.+)?\\.json")) {
+                        if (id.getPath().startsWith("tags/item/") && id.getPath().endsWith(".json")) {
                             resources.put(id, resource);
                         }
                     });
@@ -275,31 +297,27 @@ public final class CrushedOres {
                         try (InputStream input = resource.getValue().get();
                                 InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
                             JsonObject tag = JsonParser.parseReader(reader).getAsJsonObject();
-                            if (tag.get("values") instanceof com.google.gson.JsonArray values) {
-                                PACKAGED_ITEM_TAGS.computeIfAbsent(tagId, ignored -> new ArrayList<>()).addAll(values.asList());
+                            List<JsonElement> values = PACKAGED_ITEM_TAGS.computeIfAbsent(
+                                    tagId, ignored -> new ArrayList<>());
+                            if (tag.get("replace") instanceof com.google.gson.JsonPrimitive replace
+                                    && replace.isBoolean() && replace.getAsBoolean()) {
+                                values.clear();
+                            }
+                            if (tag.get("values") instanceof com.google.gson.JsonArray entries) {
+                                values.addAll(entries.asList());
                             }
                         }
                     }
                 }
-                for (String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
-                    pack.listResources(PackType.CLIENT_RESOURCES, namespace, "items", (id, resource) -> {
-                        if (!id.getPath().endsWith(".json")) {
-                            return;
-                        }
-                        Identifier itemId = Identifier.fromNamespaceAndPath(id.getNamespace(),
-                                id.getPath().substring(6, id.getPath().length() - 5));
-                        if (!FastFurnaceV2.MODID.equals(itemId.getNamespace())
-                                && isPotentialCrushedOrePath(itemId.getPath())) {
-                            KNOWN_CRUSHED_ORES.add(itemId);
-                        }
-                    });
-                }
             } catch (IOException | RuntimeException exception) {
-                LOGGER.warn("Could not inspect packaged ore tags or item definitions from {}",
+                LOGGER.warn("Could not inspect packaged ore tags from {}",
                         modFile.getFile().getFileName(), exception);
             }
         }
         for (Identifier tagId : PACKAGED_ITEM_TAGS.keySet()) {
+            if (!"c".equals(tagId.getNamespace())) {
+                continue;
+            }
             String path = tagId.getPath();
             if (path.equals("raw_materials") || path.startsWith("raw_materials/")) {
                 collectTaggedItems(tagId, new HashSet<>(), TAGGED_RAW_ORES, false);
@@ -308,7 +326,6 @@ public final class CrushedOres {
                 collectTaggedItems(tagId, new HashSet<>(), TAGGED_CRUSHED_ORES, true);
             }
         }
-        KNOWN_CRUSHED_ORES.addAll(TAGGED_CRUSHED_ORES);
     }
 
     private static void collectTaggedItems(
@@ -348,13 +365,25 @@ public final class CrushedOres {
         return directory + material;
     }
 
-    private static Identifier generatedRecipeId(Identifier crushedOreId, Identifier sourceRecipe) {
+    static Identifier generatedRecipeId(Identifier crushedOreId, Identifier sourceRecipe) {
         String itemPath = BY_ID.containsKey(crushedOreId)
                 ? crushedOreId.getPath()
                 : (crushedOreId.getNamespace() + "_" + crushedOreId.getPath()).replace('/', '_');
         return Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID,
                 itemPath + "_from_" + sourceRecipe.getNamespace() + "_"
-                        + sourceRecipe.getPath().replace('/', '_'));
+                        + sourceRecipe.getPath().replace('/', '_') + "_"
+                        + stableSuffix(crushedOreId, sourceRecipe));
+    }
+
+    private static String stableSuffix(Identifier... ids) {
+        StringBuilder value = new StringBuilder();
+        for (Identifier id : ids) {
+            if (!value.isEmpty()) {
+                value.append('|');
+            }
+            value.append(id);
+        }
+        return UUID.nameUUIDFromBytes(value.toString().getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     private record ParsedSmeltingRecipe(Identifier id, JsonObject json, Ingredient ingredient) {
