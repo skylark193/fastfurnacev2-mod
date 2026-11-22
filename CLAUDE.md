@@ -46,7 +46,7 @@ The mod also discovers vanilla and modded raw ore items during registration and 
 - Gradle 9.2.1 through the included wrapper; do not require a system Gradle installation.
 - NeoForge ModDev Gradle plugin 2.0.148.
 - Minecraft 26.1.2; NeoForge 26.1.2.126.
-- Mod ID `fastfurnacev2`; mod version 1.0.0; group `com.skylark193.fastfurnacev2`.
+- Mod ID `fastfurnacev2`; mod version 1.1.0; group `com.skylark193.fastfurnacev2`.
 - JEI 29.2.0.21 common and NeoForge APIs, using the BlameJared Maven repository.
 - Optional texture tooling uses Python 3 and Pillow 13.0.0 in an ignored `.venv`; see `tools/README.md`.
 
