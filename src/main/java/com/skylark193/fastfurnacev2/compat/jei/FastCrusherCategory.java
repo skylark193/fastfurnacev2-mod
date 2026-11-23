@@ -1,8 +1,8 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
-import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
+import com.skylark193.fastfurnacev2.api.CrusherRecipe;
 import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -14,9 +14,9 @@ import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
 import net.minecraft.network.chat.Component;
 
-final class FastCrusherCategory implements IRecipeCategory<FastCrusherRecipe> {
-    private static final IRecipeType<FastCrusherRecipe> RECIPE_TYPE =
-            IRecipeType.create(FastFurnaceV2.MODID, "crushing", FastCrusherRecipe.class);
+final class FastCrusherCategory implements IRecipeCategory<CrusherRecipe> {
+    private static final IRecipeType<CrusherRecipe> RECIPE_TYPE =
+            IRecipeType.create(FastFurnaceV2.MODID, "crushing", CrusherRecipe.class);
     private static final int WIDTH = 150;
     private static final int HEIGHT = 56;
     private static final int STANDARD_COOK_TIME = FastFurnaceTier.FAST.scaleCookTime(200, false);
@@ -29,12 +29,12 @@ final class FastCrusherCategory implements IRecipeCategory<FastCrusherRecipe> {
         this.icon = guiHelper.createDrawableItemLike(FastFurnaceV2.FAST_CRUSHER.get());
     }
 
-    static IRecipeType<FastCrusherRecipe> getCrushingRecipeType() {
+    static IRecipeType<CrusherRecipe> getCrushingRecipeType() {
         return RECIPE_TYPE;
     }
 
     @Override
-    public IRecipeType<FastCrusherRecipe> getRecipeType() {
+    public IRecipeType<CrusherRecipe> getRecipeType() {
         return getCrushingRecipeType();
     }
 
@@ -59,23 +59,26 @@ final class FastCrusherCategory implements IRecipeCategory<FastCrusherRecipe> {
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, FastCrusherRecipe recipe, IFocusGroup focuses) {
+    public void setRecipe(IRecipeLayoutBuilder builder, CrusherRecipe recipe, IFocusGroup focuses) {
         builder.addInputSlot(20, 17)
                 .setStandardSlotBackground()
-                .addItemStacks(List.of(recipe.input()));
+                .addItemStacks(recipe.inputItems());
         builder.addOutputSlot(100, 17)
                 .setStandardSlotBackground()
                 .addItemStacks(List.of(recipe.output()));
     }
 
     @Override
-    public void createRecipeExtras(IRecipeExtrasBuilder builder, FastCrusherRecipe recipe, IFocusGroup focuses) {
-        builder.addAnimatedRecipeArrow(STANDARD_COOK_TIME).setPosition(58, 18);
+    public void createRecipeExtras(IRecipeExtrasBuilder builder, CrusherRecipe recipe, IFocusGroup focuses) {
+        int processingTime = recipe.processingTime() == 0
+                ? STANDARD_COOK_TIME
+                : FastFurnaceTier.FAST.scaleCookTime(recipe.processingTime(), 0);
+        builder.addAnimatedRecipeArrow(processingTime).setPosition(58, 18);
         builder.addText(Component.translatable(
                         "jei.fastfurnacev2.crushing_output_chance",
                         FastFurnaceTier.FAST.getDoubleBurnChancePercent(),
                         FastFurnaceTier.DIAMOND.getDoubleBurnChancePercent(),
-                        FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT * 2),
+                        recipe.output().getCount() * 2),
                 WIDTH, 10)
                 .setPosition(0, 44)
                 .setTextAlignment(HorizontalAlignment.CENTER)

@@ -87,11 +87,18 @@ final class FastFurnaceFuelCategory implements IRecipeCategory<IJeiFuelingRecipe
     }
 
     private static Component createSmeltCountText(FastFurnaceTier tier, IJeiFuelingRecipe recipe) {
-        boolean extremeCoalActive = recipe.getInputs().stream()
-                .anyMatch(FastFurnaceV2::isExtremeCoalFuel);
-        boolean fastCoalActive = !extremeCoalActive && recipe.getInputs().stream()
-                .anyMatch(FastFurnaceV2::isFastCoalFuel);
-        float smeltCount = tier.getSmeltCount(recipe.getBurnTime(), fastCoalActive, extremeCoalActive);
+        int speedBonusPercent;
+        if (recipe instanceof FastFurnaceFuelRecipe fastRecipe) {
+            speedBonusPercent = fastRecipe.speedBonusPercent();
+        } else {
+            boolean extremeCoalActive = recipe.getInputs().stream()
+                    .anyMatch(FastFurnaceV2::isExtremeCoalFuel);
+            boolean fastCoalActive = !extremeCoalActive && recipe.getInputs().stream()
+                    .anyMatch(FastFurnaceV2::isFastCoalFuel);
+            speedBonusPercent = extremeCoalActive ? FastFurnaceTier.EXTREME_COAL_SPEED_BONUS_PERCENT
+                    : fastCoalActive ? FastFurnaceTier.FAST_COAL_SPEED_BONUS_PERCENT : 0;
+        }
+        float smeltCount = tier.getSmeltCount(recipe.getBurnTime(), speedBonusPercent);
         if (smeltCount == 1.0F) {
             return Component.translatable("gui.jei.category.fuel.smeltCount.single");
         }

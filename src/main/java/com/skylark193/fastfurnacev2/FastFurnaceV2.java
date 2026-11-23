@@ -2,6 +2,7 @@ package com.skylark193.fastfurnacev2;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import com.skylark193.fastfurnacev2.internal.FastFurnaceApiImpl;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.network.chat.Component;
@@ -21,6 +22,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -153,11 +155,22 @@ public class FastFurnaceV2 {
         ATTACHMENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
+        if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
+            modEventBus.addListener(FastFurnaceGameTests::registerApiFuels);
+            modEventBus.addListener(FastFurnaceGameTests::registerApiCrusherRecipes);
+            modEventBus.addListener(FastFurnaceGameTests::registerApiAcceleratorRecipes);
+        }
         modEventBus.addListener(CrushedOres::registerDiscovery);
         modEventBus.addListener(CrushedOres::registerItems);
         modEventBus.addListener(CrushedOreResources::addPackFinder);
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
+        NeoForge.EVENT_BUS.addListener(DefaultDataComponentsBoundEvent.class, event -> {
+            if (event.shouldUpdateStaticData()) {
+                FastFurnaceApiImpl.initialize(modEventBus);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
+        NeoForge.EVENT_BUS.addListener(FastFurnaceApiImpl::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(CrushedOres::generateRecipes);
         NeoForge.EVENT_BUS.addListener(ExtremeCoalOreGeneration::onChunkLoad);
     }

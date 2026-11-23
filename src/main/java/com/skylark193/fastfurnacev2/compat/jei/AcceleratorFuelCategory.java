@@ -1,7 +1,9 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
-import java.util.List;
+import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
+import com.skylark193.fastfurnacev2.api.FastFuel;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.placement.HorizontalAlignment;
@@ -13,9 +15,9 @@ import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
 import net.minecraft.network.chat.Component;
 
-final class AcceleratorFuelCategory implements IRecipeCategory<AcceleratorFuelRecipe> {
-    private static final IRecipeType<AcceleratorFuelRecipe> RECIPE_TYPE =
-            IRecipeType.create(FastFurnaceV2.MODID, "accelerator_fuel", AcceleratorFuelRecipe.class);
+final class AcceleratorFuelCategory implements IRecipeCategory<FastFuel> {
+    private static final IRecipeType<FastFuel> RECIPE_TYPE =
+            IRecipeType.create(FastFurnaceV2.MODID, "accelerator_fuel", FastFuel.class);
     private static final int WIDTH = 190;
     private static final int HEIGHT = 52;
 
@@ -27,12 +29,12 @@ final class AcceleratorFuelCategory implements IRecipeCategory<AcceleratorFuelRe
         this.icon = guiHelper.createDrawableItemLike(FastFurnaceV2.ACCELERATOR.get());
     }
 
-    static IRecipeType<AcceleratorFuelRecipe> getAcceleratorFuelRecipeType() {
+    static IRecipeType<FastFuel> getAcceleratorFuelRecipeType() {
         return RECIPE_TYPE;
     }
 
     @Override
-    public IRecipeType<AcceleratorFuelRecipe> getRecipeType() {
+    public IRecipeType<FastFuel> getRecipeType() {
         return getAcceleratorFuelRecipeType();
     }
 
@@ -57,28 +59,39 @@ final class AcceleratorFuelCategory implements IRecipeCategory<AcceleratorFuelRe
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, AcceleratorFuelRecipe recipe, IFocusGroup focuses) {
+    public void setRecipe(IRecipeLayoutBuilder builder, FastFuel recipe, IFocusGroup focuses) {
         builder.addInputSlot(1, 18)
                 .setStandardSlotBackground()
-                .addItemStacks(List.of(recipe.input()));
+                .addItemStacks(recipe.inputItems());
     }
 
     @Override
-    public void createRecipeExtras(
-            IRecipeExtrasBuilder builder, AcceleratorFuelRecipe recipe, IFocusGroup focuses) {
-        builder.addAnimatedRecipeFlame(recipe.boostWork()).setPosition(1, 0);
-        boolean extreme = FastFurnaceV2.isExtremeCoalFuel(recipe.input());
-        addCenteredText(builder, Component.translatable(extreme
-                ? "jei.fastfurnacev2.accelerator_extreme_boost_speed"
-                : "jei.fastfurnacev2.accelerator_boost_speed"), 0);
-        Component capacity = extreme
-                ? Component.translatable("jei.fastfurnacev2.accelerator_extreme_coal_capacity")
-                : recipe.input().is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())
-                        ? Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_block_capacity")
-                        : Component.translatable("jei.fastfurnacev2.accelerator_fast_coal_capacity");
-        addCenteredText(builder, capacity, 16);
+    public void createRecipeExtras(IRecipeExtrasBuilder builder, FastFuel recipe, IFocusGroup focuses) {
+        builder.addAnimatedRecipeFlame(recipe.acceleratorWork()).setPosition(1, 0);
         addCenteredText(builder, Component.translatable(
-                "jei.fastfurnacev2.accelerator_boost_work", recipe.boostWork()), 32);
+                "jei.fastfurnacev2.accelerator_boost_speed", recipe.acceleratorWorkPerTick()), 0);
+        addCenteredText(builder, Component.translatable(
+                "jei.fastfurnacev2.accelerator_boost_work", recipe.acceleratorWork()), 16);
+        addCenteredText(builder, createCapacityText(recipe), 32);
+    }
+
+    private static Component createCapacityText(FastFuel fuel) {
+        int minimum = Integer.MAX_VALUE;
+        int maximum = 0;
+        for (AcceleratorConversion conversion : FastFurnaceApi.acceleratorRecipes()) {
+            if (conversion.workUnits() <= fuel.acceleratorWork()) {
+                int count = fuel.acceleratorWork() / conversion.workUnits();
+                minimum = Math.min(minimum, count);
+                maximum = Math.max(maximum, count);
+            }
+        }
+        if (maximum == 0) {
+            return Component.translatable("jei.fastfurnacev2.accelerator_no_full_conversion");
+        }
+        return minimum == maximum
+                ? Component.translatable("jei.fastfurnacev2.accelerator_conversion_capacity", maximum)
+                : Component.translatable(
+                        "jei.fastfurnacev2.accelerator_conversion_capacity_range", minimum, maximum);
     }
 
     private static void addCenteredText(IRecipeExtrasBuilder builder, Component text, int y) {

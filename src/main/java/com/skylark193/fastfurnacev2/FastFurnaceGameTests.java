@@ -2,6 +2,13 @@ package com.skylark193.fastfurnacev2;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
+import com.skylark193.fastfurnacev2.api.CrusherRecipe;
+import com.skylark193.fastfurnacev2.api.FastFuel;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
+import com.skylark193.fastfurnacev2.api.event.RegisterAcceleratorRecipesEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterFastCrusherRecipesEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterFastFuelsEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -25,6 +32,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -66,6 +74,14 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal_generation");
     private static final Identifier MINING_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "mining_tags");
+    private static final Identifier API_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "api_extensions");
+    private static final Identifier API_FUEL_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/blaze_powder");
+    private static final Identifier API_CRUSHER_RECIPE_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/cobblestone_to_gravel");
+    private static final Identifier API_ACCELERATOR_RECIPE_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/charcoal_to_coal");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -92,6 +108,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_GENERATION_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> MINING_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, MINING_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, API_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
             Map.entry(SPEED_FUNCTION, FastFurnaceGameTests::smeltsAt150Percent),
             Map.entry(FUEL_FUNCTION, FastFurnaceGameTests::rollsAndSynchronizesFuelTime),
@@ -105,7 +123,8 @@ final class FastFurnaceGameTests {
             Map.entry(ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts),
             Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
             Map.entry(EXTREME_COAL_GENERATION_FUNCTION, FastFurnaceGameTests::extremeCoalReplacesCoalOreOnce),
-            Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable));
+            Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
+            Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
     private FastFurnaceGameTests() {
     }
@@ -134,6 +153,37 @@ final class FastFurnaceGameTests {
         event.registerTest(EXTREME_COAL_GENERATION_TEST_ID,
                 new DirectGameTestInstance(EXTREME_COAL_GENERATION_FUNCTION, testData));
         event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
+        if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
+            event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
+        }
+    }
+
+    static void registerApiFuels(RegisterFastFuelsEvent event) {
+        event.register(FastFuel.builder(API_FUEL_ID, Ingredient.of(Items.BLAZE_POWDER), 800)
+                .burnTimePercent(200)
+                .speedBonusPercent(25)
+                .acceleratorBoost(800, 4)
+                .build());
+    }
+
+    static void registerApiCrusherRecipes(RegisterFastCrusherRecipesEvent event) {
+        event.register(new CrusherRecipe(
+                API_CRUSHER_RECIPE_ID,
+                Ingredient.of(Items.COBBLESTONE),
+                2,
+                new ItemStack(Items.GRAVEL, 3),
+                200,
+                0));
+    }
+
+    static void registerApiAcceleratorRecipes(RegisterAcceleratorRecipesEvent event) {
+        event.register(new AcceleratorConversion(
+                API_ACCELERATOR_RECIPE_ID,
+                Ingredient.of(Items.CHARCOAL),
+                2,
+                new ItemStack(Items.COAL, 2),
+                200,
+                0));
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -1250,6 +1300,99 @@ final class FastFurnaceGameTests {
                 || extremeBlocksMenu.getBoostWork() != 0) {
             throw helper.assertionException("Extreme Coal did not boost exactly two coal-block conversions");
         }
+    }
+
+    private static void apiSupportsCustomFuelsAndRecipes(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        FastFuel customFuel = FastFurnaceApi.findFuel(API_FUEL_ID)
+                .orElseThrow(() -> helper.assertionException("API fuel was not registered"));
+        ItemStack blazePowder = new ItemStack(Items.BLAZE_POWDER);
+        if (customFuel.scaleBurnTime(FastFurnaceTier.FAST, 800) != 1600
+                || customFuel.getSpeedPercent(FastFurnaceTier.FAST) != 175
+                || customFuel.acceleratorWork() != 800
+                || customFuel.acceleratorWorkPerTick() != 4
+                || blazePowder.getBurnTime(RecipeType.SMELTING, level.fuelValues()) != 800
+                || FastFurnaceApi.findFuel(blazePowder).orElse(null) != customFuel
+                || FastFurnaceApi.tiers().size() != 4
+                || FastFurnaceApi.furnace(FastFurnaceTier.FAST) != FastFurnaceV2.FAST_FURNACE_ITEM.get()) {
+            throw helper.assertionException("API fuel queries or ordinary burn-time registration were incorrect");
+        }
+        if (FastFurnaceApi.findCrusherRecipe(new ItemStack(Items.COBBLESTONE)).isPresent()
+                || FastFurnaceApi.findCrusherRecipe(new ItemStack(Items.COBBLESTONE, 2))
+                        .filter(recipe -> recipe.id().equals(API_CRUSHER_RECIPE_ID)).isEmpty()
+                || FastFurnaceApi.findAcceleratorRecipe(new ItemStack(Items.CHARCOAL)).isPresent()
+                || FastFurnaceApi.findAcceleratorRecipe(new ItemStack(Items.CHARCOAL, 2))
+                        .filter(recipe -> recipe.id().equals(API_ACCELERATOR_RECIPE_ID)).isEmpty()) {
+            throw helper.assertionException("API recipe lookup did not enforce input counts or registered IDs");
+        }
+
+        helper.setBlock(BlockPos.ZERO, FastFurnaceV2.FAST_CRUSHER.get());
+        FastFurnaceBlockEntity crusher = helper.getBlockEntity(BlockPos.ZERO, FastFurnaceBlockEntity.class);
+        crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE, 3));
+        crusher.setItem(FastFurnaceMenu.FUEL_SLOT, blazePowder.copy());
+        FastFurnaceMenu crusherMenu = createMenu(helper, crusher);
+        tickFurnace(helper, crusher, BlockPos.ZERO);
+        if (crusherMenu.getTotalFuelTime() != 1600 || crusherMenu.getCurrentBurnTime() != 1600
+                || crusherMenu.getSpeedPercent() != 175 || !crusherMenu.isFastCoalActive()
+                || crusherMenu.isExtremeCoalActive()
+                || crusher.getItem(FastFurnaceMenu.FUEL_SLOT).getCount() != 0) {
+            throw helper.assertionException("Custom fuel did not synchronize its burn duration and +25 speed bonus");
+        }
+        level.getRandom().setSeed(findOutputRollSeed(false));
+        for (int tick = 2; tick < 114; tick++) {
+            tickFurnace(helper, crusher, BlockPos.ZERO);
+            if (!crusher.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Custom crusher recipe completed before tick 114");
+            }
+        }
+        tickFurnace(helper, crusher, BlockPos.ZERO);
+        ItemStack crushed = crusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!crushed.is(Items.GRAVEL) || crushed.getCount() != 3
+                || crusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Custom crusher recipe did not consume two inputs and produce three gravel");
+        }
+
+        BlockPos doubledPos = new BlockPos(2, 0, 0);
+        helper.setBlock(doubledPos, FastFurnaceV2.FAST_CRUSHER.get());
+        FastFurnaceBlockEntity doubledCrusher = helper.getBlockEntity(doubledPos, FastFurnaceBlockEntity.class);
+        doubledCrusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE, 2));
+        doubledCrusher.setItem(FastFurnaceMenu.FUEL_SLOT, blazePowder.copy());
+        for (int tick = 1; tick < 114; tick++) {
+            tickFurnace(helper, doubledCrusher, doubledPos);
+        }
+        level.getRandom().setSeed(findOutputRollSeed(true));
+        tickFurnace(helper, doubledCrusher, doubledPos);
+        ItemStack doubled = doubledCrusher.getItem(FastFurnaceMenu.RESULT_SLOT);
+        if (!doubled.is(Items.GRAVEL) || doubled.getCount() != 6
+                || !doubledCrusher.getItem(FastFurnaceMenu.INGREDIENT_SLOT).isEmpty()) {
+            throw helper.assertionException("Crusher output doubling did not double the complete custom result");
+        }
+
+        BlockPos acceleratorPos = new BlockPos(0, 4, 0);
+        AcceleratorBlockEntity accelerator = placeAccelerator(
+                helper, acceleratorPos, new ItemStack(Items.CHARCOAL, 3), blazePowder.copy());
+        AcceleratorMenu acceleratorMenu = createAcceleratorMenu(helper, accelerator);
+        if (!accelerator.canPlaceItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.CHARCOAL))
+                || !accelerator.canPlaceItem(AcceleratorMenu.FUEL_SLOT, blazePowder)
+                || !accelerator.canPlaceItemThroughFace(
+                        AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.CHARCOAL), Direction.UP)
+                || !acceleratorMenu.getSlot(AcceleratorMenu.FUEL_SLOT).mayPlace(blazePowder)) {
+            throw helper.assertionException("API content was rejected by Accelerator slots or automation");
+        }
+        tickAccelerator(helper, accelerator, acceleratorPos, 49);
+        if (!accelerator.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()
+                || acceleratorMenu.getBoostWorkPerTick() != 4) {
+            throw helper.assertionException("Custom Accelerator conversion completed before 50 boosted ticks");
+        }
+        tickAccelerator(helper, accelerator, acceleratorPos);
+        ItemStack converted = accelerator.getItem(AcceleratorMenu.RESULT_SLOT);
+        if (!converted.is(Items.COAL) || converted.getCount() != 2
+                || accelerator.getItem(AcceleratorMenu.INPUT_SLOT).getCount() != 1
+                || acceleratorMenu.getBoostWork() != 600
+                || acceleratorMenu.getBoostWorkPerTick() != 4) {
+            throw helper.assertionException("Custom Accelerator conversion or exact-work boost was incorrect");
+        }
+        helper.succeed();
     }
 
     private static void allToolRequiredBlocksArePickaxeMineable(GameTestHelper helper) {

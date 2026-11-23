@@ -1,12 +1,13 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
-import com.skylark193.fastfurnacev2.AcceleratorBlockEntity;
 import com.skylark193.fastfurnacev2.AcceleratorMenu;
-import com.skylark193.fastfurnacev2.CrushedOres;
-import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
+import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
+import com.skylark193.fastfurnacev2.api.CrusherRecipe;
+import com.skylark193.fastfurnacev2.api.FastFuel;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
 import java.util.ArrayList;
@@ -31,14 +32,11 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.FuelValues;
 
@@ -110,12 +108,16 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             if (burnTime <= 0) {
                 continue;
             }
-            boolean extremeCoal = FastFurnaceV2.isExtremeCoalFuel(stack);
-            boolean fastCoal = FastFurnaceV2.isFastCoalFuel(stack);
+            FastFuel definition = FastFurnaceApi.findFuel(stack).orElse(null);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
-                int adjustedBurnTime = extremeCoal ? tier.scaleExtremeCoalBurnTime(burnTime)
-                        : fastCoal ? tier.scaleFastCoalBurnTime(burnTime) : burnTime;
-                fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(List.of(stack), adjustedBurnTime));
+                int adjustedBurnTime = definition == null
+                        ? burnTime
+                        : definition.scaleBurnTime(tier, burnTime);
+                if (adjustedBurnTime > 0) {
+                    int speedBonus = definition == null ? 0 : definition.speedBonusPercent();
+                    fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(
+                            List.of(stack), adjustedBurnTime, speedBonus));
+                }
             }
         }
         for (Map.Entry<FastFurnaceTier, List<IJeiFuelingRecipe>> entry : fuelsByTier.entrySet()) {
@@ -125,41 +127,16 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         }
     }
 
-    private static List<FastCrusherRecipe> createCrushingRecipes() {
-        List<FastCrusherRecipe> recipes = new ArrayList<>();
-        for (Identifier rawOreId : CrushedOres.rawOres()) {
-            Item crushed = CrushedOres.forRawOre(rawOreId);
-            if (crushed == null) {
-                continue;
-            }
-            ItemStack input = new ItemStack(BuiltInRegistries.ITEM.getValue(rawOreId));
-            recipes.add(new FastCrusherRecipe(
-                    input,
-                    new ItemStack(crushed, FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT)));
-        }
-        return recipes;
+    private static List<CrusherRecipe> createCrushingRecipes() {
+        return FastFurnaceApi.crusherRecipes();
     }
 
-    private static List<AcceleratorRecipe> createAcceleratorRecipes() {
-        return List.of(
-                new AcceleratorRecipe(
-                        new ItemStack(Items.COAL),
-                        new ItemStack(FastFurnaceV2.FAST_COAL.get()),
-                        AcceleratorBlockEntity.COAL_RECIPE_TICKS),
-                new AcceleratorRecipe(
-                        new ItemStack(Items.COAL_BLOCK),
-                        new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK.get()),
-                        AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS));
+    private static List<AcceleratorConversion> createAcceleratorRecipes() {
+        return FastFurnaceApi.acceleratorRecipes();
     }
 
-    private static List<AcceleratorFuelRecipe> createAcceleratorFuels() {
-        ItemStack fastCoal = new ItemStack(FastFurnaceV2.FAST_COAL.get());
-        ItemStack fastCoalBlock = new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK.get());
-        ItemStack extremeCoal = new ItemStack(FastFurnaceV2.EXTREME_COAL.get());
-        return List.of(
-                new AcceleratorFuelRecipe(fastCoal, AcceleratorBlockEntity.getBoostWork(fastCoal)),
-                new AcceleratorFuelRecipe(fastCoalBlock, AcceleratorBlockEntity.getBoostWork(fastCoalBlock)),
-                new AcceleratorFuelRecipe(extremeCoal, AcceleratorBlockEntity.getBoostWork(extremeCoal)));
+    private static List<FastFuel> createAcceleratorFuels() {
+        return FastFurnaceApi.fuels().stream().filter(FastFuel::isAcceleratorFuel).toList();
     }
 
     @Override

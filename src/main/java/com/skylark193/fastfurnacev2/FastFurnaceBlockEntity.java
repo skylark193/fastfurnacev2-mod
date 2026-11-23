@@ -1,14 +1,16 @@
 package com.skylark193.fastfurnacev2;
 
-import net.minecraft.core.registries.BuiltInRegistries;
+import com.skylark193.fastfurnacev2.api.CrusherRecipe;
+import com.skylark193.fastfurnacev2.api.FastFuel;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
@@ -37,8 +39,9 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
             RecipeManager.createCheck(RecipeType.SMELTING);
     private int currentBurnTime;
     private int totalFuelTime;
-    private boolean fastCoalBurning;
-    private boolean extremeCoalBurning;
+    private FastFuel activeFuel;
+    private int activeSpeedPercent;
+    private int synchronizedFuelType;
     private boolean crusherDoubleOutputPending;
     private boolean needsCrusherDoubleReset;
     private final SnapshotJournal<Boolean> crusherDoubleResetJournal = new SnapshotJournal<>() {
@@ -71,8 +74,9 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 case 5 -> currentBurnTime >>> 16;
                 case 6 -> totalFuelTime & 0xFFFF;
                 case 7 -> totalFuelTime >>> 16;
-                case 8 -> extremeCoalBurning ? 2 : fastCoalBurning ? 1 : 0;
+                case 8 -> synchronizedFuelType;
                 case 9 -> fastCrusher ? 1 : 0;
+                case 10 -> activeSpeedPercent;
                 default -> dataAccess.get(index);
             };
         }
@@ -84,13 +88,11 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 case 5 -> currentBurnTime = (currentBurnTime & 0xFFFF) | (value << 16);
                 case 6 -> totalFuelTime = (totalFuelTime & 0xFFFF0000) | (value & 0xFFFF);
                 case 7 -> totalFuelTime = (totalFuelTime & 0xFFFF) | (value << 16);
-                case 8 -> {
-                    fastCoalBurning = value == 1;
-                    extremeCoalBurning = value == 2;
-                }
+                case 8 -> synchronizedFuelType = value;
                 case 9 -> {
                     // Crusher identity comes from the immutable block type, not client-supplied data.
                 }
+                case 10 -> activeSpeedPercent = value;
                 default -> dataAccess.set(index, value);
             }
         }
@@ -105,6 +107,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         super(FastFurnaceV2.FAST_FURNACE_BLOCK_ENTITY.get(), pos, state, RecipeType.SMELTING);
         this.tier = ((FastFurnaceBlock) state.getBlock()).getTier();
         this.fastCrusher = ((FastFurnaceBlock) state.getBlock()).isFastCrusher();
+        this.activeSpeedPercent = this.tier.getSpeedPercent();
     }
 
     @Override
@@ -122,10 +125,16 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         super.loadAdditional(input);
         this.currentBurnTime = input.getIntOr("lit_time_remaining", 0);
         this.totalFuelTime = input.getIntOr("lit_total_time", 0);
-        this.extremeCoalBurning = this.currentBurnTime > 0
-                && input.getBooleanOr("extreme_coal_burning", false);
-        this.fastCoalBurning = this.currentBurnTime > 0 && !this.extremeCoalBurning
-                && input.getBooleanOr("fast_coal_burning", false);
+        FastFuel loadedFuel = null;
+        Identifier fuelId = Identifier.tryParse(input.getStringOr("active_fuel", ""));
+        if (fuelId != null) {
+            loadedFuel = FastFurnaceApi.findFuel(fuelId).orElse(null);
+        } else if (input.getBooleanOr("extreme_coal_burning", false)) {
+            loadedFuel = FastFurnaceApi.findFuel(FastFurnaceApi.EXTREME_COAL_FUEL_ID).orElse(null);
+        } else if (input.getBooleanOr("fast_coal_burning", false)) {
+            loadedFuel = FastFurnaceApi.findFuel(FastFurnaceApi.FAST_COAL_FUEL_ID).orElse(null);
+        }
+        this.setActiveFuel(this.currentBurnTime > 0 ? loadedFuel : null);
         this.crusherDoubleOutputPending = this.fastCrusher
                 && input.getBooleanOr("fast_crusher_double_output_pending", false);
     }
@@ -135,18 +144,23 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         super.saveAdditional(output);
         output.putInt("lit_time_remaining", this.currentBurnTime);
         output.putInt("lit_total_time", this.totalFuelTime);
-        output.putBoolean("fast_coal_burning", this.fastCoalBurning);
-        output.putBoolean("extreme_coal_burning", this.extremeCoalBurning);
+        if (this.activeFuel != null) {
+            output.putString("active_fuel", this.activeFuel.id().toString());
+        }
+        output.putBoolean("fast_coal_burning", this.activeFuel != null
+                && (this.activeFuel.id().equals(FastFurnaceApi.FAST_COAL_FUEL_ID)
+                || this.activeFuel.id().equals(FastFurnaceApi.FAST_COAL_BLOCK_FUEL_ID)));
+        output.putBoolean("extreme_coal_burning", this.activeFuel != null
+                && this.activeFuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID));
         output.putBoolean("fast_crusher_double_output_pending", this.crusherDoubleOutputPending);
     }
 
     @Override
     protected int getBurnDuration(FuelValues fuelValues, ItemStack fuel) {
         int burnTime = super.getBurnDuration(fuelValues, fuel);
-        if (burnTime > 0 && FastFurnaceV2.isExtremeCoalFuel(fuel)) {
-            burnTime = this.tier.scaleExtremeCoalBurnTime(burnTime);
-        } else if (burnTime > 0 && FastFurnaceV2.isFastCoalFuel(fuel)) {
-            burnTime = this.tier.scaleFastCoalBurnTime(burnTime);
+        FastFuel definition = FastFurnaceApi.findFuel(fuel).orElse(null);
+        if (burnTime > 0 && definition != null) {
+            burnTime = definition.scaleBurnTime(this.tier, burnTime);
         }
         if (burnTime > 0
                 && !this.fastCrusher
@@ -208,12 +222,11 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                         entity.currentBurnTime--;
                         isLit = entity.currentBurnTime > 0;
                         if (!isLit) {
-                            entity.fastCoalBurning = false;
-                            entity.extremeCoalBurning = false;
+                            entity.setActiveFuel(null);
                         }
                         entity.syncBurnData();
                     }
-                    int expectedCookTime = entity.scaleCookTime(processing.cookingTime(), entity.fastCoalBurning, entity.extremeCoalBurning);
+                    int expectedCookTime = entity.scaleCookTime(processing.cookingTime());
                     entity.updateCookingTotal(expectedCookTime);
                     if (canProcess) {
                         if (!isLit) {
@@ -222,9 +235,8 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                             entity.totalFuelTime = newBurnTime;
                             entity.syncBurnData();
                             if (newBurnTime > 0) {
-                                entity.extremeCoalBurning = FastFurnaceV2.isExtremeCoalFuel(fuel);
-                                entity.fastCoalBurning = !entity.extremeCoalBurning && FastFurnaceV2.isFastCoalFuel(fuel);
-                                expectedCookTime = entity.scaleCookTime(processing.cookingTime(), entity.fastCoalBurning, entity.extremeCoalBurning);
+                                entity.setActiveFuel(FastFurnaceApi.findFuel(fuel).orElse(null));
+                                expectedCookTime = entity.scaleCookTime(processing.cookingTime());
                                 entity.updateCookingTotal(expectedCookTime);
                                 consumeFuel(entity.items, fuel);
                                 isLit = true;
@@ -244,7 +256,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                                 if (canBurn(entity.items, maxStackSize, recipeOutput)) {
                                     entity.dataAccess.set(DATA_COOKING_PROGRESS, 0);
                                     entity.dataAccess.set(DATA_COOKING_TOTAL_TIME, expectedCookTime);
-                                    burn(entity.items, ingredient, recipeOutput);
+                                    burn(entity.items, ingredient, recipeOutput, processing.inputCount());
                                     if (processing.recipe() != null) {
                                         entity.setRecipeUsed(processing.recipe());
                                     }
@@ -287,8 +299,18 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     }
 
     private int getTotalCookTime(ServerLevel level) {
-        SingleRecipeInput input = new SingleRecipeInput(this.getItem(SLOT_INPUT));
-        return scaleCookTime(this.getVanillaCookTime(input, level), this.fastCoalBurning, this.extremeCoalBurning);
+        ItemStack stack = this.getItem(SLOT_INPUT);
+        SingleRecipeInput input = new SingleRecipeInput(stack);
+        int processingTime = BURN_TIME_STANDARD;
+        if (this.fastCrusher) {
+            CrusherRecipe recipe = FastFurnaceApi.findCrusherRecipe(stack).orElse(null);
+            if (recipe != null) {
+                processingTime = this.getProcessingTime(recipe, input, level);
+            }
+        } else {
+            processingTime = this.getVanillaCookTime(input, level);
+        }
+        return this.scaleCookTime(processingTime);
     }
 
     private int getVanillaCookTime(SingleRecipeInput input, ServerLevel level) {
@@ -297,21 +319,26 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 .orElse(BURN_TIME_STANDARD);
     }
 
+    private int getProcessingTime(CrusherRecipe recipe, SingleRecipeInput input, ServerLevel level) {
+        return recipe.processingTime() > 0
+                ? recipe.processingTime()
+                : this.getVanillaCookTime(input, level);
+    }
+
     private ProcessingRecipe getProcessingRecipe(
             ItemStack ingredient, SingleRecipeInput input, ServerLevel level) {
         if (this.fastCrusher) {
-            Item crushed = CrushedOres.forRawOre(BuiltInRegistries.ITEM.getKey(ingredient.getItem()));
-            if (crushed == null) {
+            CrusherRecipe recipe = FastFurnaceApi.findCrusherRecipe(ingredient).orElse(null);
+            if (recipe == null) {
                 return null;
             }
-            // The raw smelting recipe supplies timing only; crushing always produces crushed ore instead.
-            return new ProcessingRecipe(null, this.getVanillaCookTime(input, level),
-                    new ItemStack(crushed, FAST_CRUSHER_OUTPUT_COUNT));
+            return new ProcessingRecipe(null, this.getProcessingTime(recipe, input, level),
+                    recipe.output(), recipe.inputCount());
         }
 
         RecipeHolder<? extends AbstractCookingRecipe> recipe = this.quickCheck.getRecipeFor(input, level).orElse(null);
         return recipe == null ? null : new ProcessingRecipe(
-                recipe, recipe.value().cookingTime(), recipe.value().assemble(input));
+                recipe, recipe.value().cookingTime(), recipe.value().assemble(input), 1);
     }
 
     private void updateCookingTotal(int expectedCookTime) {
@@ -326,8 +353,20 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         }
     }
 
-    private int scaleCookTime(int vanillaCookTime, boolean fastCoalActive, boolean extremeCoalActive) {
-        return this.tier.scaleCookTime(vanillaCookTime, fastCoalActive, extremeCoalActive);
+    private int scaleCookTime(int vanillaCookTime) {
+        return this.tier.scaleCookTime(vanillaCookTime,
+                this.activeFuel == null ? 0 : this.activeFuel.speedBonusPercent());
+    }
+
+    private void setActiveFuel(FastFuel fuel) {
+        this.activeFuel = fuel;
+        this.activeSpeedPercent = fuel == null
+                ? this.tier.getSpeedPercent()
+                : fuel.getSpeedPercent(this.tier);
+        this.synchronizedFuelType = fuel == null ? 0
+                : fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID) ? 2
+                : fuel.id().equals(FastFurnaceApi.FAST_COAL_FUEL_ID)
+                        || fuel.id().equals(FastFurnaceApi.FAST_COAL_BLOCK_FUEL_ID) ? 1 : 3;
     }
 
     private ItemStack rollCrusherOutput(ServerLevel level, ItemStack burnResult) {
@@ -343,7 +382,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     }
 
     private record ProcessingRecipe(
-            RecipeHolder<? extends AbstractCookingRecipe> recipe, int cookingTime, ItemStack result) {
+            RecipeHolder<? extends AbstractCookingRecipe> recipe, int cookingTime, ItemStack result, int inputCount) {
     }
 
     private static void consumeFuel(NonNullList<ItemStack> items, ItemStack fuel) {
@@ -367,7 +406,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         }
     }
 
-    private static void burn(NonNullList<ItemStack> items, ItemStack input, ItemStack result) {
+    private static void burn(NonNullList<ItemStack> items, ItemStack input, ItemStack result, int inputCount) {
         ItemStack resultStack = items.get(SLOT_RESULT);
         if (resultStack.isEmpty()) {
             items.set(SLOT_RESULT, result.copy());
@@ -378,6 +417,6 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         if (input.is(Items.WET_SPONGE) && !items.get(SLOT_FUEL).isEmpty() && items.get(SLOT_FUEL).is(Items.BUCKET)) {
             items.set(SLOT_FUEL, new ItemStack(Items.WATER_BUCKET));
         }
-        input.shrink(1);
+        input.shrink(inputCount);
     }
 }

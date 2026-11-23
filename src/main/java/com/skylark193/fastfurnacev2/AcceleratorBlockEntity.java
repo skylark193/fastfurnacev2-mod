@@ -1,9 +1,13 @@
 package com.skylark193.fastfurnacev2;
 
+import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
+import com.skylark193.fastfurnacev2.api.FastFuel;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.ContainerHelper;
@@ -11,9 +15,7 @@ import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -34,17 +36,14 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     private static final int[] INPUT_SLOTS = {AcceleratorMenu.INPUT_SLOT};
     private static final int[] FUEL_SLOTS = {AcceleratorMenu.FUEL_SLOT};
     private static final int[] RESULT_SLOTS = {AcceleratorMenu.RESULT_SLOT};
-    private static final ConversionRecipe COAL_RECIPE =
-            new ConversionRecipe(FastFurnaceV2.FAST_COAL.get(), COAL_RECIPE_TICKS);
-    private static final ConversionRecipe COAL_BLOCK_RECIPE =
-            new ConversionRecipe(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get(), COAL_BLOCK_RECIPE_TICKS);
-
     private NonNullList<ItemStack> items = NonNullList.withSize(AcceleratorMenu.SLOT_COUNT, ItemStack.EMPTY);
     private int workProgress;
     private int recipeTicks;
     private int boostWork;
     private int totalBoostWork;
+    private FastFuel activeBoostFuel;
     private boolean extremeBoost;
+    private int boostWorkPerTick = 1;
     private int lavaSideCount;
     private boolean processing;
     private boolean needsProgressReset;
@@ -80,6 +79,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                 case 4 -> lavaSideCount;
                 case 5 -> processing ? 1 : 0;
                 case 6 -> extremeBoost ? 1 : 0;
+                case 7 -> boostWorkPerTick;
                 default -> throw new IllegalArgumentException("Invalid Accelerator data index: " + index);
             };
         }
@@ -94,6 +94,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                 case 4 -> lavaSideCount = value;
                 case 5 -> processing = value != 0;
                 case 6 -> extremeBoost = value != 0;
+                case 7 -> boostWorkPerTick = value;
                 default -> throw new IllegalArgumentException("Invalid Accelerator data index: " + index);
             }
         }
@@ -109,33 +110,19 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     }
 
     public static boolean isAcceleratorInput(ItemStack stack) {
-        return stack.is(Items.COAL) || stack.is(Items.COAL_BLOCK);
+        return FastFurnaceApi.isAcceleratorInput(stack);
     }
 
     public static boolean isAcceleratorFuel(ItemStack stack) {
-        return FastFurnaceV2.isFastCoalFuel(stack) || FastFurnaceV2.isExtremeCoalFuel(stack);
+        return FastFurnaceApi.findFuel(stack).filter(FastFuel::isAcceleratorFuel).isPresent();
     }
 
     public static int getBoostWork(ItemStack fuel) {
-        if (FastFurnaceV2.isExtremeCoalFuel(fuel)) {
-            return EXTREME_COAL_BOOST_WORK;
-        }
-        if (fuel.is(FastFurnaceV2.FAST_COAL.get())) {
-            return FAST_COAL_BOOST_WORK;
-        }
-        if (fuel.is(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get())) {
-            return FAST_COAL_BLOCK_BOOST_WORK;
-        }
-        return 0;
+        return FastFurnaceApi.findFuel(fuel).map(FastFuel::acceleratorWork).orElse(0);
     }
 
     public static int getBoostWorkPerTick(ItemStack fuel) {
-        if (!isAcceleratorFuel(fuel)) {
-            return 0;
-        }
-        return FastFurnaceV2.isExtremeCoalFuel(fuel)
-                ? EXTREME_COAL_BOOSTED_WORK_PER_TICK
-                : BOOSTED_WORK_PER_TICK;
+        return FastFurnaceApi.findFuel(fuel).map(FastFuel::acceleratorWorkPerTick).orElse(0);
     }
 
     @Override
@@ -171,7 +158,18 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         this.recipeTicks = input.getIntOr("accelerator_recipe_ticks", 0);
         this.boostWork = input.getIntOr("accelerator_boost_work", 0);
         this.totalBoostWork = input.getIntOr("accelerator_total_boost_work", 0);
-        this.extremeBoost = this.boostWork > 0 && input.getBooleanOr("accelerator_extreme_boost", false);
+        FastFuel loadedBoost = null;
+        Identifier boostId = Identifier.tryParse(input.getStringOr("accelerator_boost_fuel", ""));
+        if (boostId != null) {
+            loadedBoost = FastFurnaceApi.findFuel(boostId).filter(FastFuel::isAcceleratorFuel).orElse(null);
+        } else {
+            // Old saves recorded only whether the active built-in boost was Extreme Coal.
+            Identifier legacyId = input.getBooleanOr("accelerator_extreme_boost", false)
+                    ? FastFurnaceApi.EXTREME_COAL_FUEL_ID
+                    : FastFurnaceApi.FAST_COAL_FUEL_ID;
+            loadedBoost = FastFurnaceApi.findFuel(legacyId).orElse(null);
+        }
+        this.setActiveBoost(this.boostWork > 0 ? loadedBoost : null);
         this.lavaSideCount = 0;
         this.processing = false;
     }
@@ -184,6 +182,9 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         output.putInt("accelerator_recipe_ticks", this.recipeTicks);
         output.putInt("accelerator_boost_work", this.boostWork);
         output.putInt("accelerator_total_boost_work", this.totalBoostWork);
+        if (this.activeBoostFuel != null) {
+            output.putString("accelerator_boost_fuel", this.activeBoostFuel.id().toString());
+        }
         output.putBoolean("accelerator_extreme_boost", this.extremeBoost);
     }
 
@@ -211,8 +212,8 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
 
     private void resetProgressForInput() {
         this.workProgress = 0;
-        ConversionRecipe recipe = getRecipe(this.getItem(AcceleratorMenu.INPUT_SLOT));
-        this.recipeTicks = recipe == null ? 0 : recipe.ticks();
+        AcceleratorConversion recipe = getRecipe(this.getItem(AcceleratorMenu.INPUT_SLOT));
+        this.recipeTicks = recipe == null ? 0 : recipe.workUnits();
     }
 
     @Override
@@ -249,25 +250,25 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         entity.processing = false;
 
         ItemStack input = entity.getItem(AcceleratorMenu.INPUT_SLOT);
-        ConversionRecipe recipe = getRecipe(input);
+        AcceleratorConversion recipe = getRecipe(input);
         if (recipe == null) {
             changed = entity.resetProgress() || changed;
             entity.recipeTicks = 0;
         } else {
-            if (entity.recipeTicks != recipe.ticks()) {
-                entity.recipeTicks = recipe.ticks();
+            if (entity.recipeTicks != recipe.workUnits()) {
+                entity.recipeTicks = recipe.workUnits();
                 entity.workProgress = 0;
                 changed = true;
             }
-            if (entity.lavaSideCount == REQUIRED_LAVA_SIDES && canAcceptResult(entity.items, recipe.result())) {
+            if (entity.lavaSideCount == REQUIRED_LAVA_SIDES && canAcceptResult(entity.items, recipe.output())) {
                 if (entity.boostWork == 0) {
-                    entity.extremeBoost = false;
+                    entity.setActiveBoost(null);
                     ItemStack fuel = entity.getItem(AcceleratorMenu.FUEL_SLOT);
                     int fuelWork = getBoostWork(fuel);
                     if (fuelWork > 0) {
                         entity.boostWork = fuelWork;
                         entity.totalBoostWork = fuelWork;
-                        entity.extremeBoost = FastFurnaceV2.isExtremeCoalFuel(fuel);
+                        entity.setActiveBoost(FastFurnaceApi.findFuel(fuel).orElse(null));
                         fuel.shrink(1);
                         if (fuel.isEmpty()) {
                             entity.items.set(AcceleratorMenu.FUEL_SLOT, ItemStack.EMPTY);
@@ -276,26 +277,24 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
                     }
                 }
 
-                int remainingRecipeWork = recipe.ticks() - entity.workProgress;
-                int boostedWorkPerTick = entity.extremeBoost
-                        ? EXTREME_COAL_BOOSTED_WORK_PER_TICK : BOOSTED_WORK_PER_TICK;
+                int remainingRecipeWork = recipe.workUnits() - entity.workProgress;
                 int step = Math.min(
-                        entity.boostWork > 0 ? boostedWorkPerTick : 1,
+                        entity.boostWork > 0 ? entity.boostWorkPerTick : 1,
                         remainingRecipeWork);
                 if (entity.boostWork > 0) {
                     step = Math.min(step, entity.boostWork);
                     entity.boostWork -= step;
                     if (entity.boostWork == 0) {
-                        entity.extremeBoost = false;
+                        entity.setActiveBoost(null);
                     }
                 }
                 entity.workProgress += step;
                 entity.processing = step > 0;
                 changed = true;
 
-                if (entity.workProgress >= recipe.ticks()) {
-                    addResult(entity.items, recipe.result());
-                    input.shrink(1);
+                if (entity.workProgress >= recipe.workUnits()) {
+                    addResult(entity.items, recipe.output());
+                    input.shrink(recipe.inputCount());
                     entity.workProgress = 0;
                     if (input.isEmpty()) {
                         entity.recipeTicks = 0;
@@ -338,31 +337,31 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         return changed;
     }
 
-    private static @Nullable ConversionRecipe getRecipe(ItemStack input) {
-        if (input.is(Items.COAL)) {
-            return COAL_RECIPE;
-        }
-        return input.is(Items.COAL_BLOCK) ? COAL_BLOCK_RECIPE : null;
+    private static @Nullable AcceleratorConversion getRecipe(ItemStack input) {
+        return FastFurnaceApi.findAcceleratorRecipe(input).orElse(null);
     }
 
-    private static boolean canAcceptResult(NonNullList<ItemStack> items, Item result) {
+    private static boolean canAcceptResult(NonNullList<ItemStack> items, ItemStack result) {
         ItemStack output = items.get(AcceleratorMenu.RESULT_SLOT);
         if (output.isEmpty()) {
             return true;
         }
-        return ItemStack.isSameItemSameComponents(output, result.getDefaultInstance())
-                && output.getCount() < output.getMaxStackSize();
+        return ItemStack.isSameItemSameComponents(output, result)
+                && output.getCount() + result.getCount() <= Math.min(output.getMaxStackSize(), result.getMaxStackSize());
     }
 
-    private static void addResult(NonNullList<ItemStack> items, Item result) {
+    private static void addResult(NonNullList<ItemStack> items, ItemStack result) {
         ItemStack output = items.get(AcceleratorMenu.RESULT_SLOT);
         if (output.isEmpty()) {
-            items.set(AcceleratorMenu.RESULT_SLOT, new ItemStack(result));
+            items.set(AcceleratorMenu.RESULT_SLOT, result.copy());
         } else {
-            output.grow(1);
+            output.grow(result.getCount());
         }
     }
 
-    private record ConversionRecipe(Item result, int ticks) {
+    private void setActiveBoost(FastFuel fuel) {
+        this.activeBoostFuel = fuel;
+        this.extremeBoost = fuel != null && fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID);
+        this.boostWorkPerTick = fuel == null ? 1 : fuel.acceleratorWorkPerTick();
     }
 }

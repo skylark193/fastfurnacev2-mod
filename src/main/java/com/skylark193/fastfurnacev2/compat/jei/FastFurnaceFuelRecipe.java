@@ -4,11 +4,15 @@ import java.util.List;
 import mezz.jei.api.recipe.vanilla.IJeiFuelingRecipe;
 import net.minecraft.world.item.ItemStack;
 
-record FastFurnaceFuelRecipe(List<ItemStack> inputs, int burnTime) implements IJeiFuelingRecipe {
+record FastFurnaceFuelRecipe(List<ItemStack> inputs, int burnTime, int speedBonusPercent)
+        implements IJeiFuelingRecipe {
     FastFurnaceFuelRecipe {
         inputs = List.copyOf(inputs);
         if (burnTime <= 0) {
             throw new IllegalArgumentException("Burn time must be greater than zero");
+        }
+        if (speedBonusPercent < 0) {
+            throw new IllegalArgumentException("Speed bonus cannot be negative");
         }
     }
 

@@ -34,15 +34,23 @@ public enum FastFurnaceTier {
         return this.speedPercent;
     }
 
+    public int getSpeedPercent(int fuelSpeedBonusPercent) {
+        return this.speedPercent + fuelSpeedBonusPercent;
+    }
+
     public int getSpeedPercent(boolean fastCoalActive) {
-        return this.speedPercent + (fastCoalActive ? FAST_COAL_SPEED_BONUS_PERCENT : 0);
+        return this.getSpeedPercent(fastCoalActive ? FAST_COAL_SPEED_BONUS_PERCENT : 0);
     }
 
     public int getSpeedPercent(boolean fastCoalActive, boolean extremeCoalActive) {
         if (extremeCoalActive) {
-            return this.speedPercent + EXTREME_COAL_SPEED_BONUS_PERCENT;
+            return this.getSpeedPercent(EXTREME_COAL_SPEED_BONUS_PERCENT);
         }
         return this.getSpeedPercent(fastCoalActive);
+    }
+
+    public int getFastCoalBurnTimePercent() {
+        return this.fastCoalBurnTimePercent;
     }
 
     public int getDoubleBurnChancePercent() {
@@ -58,7 +66,13 @@ public enum FastFurnaceTier {
     }
 
     public int scaleCookTime(int vanillaCookTime, boolean fastCoalActive, boolean extremeCoalActive) {
-        return Math.max(1, (int) (vanillaCookTime * 100L / getSpeedPercent(fastCoalActive, extremeCoalActive)));
+        return this.scaleCookTime(vanillaCookTime, extremeCoalActive
+                ? EXTREME_COAL_SPEED_BONUS_PERCENT
+                : fastCoalActive ? FAST_COAL_SPEED_BONUS_PERCENT : 0);
+    }
+
+    public int scaleCookTime(int vanillaCookTime, int fuelSpeedBonusPercent) {
+        return Math.max(1, (int) (vanillaCookTime * 100L / this.getSpeedPercent(fuelSpeedBonusPercent)));
     }
 
     public int scaleFastCoalBurnTime(int burnTime) {
@@ -77,5 +91,9 @@ public enum FastFurnaceTier {
 
     public float getSmeltCount(int burnTime, boolean fastCoalActive, boolean extremeCoalActive) {
         return burnTime / (float) this.scaleCookTime(VANILLA_COOK_TIME, fastCoalActive, extremeCoalActive);
+    }
+
+    public float getSmeltCount(int burnTime, int fuelSpeedBonusPercent) {
+        return burnTime / (float) this.scaleCookTime(VANILLA_COOK_TIME, fuelSpeedBonusPercent);
     }
 }

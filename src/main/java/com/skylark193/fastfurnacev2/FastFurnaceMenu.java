@@ -11,7 +11,7 @@ import net.minecraft.world.item.crafting.RecipePropertySet;
 import net.minecraft.world.item.crafting.RecipeType;
 
 public class FastFurnaceMenu extends AbstractFurnaceMenu {
-    public static final int MENU_DATA_COUNT = 10;
+    public static final int MENU_DATA_COUNT = 11;
     private static final int DATA_BURN_TIME_LOW = 4;
     private static final int DATA_BURN_TIME_HIGH = 5;
     private static final int DATA_FUEL_TIME_LOW = 6;
@@ -66,6 +66,11 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
 
     public boolean isFastCrusher() {
         return this.data.get(DATA_FAST_CRUSHER) != 0;
+    }
+
+    /** Returns the tier speed including any synchronized custom or built-in fuel bonus. */
+    public int getSpeedPercent() {
+        return this.data.get(10);
     }
 
     private static int joinInt(int low, int high) {
