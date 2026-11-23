@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This documentation applies to **Fast Furnace V2 1.2.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
+This documentation applies to **Fast Furnace V2 1.3.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
 
 ## Documentation map
 
