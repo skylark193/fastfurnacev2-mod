@@ -159,7 +159,7 @@ One work unit equals one unboosted tick. An active boost advances up to its `acc
 
 The existing four-horizontal-lava requirement, blocked-output pause/resume, input-change reset, transaction handling, persistence, and automation rules apply to custom conversions. Slots and hoppers accept a matching ingredient even before its full required count is present; processing starts only when enough items are available.
 
-Built-in conversion IDs are `fastfurnacev2:accelerator/coal` and `fastfurnacev2:accelerator/coal_block`.
+Built-in conversion IDs are `fastfurnacev2:accelerator/coal`, `coal_block`, `iron`, `iron_block`, `gold`, `gold_block`, `diamond`, and `diamond_block` (each suffix after `fastfurnacev2:accelerator/`). Item conversions require 400 work units and block conversions require 3,600.
 
 ## Queries and built-in content access
 

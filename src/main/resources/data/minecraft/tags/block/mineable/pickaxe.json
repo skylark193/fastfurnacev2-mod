@@ -3,7 +3,13 @@
   "values": [
     "fastfurnacev2:fast_cobblestone",
     "fastfurnacev2:extreme_coal_ore",
+    "fastfurnacev2:fast_iron_ore",
+    "fastfurnacev2:fast_gold_ore",
+    "fastfurnacev2:fast_diamond_ore",
     "fastfurnacev2:fast_coal_block",
+    "fastfurnacev2:fast_iron_block",
+    "fastfurnacev2:fast_gold_block",
+    "fastfurnacev2:fast_diamond_block",
     "fastfurnacev2:accelerator",
     "fastfurnacev2:fast_furnace",
     "fastfurnacev2:iron_fast_furnace",

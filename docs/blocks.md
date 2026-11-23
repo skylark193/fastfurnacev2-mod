@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Items](items.md) · [Recipes](recipes.md)
 
-Fast Furnace V2 registers **12 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
+Fast Furnace V2 registers **18 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
 
 ## Complete block index
 
@@ -11,15 +11,21 @@ Fast Furnace V2 registers **12 blocks**, each with a corresponding block item. A
 | Fast Cobblestone | `fastfurnacev2:fast_cobblestone` | Building Blocks | Bonus drop from mining stone |
 | Block of Fast Coal | `fastfurnacev2:fast_coal_block` | Building Blocks | Craft 9 Fast Coal; unpack back into 9 |
 | Extreme Coal Ore | `fastfurnacev2:extreme_coal_ore` | Natural Blocks | Replaces eligible regular coal ore during chunk processing |
+| Fast Iron Ore | `fastfurnacev2:fast_iron_ore` | Natural Blocks | Replaces eligible regular iron ore during chunk processing |
+| Fast Gold Ore | `fastfurnacev2:fast_gold_ore` | Natural Blocks | Replaces eligible regular gold ore during chunk processing |
+| Fast Diamond Ore | `fastfurnacev2:fast_diamond_ore` | Natural Blocks | Replaces eligible regular diamond ore during chunk processing |
+| Block of Fast Iron | `fastfurnacev2:fast_iron_block` | Building Blocks | Craft 9 Fast Iron Ingots or convert an Iron Block |
+| Block of Fast Gold | `fastfurnacev2:fast_gold_block` | Building Blocks | Craft 9 Fast Gold Ingots or convert a Gold Block |
+| Block of Fast Diamond | `fastfurnacev2:fast_diamond_block` | Building Blocks | Craft 9 Fast Diamonds or convert a Diamond Block |
 | Accelerator | `fastfurnacev2:accelerator` | Functional Blocks | Surround an Iron Fast Furnace with 8 Redstone Blocks |
 | Fast Furnace | `fastfurnacev2:fast_furnace` | Functional Blocks | Craft from 8 Fast Cobblestone |
-| Iron Fast Furnace | `fastfurnacev2:iron_fast_furnace` | Functional Blocks | Upgrade Fast Furnace with 8 Iron Blocks |
-| Gold Fast Furnace | `fastfurnacev2:gold_fast_furnace` | Functional Blocks | Upgrade Iron Fast Furnace with 8 Gold Blocks |
-| Diamond Fast Furnace | `fastfurnacev2:diamond_fast_furnace` | Functional Blocks | Upgrade Gold Fast Furnace with 8 Diamond Blocks |
+| Iron Fast Furnace | `fastfurnacev2:iron_fast_furnace` | Functional Blocks | Upgrade Fast Furnace with 8 Blocks of Fast Iron |
+| Gold Fast Furnace | `fastfurnacev2:gold_fast_furnace` | Functional Blocks | Upgrade Iron Fast Furnace with 8 Blocks of Fast Gold |
+| Diamond Fast Furnace | `fastfurnacev2:diamond_fast_furnace` | Functional Blocks | Upgrade Gold Fast Furnace with 8 Blocks of Fast Diamond |
 | Fast Crusher | `fastfurnacev2:fast_crusher` | Functional Blocks | No built-in crafting recipe |
-| Iron Fast Crusher | `fastfurnacev2:iron_fast_crusher` | Functional Blocks | Upgrade Fast Crusher with 8 Iron Blocks |
-| Gold Fast Crusher | `fastfurnacev2:gold_fast_crusher` | Functional Blocks | Upgrade Iron Fast Crusher with 8 Gold Blocks |
-| Diamond Fast Crusher | `fastfurnacev2:diamond_fast_crusher` | Functional Blocks | Upgrade Gold Fast Crusher with 8 Diamond Blocks |
+| Iron Fast Crusher | `fastfurnacev2:iron_fast_crusher` | Functional Blocks | Upgrade Fast Crusher with 8 Blocks of Fast Iron |
+| Gold Fast Crusher | `fastfurnacev2:gold_fast_crusher` | Functional Blocks | Upgrade Iron Fast Crusher with 8 Blocks of Fast Gold |
+| Diamond Fast Crusher | `fastfurnacev2:diamond_fast_crusher` | Functional Blocks | Upgrade Gold Fast Crusher with 8 Blocks of Fast Diamond |
 
 “No built-in crafting recipe” means the block is available in creative mode and can be supplied by commands, another mod, or a modpack, but the base mod does not provide a survival crafting pattern.
 
@@ -62,7 +68,35 @@ Extreme Coal Ore mirrors regular coal ore's physical properties without inheriti
 - With Silk Touch, it drops the ore block itself.
 - Its texture resembles coal ore with animated lava veins.
 
-Each eligible regular coal-ore position has an independent deterministic 5% replacement chance. Deepslate coal ore is excluded. Existing chunks are processed once when loaded after the mod is added. See [Extreme Coal Ore generation](world-generation.md#extreme-coal-ore-generation).
+Each eligible regular coal-ore position has an independent deterministic 5% replacement chance. Deepslate coal ore is excluded. Existing chunks are processed once when loaded after the mod is added. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
+
+## Fast Iron, Gold, and Diamond Ores
+
+**IDs:** `fastfurnacev2:fast_iron_ore`, `fastfurnacev2:fast_gold_ore`, `fastfurnacev2:fast_diamond_ore`
+
+These blocks resemble their corresponding vanilla ores with animated lava veins. Each has stone map color, base-drum instrument, hardness **3.0**, and blast resistance **3.0**, with the same correct-tool requirement as ordinary ores.
+
+| Ore | Required pickaxe tier | Ordinary drop | Silk Touch drop |
+|---|---|---|---|
+| Fast Iron Ore | Stone or better | Raw Fast Iron | Fast Iron Ore |
+| Fast Gold Ore | Iron or better | Raw Fast Gold | Fast Gold Ore |
+| Fast Diamond Ore | Iron or better | Raw Fast Diamond | Fast Diamond Ore |
+
+Ordinary drops use vanilla's `minecraft:ore_drops` Fortune formula and explosion decay. Each matching regular iron, gold, or diamond ore has an independent deterministic 5% replacement chance in newly generated chunks and once in existing chunks. Deepslate variants are excluded. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
+
+## Fast material storage blocks
+
+**IDs:** `fastfurnacev2:fast_iron_block`, `fastfurnacev2:fast_gold_block`, `fastfurnacev2:fast_diamond_block`
+
+Each storage block uses its vanilla counterpart's texture with animated lava veins, drops itself, and can be crafted from nine matching Fast materials or unpacked back into nine. The Accelerator can also convert the corresponding vanilla storage block directly.
+
+| Block | Physical properties | Required pickaxe tier |
+|---|---|---|
+| Block of Fast Iron | Metal map color, iron-xylophone instrument, hardness **5.0**, blast resistance **6.0** | Stone or better |
+| Block of Fast Gold | Gold map color, bell instrument, hardness **3.0**, blast resistance **6.0** | Iron or better |
+| Block of Fast Diamond | Diamond map color, hardness **5.0**, blast resistance **6.0** | Iron or better |
+
+These blocks are the required upgrade materials for Iron, Gold, and Diamond Fast Furnaces and Fast Crushers. Vanilla iron, gold, and diamond blocks do not satisfy those recipes.
 
 ## Fast Furnace blocks
 

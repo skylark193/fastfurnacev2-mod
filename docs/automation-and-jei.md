@@ -54,7 +54,7 @@ Furnace and crusher timers are calculated from exact tick counts and displayed i
 - Horizontal lava-side count, highlighted according to whether all four are present.
 - Current processing speed.
 - Remaining boosted work.
-- Built-in conversion times and built-in boost capacities.
+- Built-in item/block conversion times and built-in boost capacities.
 
 ## Comparators, naming, and drops
 
@@ -68,7 +68,7 @@ Breaking a machine does **not** create a portable inventory or energy-storage it
 | Fast Crusher | Custom name | Inventory, progress, active fuel, pending doubled output |
 | Accelerator | Custom name | Inventory, conversion progress, banked boost |
 
-Inventory, processing state, and active fuel or boost are saved while the block remains placed in the world. Fast Coal Block, Fast Cobblestone, and Extreme Coal Ore use their own ordinary block loot rather than machine state rules.
+Inventory, processing state, and active fuel or boost are saved while the block remains placed in the world. Fast storage blocks, Fast Cobblestone, and Fast ores use their own ordinary block loot rather than machine state rules.
 
 ## Optional JEI integration
 
@@ -118,7 +118,7 @@ Custom fuels use their registered duration and speed bonuses in the same calcula
 
 ### Ingredient information
 
-JEI includes explanatory information for Fast Cobblestone, Fast Coal, Block of Fast Coal, Extreme Coal Ore, Extreme Coal, the Accelerator, and every furnace and crusher tier. Looking up Fast Coal or its block also exposes its Accelerator conversion as a crafting source.
+JEI includes explanatory information for Fast Cobblestone, Fast Coal, Block of Fast Coal, Extreme Coal Ore, Extreme Coal, every Fast ore, raw and finished Fast material, Fast storage block, the Accelerator, and every furnace and crusher tier. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
 
 ### Current compatibility boundary
 

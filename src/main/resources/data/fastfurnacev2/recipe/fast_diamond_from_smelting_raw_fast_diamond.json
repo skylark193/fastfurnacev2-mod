@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 1.0,
+  "group": "fast_diamond",
+  "ingredient": "fastfurnacev2:raw_fast_diamond",
+  "result": {
+    "id": "fastfurnacev2:fast_diamond"
+  }
+}

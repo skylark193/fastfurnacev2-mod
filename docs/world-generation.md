@@ -5,7 +5,7 @@
 Fast Furnace V2 adds materials through three separate systems:
 
 1. Bonus drops appended while mining stone or coal ore.
-2. Deterministic replacement of regular coal ore with Extreme Coal Ore.
+2. Deterministic replacement of regular coal, iron, gold, and diamond ore with their modded variants.
 3. Startup discovery and generation of crushed-ore processing items and smelting recipes.
 
 These systems do not replace ordinary stone or coal-ore drops, add a new ore distribution noise generator, or require a fixed set of crushed items from another mod.
@@ -50,26 +50,30 @@ bonus chance = min(100%, 10% + 5 percentage points × Fortune level)
 
 Each eligible block makes its own roll. Fortune increases the chance of the one-item bonus; it does not multiply that bonus into multiple Fast Cobblestone or Fast Coal items. Coal ore's separate vanilla Fortune-scaled coal drops are unchanged.
 
-## Extreme Coal Ore generation
+## Fast and Extreme ore generation
 
-Extreme Coal Ore is created by replacing existing regular coal-ore blocks, rather than by adding a separate ore vein distribution.
+Fast and Extreme ores are created by replacing existing regular vanilla ore blocks, rather than by adding separate ore-vein distributions.
 
 ### Replacement rule
 
-During chunk loading, Fast Furnace V2 examines positions that can contain regular coal ore. Each actual `minecraft:coal_ore` position receives an independent deterministic roll:
+During chunk loading, Fast Furnace V2 examines positions that can contain any eligible regular ore. Each actual matching ore position receives an independent deterministic roll:
 
-```text
-5% chance: minecraft:coal_ore → fastfurnacev2:extreme_coal_ore
-95% chance: leave the regular coal ore unchanged
-```
+| Vanilla source | 5% replacement result |
+|---|---|
+| `minecraft:coal_ore` | `fastfurnacev2:extreme_coal_ore` |
+| `minecraft:iron_ore` | `fastfurnacev2:fast_iron_ore` |
+| `minecraft:gold_ore` | `fastfurnacev2:fast_gold_ore` |
+| `minecraft:diamond_ore` | `fastfurnacev2:fast_diamond_ore` |
 
-- Only regular coal ore is eligible.
-- Deepslate coal ore is explicitly excluded.
-- Other blocks in the broader coal-ores tag are not replaced.
+The other 95% of rolls leave the vanilla ore unchanged.
+
+- Only the regular ore blocks listed above are eligible.
+- Deepslate coal, iron, gold, and diamond ores are explicitly excluded; Nether Gold Ore is also excluded.
+- Other blocks in broader ore tags are not replaced.
 - No ore is inserted into stone or empty space.
-- The replacement preserves the original block position.
+- Each replacement preserves the original block position.
 
-The roll is derived from the world seed, block position, and a fixed salt. It therefore does not depend on chunk-load order or a changing random-number sequence.
+Each source material has its own fixed salt. A roll is derived from the world seed, block position, and that salt, so it does not depend on chunk-load order or a changing random-number sequence.
 
 ### New and existing chunks
 
@@ -78,18 +82,24 @@ The same replacement pass handles:
 - Newly generated chunks when they are loaded.
 - Chunks generated before Fast Furnace V2 was installed, when those chunks are subsequently loaded.
 
-A persistent Boolean chunk attachment marks a completed pass. Existing chunks are processed **once**, so unloading and reloading them does not reroll coal ore or continue converting more blocks over time.
+A persistent Boolean `fast_ore_chunk_processed` chunk attachment marks a completed pass. Existing chunks are processed **once**, so unloading and reloading them does not reroll ores or continue converting more blocks over time. The former coal-only `extreme_coal_chunk_processed` attachment remains readable for old saves but does not suppress the new combined pass, allowing existing worlds to receive Fast Iron, Gold, and Diamond generation.
 
-This also means that manually placing ordinary coal ore in an already processed chunk does not schedule another conversion pass.
+This also means that manually placing an eligible vanilla ore in an already processed chunk does not schedule another conversion pass.
 
 ### Drops and acquisition
 
-Extreme Coal Ore follows vanilla coal ore's drop structure:
+All four replacement ores follow the corresponding vanilla ore's Silk Touch alternatives and Fortune-scaled `minecraft:ore_drops` formula:
 
-- Without Silk Touch: Extreme Coal with vanilla Fortune-scaled ore drops.
-- With Silk Touch: the Extreme Coal Ore block itself.
+| Replacement ore | Ordinary drop |
+|---|---|
+| Extreme Coal Ore | Extreme Coal |
+| Fast Iron Ore | Raw Fast Iron |
+| Fast Gold Ore | Raw Fast Gold |
+| Fast Diamond Ore | Raw Fast Diamond |
 
-See [Extreme Coal Ore](blocks.md#extreme-coal-ore) and [Extreme Coal](items.md#extreme-coal).
+Without Silk Touch, Fortune can increase the drop quantity. With Silk Touch, each ore drops itself. Fast ore mining tiers match their vanilla equivalents: Fast Iron Ore requires a stone pickaxe or better, while Fast Gold and Fast Diamond Ore require an iron pickaxe or better.
+
+See [Extreme Coal Ore](blocks.md#extreme-coal-ore), [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), and [Fast material items](items.md#fast-material-items).
 
 ## Dynamic crushed ores
 
@@ -107,7 +117,7 @@ Packaged item-tag JSON from loaded mod files is indexed so nested references can
 
 Only registered, non-block raw items participate. Datapacks cannot introduce new registry items after startup.
 
-Items in Fast Furnace V2's own namespace are excluded from raw-ore discovery. Generated crushed IDs can retain source suffixes such as `_raw_ore`; allowing the mod to rediscover its own outputs would recursively register more items.
+Items in Fast Furnace V2's own namespace are excluded from raw-ore discovery except for the three explicit built-ins `raw_fast_iron`, `raw_fast_gold`, and `raw_fast_diamond`. Generated crushed IDs can retain source suffixes such as `_raw_ore`; allowing arbitrary mod outputs to rediscover themselves would recursively register more items. The narrow whitelist supports the built-in Fast-material processing chain without reopening that recursion.
 
 ### External result selection
 
@@ -145,8 +155,11 @@ With vanilla raw materials and no external matches:
 | `minecraft:raw_iron` | `fastfurnacev2:crushed_iron` |
 | `minecraft:raw_copper` | `fastfurnacev2:crushed_copper` |
 | `minecraft:raw_gold` | `fastfurnacev2:crushed_gold` |
+| `fastfurnacev2:raw_fast_iron` | `fastfurnacev2:crushed_fast_iron` |
+| `fastfurnacev2:raw_fast_gold` | `fastfurnacev2:crushed_fast_gold` |
+| `fastfurnacev2:raw_fast_diamond` | `fastfurnacev2:crushed_fast_diamond` |
 
-Non-vanilla sources include their source namespace in the readable generated ID. If that ID is occupied, a deterministic name-based UUID suffix avoids a collision.
+Other modded sources include their source namespace in the readable generated ID; the three built-in raw Fast materials use the short IDs shown above. If a readable ID is occupied, a deterministic name-based UUID suffix avoids a collision.
 
 Generated items use a shared dust-pile model, a source-derived tint, and an ID-derived English fallback name. Display normalization removes raw-ore suffixes, so a generated result for `tin_raw_ore` is named **Crushed Tin** even when no language entry exists.
 

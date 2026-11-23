@@ -11,7 +11,7 @@ Fast Crushers are fuel-powered machines that turn raw ore items into matching cr
 | Gold | `fastfurnacev2:gold_fast_crusher` | 250% | 20% |
 | Diamond | `fastfurnacev2:diamond_fast_crusher` | 300% | 25% |
 
-The base Fast Crusher has no built-in crafting recipe. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching metal blocks. See [Recipes](recipes.md#fast-crusher-upgrades).
+The base Fast Crusher has no built-in crafting recipe. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching Blocks of Fast Iron, Fast Gold, or Fast Diamond. See [Recipes](recipes.md#fast-crusher-upgrades).
 
 All crushers require a pickaxe, drop themselves, preserve custom names, support comparators and directional placement, and emit light level 13 while lit. Their sides and bottom use animated Netherrack textures. The top blender is static while idle and animated while lit; upgrade tiers add their metal block's texture to the stationary housing.
 
@@ -26,6 +26,9 @@ Without external replacements, the vanilla built-ins are:
 | `minecraft:raw_iron` | 2 × `fastfurnacev2:crushed_iron` |
 | `minecraft:raw_copper` | 2 × `fastfurnacev2:crushed_copper` |
 | `minecraft:raw_gold` | 2 × `fastfurnacev2:crushed_gold` |
+| `fastfurnacev2:raw_fast_iron` | 2 × `fastfurnacev2:crushed_fast_iron` |
+| `fastfurnacev2:raw_fast_gold` | 2 × `fastfurnacev2:crushed_fast_gold` |
+| `fastfurnacev2:raw_fast_diamond` | 2 × `fastfurnacev2:crushed_fast_diamond` |
 
 Crushing does not use the raw ore's ordinary smelting result. Ordinary furnace inputs such as cobblestone are not accepted unless another mod registers a crusher recipe for them. Built-in crushing does not award ordinary smelting experience.
 

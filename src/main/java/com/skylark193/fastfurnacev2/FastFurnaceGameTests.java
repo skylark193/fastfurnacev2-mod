@@ -37,6 +37,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
@@ -70,8 +71,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator");
     private static final Identifier EXTREME_COAL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal");
-    private static final Identifier EXTREME_COAL_GENERATION_TEST_ID =
-            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal_generation");
+    private static final Identifier FAST_ORE_GENERATION_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_ore_generation");
     private static final Identifier MINING_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "mining_tags");
     private static final Identifier API_TEST_ID =
@@ -104,8 +105,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, ACCELERATOR_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_TEST_ID);
-    private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_GENERATION_FUNCTION =
-            ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_GENERATION_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> FAST_ORE_GENERATION_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, FAST_ORE_GENERATION_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> MINING_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, MINING_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
@@ -122,7 +123,7 @@ final class FastFurnaceGameTests {
             Map.entry(FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork),
             Map.entry(ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts),
             Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
-            Map.entry(EXTREME_COAL_GENERATION_FUNCTION, FastFurnaceGameTests::extremeCoalReplacesCoalOreOnce),
+            Map.entry(FAST_ORE_GENERATION_FUNCTION, FastFurnaceGameTests::fastOresReplaceRegularOresOnce),
             Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
             Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
@@ -150,8 +151,8 @@ final class FastFurnaceGameTests {
         event.registerTest(FUEL_PAUSE_TEST_ID, new DirectGameTestInstance(FUEL_PAUSE_FUNCTION, testData));
         event.registerTest(ACCELERATOR_TEST_ID, new DirectGameTestInstance(ACCELERATOR_FUNCTION, testData));
         event.registerTest(EXTREME_COAL_TEST_ID, new DirectGameTestInstance(EXTREME_COAL_FUNCTION, testData));
-        event.registerTest(EXTREME_COAL_GENERATION_TEST_ID,
-                new DirectGameTestInstance(EXTREME_COAL_GENERATION_FUNCTION, testData));
+        event.registerTest(FAST_ORE_GENERATION_TEST_ID,
+                new DirectGameTestInstance(FAST_ORE_GENERATION_FUNCTION, testData));
         event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
             event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
@@ -861,54 +862,83 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
-    private static void extremeCoalReplacesCoalOreOnce(GameTestHelper helper) {
+    private static void fastOresReplaceRegularOresOnce(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(BlockPos.ZERO);
         var chunkPos = new net.minecraft.world.level.ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
-        BlockPos replacedPos = null;
-        BlockPos retainedPos = null;
-        for (int x = 0; x < 16 && (replacedPos == null || retainedPos == null); x++) {
-            for (int z = 0; z < 16; z++) {
-                BlockPos pos = new BlockPos(
-                        chunkPos.getMinBlockX() + x, origin.getY(), chunkPos.getMinBlockZ() + z);
-                if (ExtremeCoalOreGeneration.shouldReplace(level.getSeed(), pos) && replacedPos == null) {
-                    replacedPos = pos;
-                } else if (!ExtremeCoalOreGeneration.shouldReplace(level.getSeed(), pos) && retainedPos == null) {
-                    retainedPos = pos;
-                }
-                if (replacedPos != null && retainedPos != null) {
-                    break;
+        List<Map.Entry<Block, Block>> orePairs = List.of(
+                Map.entry(Blocks.COAL_ORE, FastFurnaceV2.EXTREME_COAL_ORE.get()),
+                Map.entry(Blocks.IRON_ORE, FastFurnaceV2.FAST_IRON_ORE.get()),
+                Map.entry(Blocks.GOLD_ORE, FastFurnaceV2.FAST_GOLD_ORE.get()),
+                Map.entry(Blocks.DIAMOND_ORE, FastFurnaceV2.FAST_DIAMOND_ORE.get()));
+        Block[] deepslateOres = {
+            Blocks.DEEPSLATE_COAL_ORE,
+            Blocks.DEEPSLATE_IRON_ORE,
+            Blocks.DEEPSLATE_GOLD_ORE,
+            Blocks.DEEPSLATE_DIAMOND_ORE
+        };
+        BlockPos[] replacedPositions = new BlockPos[orePairs.size()];
+        BlockPos[] retainedPositions = new BlockPos[orePairs.size()];
+        BlockPos[] deepslatePositions = new BlockPos[orePairs.size()];
+
+        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
+            Block source = orePairs.get(oreIndex).getKey();
+            int y = origin.getY() + oreIndex * 2;
+            for (int x = 0; x < 16 && (replacedPositions[oreIndex] == null || retainedPositions[oreIndex] == null); x++) {
+                for (int z = 0; z < 16; z++) {
+                    BlockPos pos = new BlockPos(chunkPos.getMinBlockX() + x, y, chunkPos.getMinBlockZ() + z);
+                    if (FastOreGeneration.shouldReplace(level.getSeed(), pos, source)
+                            && replacedPositions[oreIndex] == null) {
+                        replacedPositions[oreIndex] = pos;
+                    } else if (!FastOreGeneration.shouldReplace(level.getSeed(), pos, source)
+                            && retainedPositions[oreIndex] == null) {
+                        retainedPositions[oreIndex] = pos;
+                    }
+                    if (replacedPositions[oreIndex] != null && retainedPositions[oreIndex] != null) {
+                        break;
+                    }
                 }
             }
-        }
-        if (replacedPos == null || retainedPos == null) {
-            throw helper.assertionException("Could not establish deterministic 5% Extreme Coal replacement positions");
+            if (replacedPositions[oreIndex] == null || retainedPositions[oreIndex] == null) {
+                throw helper.assertionException("Could not establish deterministic 5% replacement positions for " + source);
+            }
+            level.setBlock(replacedPositions[oreIndex], source.defaultBlockState(), 0);
+            level.setBlock(retainedPositions[oreIndex], source.defaultBlockState(), 0);
+            deepslatePositions[oreIndex] = retainedPositions[oreIndex].above();
+            level.setBlock(deepslatePositions[oreIndex], deepslateOres[oreIndex].defaultBlockState(), 0);
         }
 
-        level.setBlock(replacedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
-        level.setBlock(retainedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
-        BlockPos deepslatePos = retainedPos.above();
-        level.setBlock(deepslatePos, Blocks.DEEPSLATE_COAL_ORE.defaultBlockState(), 0);
         net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(chunkPos.x(), chunkPos.z());
-        chunk.setData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED, false);
-        int replacements = ExtremeCoalOreGeneration.processChunk(level.getSeed(), chunk);
-        if (replacements < 1
-                || !level.getBlockState(replacedPos).is(FastFurnaceV2.EXTREME_COAL_ORE.get())
-                || !level.getBlockState(retainedPos).is(Blocks.COAL_ORE)
-                || !level.getBlockState(deepslatePos).is(Blocks.DEEPSLATE_COAL_ORE)
-                || !chunk.getData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED)) {
-            throw helper.assertionException("Extreme Coal did not replace only selected regular coal ore and mark the chunk");
+        chunk.setData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED, true);
+        chunk.setData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED, false);
+        int replacements = FastOreGeneration.processChunk(level.getSeed(), chunk);
+        if (replacements < orePairs.size() || !chunk.getData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED)) {
+            throw helper.assertionException("Fast ore generation did not process a legacy chunk and set its new marker");
+        }
+        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
+            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getValue())
+                    || !level.getBlockState(retainedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())
+                    || !level.getBlockState(deepslatePositions[oreIndex]).is(deepslateOres[oreIndex])) {
+                throw helper.assertionException("Fast ore generation replaced the wrong blocks for "
+                        + orePairs.get(oreIndex).getKey());
+            }
+            level.setBlock(replacedPositions[oreIndex], orePairs.get(oreIndex).getKey().defaultBlockState(), 0);
         }
 
-        level.setBlock(replacedPos, Blocks.COAL_ORE.defaultBlockState(), 0);
-        int repeatedReplacements = ExtremeCoalOreGeneration.processChunk(level.getSeed(), chunk);
-        if (repeatedReplacements != 0 || !level.getBlockState(replacedPos).is(Blocks.COAL_ORE)) {
-            throw helper.assertionException("A processed chunk rolled for Extreme Coal more than once");
+        int repeatedReplacements = FastOreGeneration.processChunk(level.getSeed(), chunk);
+        if (repeatedReplacements != 0) {
+            throw helper.assertionException("A processed chunk rolled for Fast ores more than once");
+        }
+        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
+            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())) {
+                throw helper.assertionException("A processed chunk replaced newly placed regular ore");
+            }
         }
         helper.succeed();
     }
 
     private static void crushedOresMatchRawOreSmelting(GameTestHelper helper) {
+        assertFastMaterialProcessing(helper);
         ServerLevel level = helper.getLevel();
         Item crushedIron = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_iron"));
         Item crushedCopper = CrushedOres.forRawOre(Identifier.withDefaultNamespace("raw_copper"));
@@ -1012,6 +1042,18 @@ final class FastFurnaceGameTests {
     }
 
     private static void acceleratorConvertsCoalWithLavaAndBoosts(GameTestHelper helper) {
+        assertAcceleratorConversion(helper, Items.IRON_INGOT, FastFurnaceV2.FAST_IRON_INGOT.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        assertAcceleratorConversion(helper, Items.IRON_BLOCK, FastFurnaceV2.FAST_IRON_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+        assertAcceleratorConversion(helper, Items.GOLD_INGOT, FastFurnaceV2.FAST_GOLD_INGOT.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        assertAcceleratorConversion(helper, Items.GOLD_BLOCK, FastFurnaceV2.FAST_GOLD_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+        assertAcceleratorConversion(helper, Items.DIAMOND, FastFurnaceV2.FAST_DIAMOND.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        assertAcceleratorConversion(helper, Items.DIAMOND_BLOCK, FastFurnaceV2.FAST_DIAMOND_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
         ServerLevel level = helper.getLevel();
         AcceleratorBlockEntity normal = placeAccelerator(
                 helper, BlockPos.ZERO, new ItemStack(Items.COAL), ItemStack.EMPTY);
@@ -1030,9 +1072,9 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Accelerator slots or automation accepted unsupported items");
         }
 
-        for (int tick = 1; tick <= AcceleratorBlockEntity.COAL_RECIPE_TICKS; tick++) {
+        for (int tick = 1; tick <= AcceleratorBlockEntity.ITEM_RECIPE_TICKS; tick++) {
             tickAccelerator(helper, normal, BlockPos.ZERO);
-            if (tick < AcceleratorBlockEntity.COAL_RECIPE_TICKS
+            if (tick < AcceleratorBlockEntity.ITEM_RECIPE_TICKS
                     && !normal.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
                 throw helper.assertionException("Accelerator converted coal before 400 ticks");
             }
@@ -1057,7 +1099,7 @@ final class FastFurnaceGameTests {
         BlockPos coalBlockPos = new BlockPos(4, 0, 0);
         AcceleratorBlockEntity coalBlock = placeAccelerator(
                 helper, coalBlockPos, new ItemStack(Items.COAL_BLOCK), ItemStack.EMPTY);
-        tickAccelerator(helper, coalBlock, coalBlockPos, AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS - 1);
+        tickAccelerator(helper, coalBlock, coalBlockPos, AcceleratorBlockEntity.BLOCK_RECIPE_TICKS - 1);
         if (!coalBlock.getItem(AcceleratorMenu.RESULT_SLOT).isEmpty()) {
             throw helper.assertionException("Accelerator converted a coal block before 3600 ticks");
         }
@@ -1115,7 +1157,7 @@ final class FastFurnaceGameTests {
         tickAccelerator(helper, paused, pausedPos, 5);
         paused.setItem(AcceleratorMenu.INPUT_SLOT, new ItemStack(Items.COAL_BLOCK));
         if (pausedMenu.getWorkProgress() != 0
-                || pausedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS) {
+                || pausedMenu.getRecipeTicks() != AcceleratorBlockEntity.BLOCK_RECIPE_TICKS) {
             throw helper.assertionException("Accelerator did not reset progress when its input type changed");
         }
 
@@ -1145,7 +1187,7 @@ final class FastFurnaceGameTests {
         }
         if (!aborted.getItem(AcceleratorMenu.INPUT_SLOT).is(Items.COAL)
                 || abortedMenu.getWorkProgress() != 25
-                || abortedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_RECIPE_TICKS) {
+                || abortedMenu.getRecipeTicks() != AcceleratorBlockEntity.ITEM_RECIPE_TICKS) {
             throw helper.assertionException("An aborted Accelerator extraction erased progress or failed to restore coal");
         }
 
@@ -1176,7 +1218,7 @@ final class FastFurnaceGameTests {
             transaction.commit();
         }
         if (committedMenu.getWorkProgress() != 0
-                || committedMenu.getRecipeTicks() != AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS) {
+                || committedMenu.getRecipeTicks() != AcceleratorBlockEntity.BLOCK_RECIPE_TICKS) {
             throw helper.assertionException("A committed Accelerator refill did not select the new conversion duration");
         }
 
@@ -1395,6 +1437,56 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void assertFastMaterialProcessing(GameTestHelper helper) {
+        Item[] rawMaterials = {
+            FastFurnaceV2.RAW_FAST_IRON.get(),
+            FastFurnaceV2.RAW_FAST_GOLD.get(),
+            FastFurnaceV2.RAW_FAST_DIAMOND.get()
+        };
+        Item[] results = {
+            FastFurnaceV2.FAST_IRON_INGOT.get(),
+            FastFurnaceV2.FAST_GOLD_INGOT.get(),
+            FastFurnaceV2.FAST_DIAMOND.get()
+        };
+        for (int index = 0; index < rawMaterials.length; index++) {
+            Item raw = rawMaterials[index];
+            Identifier rawId = BuiltInRegistries.ITEM.getKey(raw);
+            Item crushed = CrushedOres.forRawOre(rawId);
+            if (crushed == null || !CrushedOres.isDiscoverableRawOre(rawId, raw)) {
+                throw helper.assertionException("Built-in raw Fast material was not discovered: " + rawId);
+            }
+            CrusherRecipe crusherRecipe = FastFurnaceApi.findCrusherRecipe(raw.getDefaultInstance())
+                    .orElseThrow(() -> helper.assertionException("No crusher recipe for " + rawId));
+            ItemStack crusherOutput = crusherRecipe.output();
+            if (!crusherOutput.is(crushed) || crusherOutput.getCount() != 2) {
+                throw helper.assertionException("Crusher recipe did not produce two crushed results for " + rawId);
+            }
+            assertSmeltingResult(helper, raw, results[index]);
+            assertSmeltingResult(helper, crushed, results[index]);
+        }
+    }
+
+    private static void assertSmeltingResult(GameTestHelper helper, Item input, Item expectedResult) {
+        ServerLevel level = helper.getLevel();
+        SingleRecipeInput recipeInput = new SingleRecipeInput(input.getDefaultInstance());
+        ItemStack result = level.recipeAccess().getRecipeFor(RecipeType.SMELTING, recipeInput, level)
+                .orElseThrow(() -> helper.assertionException("No smelting recipe for " + BuiltInRegistries.ITEM.getKey(input)))
+                .value().assemble(recipeInput);
+        if (!result.is(expectedResult) || result.getCount() != 1) {
+            throw helper.assertionException("Incorrect smelting result for " + BuiltInRegistries.ITEM.getKey(input));
+        }
+    }
+
+    private static void assertAcceleratorConversion(
+            GameTestHelper helper, Item input, Item expectedOutput, int expectedWork) {
+        AcceleratorConversion conversion = FastFurnaceApi.findAcceleratorRecipe(input.getDefaultInstance())
+                .orElseThrow(() -> helper.assertionException("No Accelerator conversion for " + input));
+        ItemStack output = conversion.output();
+        if (!output.is(expectedOutput) || output.getCount() != 1 || conversion.workUnits() != expectedWork) {
+            throw helper.assertionException("Incorrect Accelerator conversion for " + input);
+        }
+    }
+
     private static void allToolRequiredBlocksArePickaxeMineable(GameTestHelper helper) {
         int registeredBlocks = 0;
         for (var entry : BuiltInRegistries.BLOCK.entrySet()) {
@@ -1408,8 +1500,8 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
             }
         }
-        if (registeredBlocks != 12) {
-            throw helper.assertionException("Expected to audit all 12 registered mod blocks, found " + registeredBlocks);
+        if (registeredBlocks != 18) {
+            throw helper.assertionException("Expected to audit all 18 registered mod blocks, found " + registeredBlocks);
         }
         helper.succeed();
     }

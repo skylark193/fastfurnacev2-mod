@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "#": "minecraft:iron_block",
+    "#": "fastfurnacev2:fast_iron_block",
     "F": "fastfurnacev2:fast_furnace"
   },
   "pattern": [

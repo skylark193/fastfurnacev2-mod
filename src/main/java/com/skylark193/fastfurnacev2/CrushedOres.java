@@ -51,6 +51,10 @@ public final class CrushedOres {
     private static final Map<Identifier, Identifier> BY_RAW_ORE = new LinkedHashMap<>();
     private static final Map<Identifier, CrushedOreItem> BY_ID = new LinkedHashMap<>();
     private static final Set<Identifier> TAGGED_RAW_ORES = new HashSet<>();
+    private static final Set<Identifier> BUILT_IN_RAW_ORES = Set.of(
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "raw_fast_iron"),
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "raw_fast_gold"),
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "raw_fast_diamond"));
     private static final Set<Identifier> KNOWN_CRUSHED_ORES = new HashSet<>();
     private static final Set<Identifier> TAGGED_CRUSHED_ORES = new HashSet<>();
     private static final Map<Identifier, List<JsonElement>> PACKAGED_ITEM_TAGS = new HashMap<>();
@@ -180,7 +184,8 @@ public final class CrushedOres {
 
     static boolean isDiscoverableRawOre(Identifier rawOreId, Item rawOre) {
         // Generated IDs can retain a source's _raw_ore suffix; never feed them back into discovery.
-        if (rawOre instanceof BlockItem || FastFurnaceV2.MODID.equals(rawOreId.getNamespace())) {
+        if (rawOre instanceof BlockItem
+                || FastFurnaceV2.MODID.equals(rawOreId.getNamespace()) && !BUILT_IN_RAW_ORES.contains(rawOreId)) {
             return false;
         }
         return rawOreId.getPath().startsWith("raw_") || rawOreId.getPath().contains("/raw_")
@@ -205,7 +210,7 @@ public final class CrushedOres {
             return;
         }
 
-        String path = rawOreId.getNamespace().equals(Identifier.DEFAULT_NAMESPACE)
+        String path = rawOreId.getNamespace().equals(Identifier.DEFAULT_NAMESPACE) || BUILT_IN_RAW_ORES.contains(rawOreId)
                 ? "crushed_" + material
                 : "crushed_" + rawOreId.getNamespace() + "_" + material;
         Identifier id = Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, path.replace('/', '_'));

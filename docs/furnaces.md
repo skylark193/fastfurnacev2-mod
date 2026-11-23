@@ -7,9 +7,9 @@ The Fast Furnace family contains four vanilla-compatible smelting machines:
 | Tier | Block ID | Normal speed | Upgrade material |
 |---|---|---:|---|
 | Fast | `fastfurnacev2:fast_furnace` | 150% | Eight Fast Cobblestone around an empty center |
-| Iron | `fastfurnacev2:iron_fast_furnace` | 200% | Eight Iron Blocks around Fast Furnace |
-| Gold | `fastfurnacev2:gold_fast_furnace` | 250% | Eight Gold Blocks around Iron Fast Furnace |
-| Diamond | `fastfurnacev2:diamond_fast_furnace` | 300% | Eight Diamond Blocks around Gold Fast Furnace |
+| Iron | `fastfurnacev2:iron_fast_furnace` | 200% | Eight Blocks of Fast Iron around Fast Furnace |
+| Gold | `fastfurnacev2:gold_fast_furnace` | 250% | Eight Blocks of Fast Gold around Iron Fast Furnace |
+| Diamond | `fastfurnacev2:diamond_fast_furnace` | 300% | Eight Blocks of Fast Diamond around Gold Fast Furnace |
 
 All four support ordinary `minecraft:smelting` recipes, ordinary and modded fuels, the vanilla furnace recipe book, fuel remainders, smelting experience, comparators, directional placement, custom names, and familiar furnace sounds and particles. Blasting and smoking recipes are not substituted for ordinary smelting recipes. They require a pickaxe, drop themselves, and emit light level 13 while lit.
 

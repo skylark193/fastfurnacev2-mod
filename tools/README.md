@@ -10,7 +10,7 @@ The lava-vein generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. The Fast material sources are preserved as `iron_ore.png`, `gold_ore.png`, `diamond_ore.png`, `raw_iron.png`, `raw_gold.png`, `raw_diamond.png`, `iron_ingot.png`, `gold_ingot.png`, and `diamond.png` in the same directory. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -90,6 +90,44 @@ macOS/Linux:
 ```
 
 This writes the animated block texture and its `.png.mcmeta` metadata. The block and item definitions reference the same `cube_all` block model automatically.
+
+## Regenerate Fast Material Textures
+
+The Fast ores, raw materials, finished materials, and storage blocks use seeds **421–432** in material order. Every command writes an eight-frame vertical strip with two ticks per frame, no interpolation, and two primary veins.
+
+| Output | Source | Seed |
+|---|---|---:|
+| `block/fast_iron_ore.png` | `iron_ore.png` | 421 |
+| `item/raw_fast_iron.png` | `raw_iron.png` | 422 |
+| `item/fast_iron_ingot.png` | `iron_ingot.png` | 423 |
+| `block/fast_iron_block.png` | `iron_block.png` | 424 |
+| `block/fast_gold_ore.png` | `gold_ore.png` | 425 |
+| `item/raw_fast_gold.png` | `raw_gold.png` | 426 |
+| `item/fast_gold_ingot.png` | `gold_ingot.png` | 427 |
+| `block/fast_gold_block.png` | `gold_block.png` | 428 |
+| `block/fast_diamond_ore.png` | `diamond_ore.png` | 429 |
+| `item/raw_fast_diamond.png` | `raw_diamond.png` | 430 |
+| `item/fast_diamond.png` | `diamond.png` | 431 |
+| `block/fast_diamond_block.png` | `diamond_block.png` | 432 |
+
+Windows, from the project root:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_iron_ore.png --seed 421 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\raw_iron.png --output src\main\resources\assets\fastfurnacev2\textures\item\raw_fast_iron.png --seed 422 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_ingot.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_iron_ingot.png --seed 423 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_iron_block.png --seed 424 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_gold_ore.png --seed 425 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\raw_gold.png --output src\main\resources\assets\fastfurnacev2\textures\item\raw_fast_gold.png --seed 426 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_ingot.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_gold_ingot.png --seed 427 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\gold_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_gold_block.png --seed 428 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_diamond_ore.png --seed 429 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\raw_diamond.png --output src\main\resources\assets\fastfurnacev2\textures\item\raw_fast_diamond.png --seed 430 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_diamond.png --seed 431 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\fast_diamond_block.png --seed 432 --frames 8 --frame-time 2 --veins 2
+```
+
+On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments.
 
 ## Regenerate Accelerator Textures
 

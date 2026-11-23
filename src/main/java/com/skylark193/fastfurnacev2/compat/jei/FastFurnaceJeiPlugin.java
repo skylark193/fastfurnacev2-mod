@@ -78,6 +78,30 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.EXTREME_COAL.get(),
                 Component.translatable("jei.fastfurnacev2.extreme_coal"));
+        for (var ore : List.of(
+                FastFurnaceV2.FAST_IRON_ORE.get(),
+                FastFurnaceV2.FAST_GOLD_ORE.get(),
+                FastFurnaceV2.FAST_DIAMOND_ORE.get())) {
+            registration.addIngredientInfo(ore, Component.translatable("jei.fastfurnacev2.fast_ore"));
+        }
+        for (var rawMaterial : List.of(
+                FastFurnaceV2.RAW_FAST_IRON.get(),
+                FastFurnaceV2.RAW_FAST_GOLD.get(),
+                FastFurnaceV2.RAW_FAST_DIAMOND.get())) {
+            registration.addIngredientInfo(rawMaterial, Component.translatable("jei.fastfurnacev2.fast_raw_material"));
+        }
+        for (var material : List.of(
+                FastFurnaceV2.FAST_IRON_INGOT.get(),
+                FastFurnaceV2.FAST_GOLD_INGOT.get(),
+                FastFurnaceV2.FAST_DIAMOND.get())) {
+            registration.addIngredientInfo(material, Component.translatable("jei.fastfurnacev2.fast_material"));
+        }
+        for (var block : List.of(
+                FastFurnaceV2.FAST_IRON_BLOCK.get(),
+                FastFurnaceV2.FAST_GOLD_BLOCK.get(),
+                FastFurnaceV2.FAST_DIAMOND_BLOCK.get())) {
+            registration.addIngredientInfo(block, Component.translatable("jei.fastfurnacev2.fast_material_block"));
+        }
         registration.addIngredientInfo(
                 FastFurnaceV2.ACCELERATOR.get(),
                 Component.translatable("jei.fastfurnacev2.accelerator_info"));

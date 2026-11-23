@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "fastfurnacev2:item/fast_gold_ingot"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "fastfurnacev2:fast_gold_ore",
+    "fastfurnacev2:fast_gold_block",
+    "fastfurnacev2:fast_diamond_ore",
+    "fastfurnacev2:fast_diamond_block"
+  ]
+}

@@ -201,16 +201,30 @@ public final class FastFurnaceApiImpl {
     }
 
     private static void registerDefaultAcceleratorRecipes() {
+        registerAcceleratorConversion("coal", Items.COAL, FastFurnaceV2.FAST_COAL.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        registerAcceleratorConversion("coal_block", Items.COAL_BLOCK, FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+        registerAcceleratorConversion("iron", Items.IRON_INGOT, FastFurnaceV2.FAST_IRON_INGOT.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        registerAcceleratorConversion("iron_block", Items.IRON_BLOCK, FastFurnaceV2.FAST_IRON_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+        registerAcceleratorConversion("gold", Items.GOLD_INGOT, FastFurnaceV2.FAST_GOLD_INGOT.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        registerAcceleratorConversion("gold_block", Items.GOLD_BLOCK, FastFurnaceV2.FAST_GOLD_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+        registerAcceleratorConversion("diamond", Items.DIAMOND, FastFurnaceV2.FAST_DIAMOND.get(),
+                AcceleratorBlockEntity.ITEM_RECIPE_TICKS);
+        registerAcceleratorConversion("diamond_block", Items.DIAMOND_BLOCK, FastFurnaceV2.FAST_DIAMOND_BLOCK_ITEM.get(),
+                AcceleratorBlockEntity.BLOCK_RECIPE_TICKS);
+    }
+
+    private static void registerAcceleratorConversion(String path, Item input, Item output, int workUnits) {
         registerAcceleratorRecipe(new AcceleratorConversion(
-                Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator/coal"),
-                Ingredient.of(Items.COAL),
-                new ItemStack(FastFurnaceV2.FAST_COAL.get()),
-                AcceleratorBlockEntity.COAL_RECIPE_TICKS));
-        registerAcceleratorRecipe(new AcceleratorConversion(
-                Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator/coal_block"),
-                Ingredient.of(Items.COAL_BLOCK),
-                new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()),
-                AcceleratorBlockEntity.COAL_BLOCK_RECIPE_TICKS));
+                Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator/" + path),
+                Ingredient.of(input),
+                new ItemStack(output),
+                workUnits));
     }
 
     private record Entry<T>(T value, int sequence) {

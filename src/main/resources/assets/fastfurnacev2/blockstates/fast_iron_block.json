@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "fastfurnacev2:block/fast_iron_block"
+    }
+  }
+}

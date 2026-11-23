@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Fuel items](items.md#special-fuels) · [Automation and GUI](automation-and-jei.md)
 
-The **Accelerator** (`fastfurnacev2:accelerator`) converts coal into Fast Coal and coal blocks into Blocks of Fast Coal. It is separate from ordinary smelting and the vanilla recipe book.
+The **Accelerator** (`fastfurnacev2:accelerator`) converts coal, iron ingots, gold ingots, diamonds, and their storage blocks into Fast variants. It is separate from ordinary smelting and the vanilla recipe book.
 
 Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It requires a pickaxe, drops itself, preserves a custom name, supports directional placement and comparators, and appears in Functional Blocks and the Fast Furnace V2 creative tab. See [Accelerator crafting](recipes.md#accelerator-crafting) for the grid pattern.
 
@@ -25,9 +25,15 @@ Missing lava pauses processing, boost drain, and fuel consumption without erasin
 | Input | Output | Unboosted work and time |
 |---|---|---:|
 | 1 × `minecraft:coal` | 1 × `fastfurnacev2:fast_coal` | 400 work units / 400 ticks |
+| 1 × `minecraft:iron_ingot` | 1 × `fastfurnacev2:fast_iron_ingot` | 400 work units / 400 ticks |
+| 1 × `minecraft:gold_ingot` | 1 × `fastfurnacev2:fast_gold_ingot` | 400 work units / 400 ticks |
+| 1 × `minecraft:diamond` | 1 × `fastfurnacev2:fast_diamond` | 400 work units / 400 ticks |
 | 1 × `minecraft:coal_block` | 1 × `fastfurnacev2:fast_coal_block` | 3,600 work units / 3,600 ticks |
+| 1 × `minecraft:iron_block` | 1 × `fastfurnacev2:fast_iron_block` | 3,600 work units / 3,600 ticks |
+| 1 × `minecraft:gold_block` | 1 × `fastfurnacev2:fast_gold_block` | 3,600 work units / 3,600 ticks |
+| 1 × `minecraft:diamond_block` | 1 × `fastfurnacev2:fast_diamond_block` | 3,600 work units / 3,600 ticks |
 
-One work unit advances per tick without a boost. At 20 ticks per second, these operations take 20 seconds and 180 seconds respectively under ideal tick rates.
+One work unit advances per tick without a boost. At 20 ticks per second, item conversions take 20 seconds and block conversions take 180 seconds under ideal tick rates.
 
 The Accelerator does not require fuel to perform these conversions. Other mods can register additional conversions through the [API](api.md#accelerator-conversions-and-boosts).
 
@@ -51,14 +57,14 @@ This clamping prevents wasted partial ticks or boost work.
 
 ### Conversion times and capacities
 
-| Boost | Coal conversion | Coal-block conversion | Built-in capacity from one boost item |
+| Boost | Item conversion | Block conversion | Built-in capacity from one boost item |
 |---|---:|---:|---|
 | None | 400 ticks | 3,600 ticks | Not applicable; conversions run without boost |
-| Fast Coal | 134 ticks | 1,200 ticks | 9 coal conversions, or 1 coal-block conversion |
-| Block of Fast Coal | 134 ticks | 1,200 ticks | 10 coal conversions, or 1 coal-block conversion plus 1 coal conversion |
-| Extreme Coal | 80 ticks | 720 ticks | 18 coal conversions, or 2 coal-block conversions |
+| Fast Coal | 134 ticks | 1,200 ticks | 9 item conversions, or 1 block conversion |
+| Block of Fast Coal | 134 ticks | 1,200 ticks | 10 item conversions, or 1 block conversion plus 1 item conversion |
+| Extreme Coal | 80 ticks | 720 ticks | 18 item conversions, or 2 block conversions |
 
-Boost work can be spent across different conversion types. For example, a Block of Fast Coal can fund one 3,600-work coal-block conversion and then one 400-work coal conversion.
+Boost work can be spent across different conversion types. For example, a Block of Fast Coal can fund one 3,600-work block conversion and then one 400-work item conversion, regardless of which supported materials are used.
 
 ## Pause and reset rules
 
@@ -82,7 +88,7 @@ The furnace-style GUI contains input, boost, and output slots but no ordinary sm
 - Current horizontal lava-side count.
 - Current processing speed.
 - Remaining boosted work.
-- Built-in conversion times and boost capacities.
+- Built-in item/block conversion times and boost capacities.
 
 The top face displays an eleven-stage lightning bolt that fills from bottom to top using ceiling progress. The final partial decile displays the full bolt before the completed output resets progress to zero. The body uses animated smooth stone with lava veins. The lit block state means work advanced on that tick, not merely that boost remains banked.
 

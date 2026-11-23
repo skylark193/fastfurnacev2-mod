@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **ten checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
+This page collects the **16 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 
@@ -36,9 +36,9 @@ M  M  M
 
 | Previous furnace `P` | Metal blocks `M` | Output |
 |---|---|---|
-| Fast Furnace | 8 × Iron Block | Iron Fast Furnace |
-| Iron Fast Furnace | 8 × Gold Block | Gold Fast Furnace |
-| Gold Fast Furnace | 8 × Diamond Block | Diamond Fast Furnace |
+| Fast Furnace | 8 × Block of Fast Iron | Iron Fast Furnace |
+| Iron Fast Furnace | 8 × Block of Fast Gold | Gold Fast Furnace |
+| Gold Fast Furnace | 8 × Block of Fast Diamond | Diamond Fast Furnace |
 
 Upgrades must follow this order; a lower tier cannot skip directly to Gold or Diamond.
 
@@ -54,9 +54,9 @@ M  M  M
 
 | Previous crusher `P` | Metal blocks `M` | Output |
 |---|---|---|
-| Fast Crusher | 8 × Iron Block | Iron Fast Crusher |
-| Iron Fast Crusher | 8 × Gold Block | Gold Fast Crusher |
-| Gold Fast Crusher | 8 × Diamond Block | Diamond Fast Crusher |
+| Fast Crusher | 8 × Block of Fast Iron | Iron Fast Crusher |
+| Iron Fast Crusher | 8 × Block of Fast Gold | Gold Fast Crusher |
+| Gold Fast Crusher | 8 × Block of Fast Diamond | Diamond Fast Crusher |
 
 The base crusher must first be supplied through creative mode, commands, another mod, or a modpack.
 
@@ -86,6 +86,30 @@ Place one Block of Fast Coal in a shapeless crafting recipe:
 
 Packing and unpacking are reversible and lossless in item count.
 
+## Fast material storage blocks
+
+Fast Iron Ingots, Fast Gold Ingots, and Fast Diamonds each have a reversible storage block:
+
+```text
+M  M  M        1 × Block of Fast material
+M  M  M  →     9 × matching Fast material (shapeless unpacking)
+M  M  M
+```
+
+`M` is nine matching Fast Iron Ingots, Fast Gold Ingots, or Fast Diamonds for the shaped packing recipe. The three Fast storage blocks are also required for furnace and crusher upgrades.
+
+## Raw Fast material smelting
+
+Each raw Fast material smelts directly into one finished material:
+
+| Input | Output | Cooking time | Experience |
+|---|---|---:|---:|
+| Raw Fast Iron | Fast Iron Ingot | 200 ticks | 0.7 |
+| Raw Fast Gold | Fast Gold Ingot | 200 ticks | 1.0 |
+| Raw Fast Diamond | Fast Diamond | 200 ticks | 1.0 |
+
+The corresponding crushed Fast items receive cloned smelting recipes with the same output, time, and experience.
+
 ## Accelerator crafting
 
 Surround one Iron Fast Furnace with eight Redstone Blocks:
@@ -107,7 +131,13 @@ The Accelerator does not use ordinary smelting JSON for these operations:
 | Input | Output | Unboosted duration |
 |---|---|---:|
 | 1 × Coal | 1 × Fast Coal | 400 ticks |
+| 1 × Iron Ingot | 1 × Fast Iron Ingot | 400 ticks |
+| 1 × Gold Ingot | 1 × Fast Gold Ingot | 400 ticks |
+| 1 × Diamond | 1 × Fast Diamond | 400 ticks |
 | 1 × Coal Block | 1 × Block of Fast Coal | 3,600 ticks |
+| 1 × Iron Block | 1 × Block of Fast Iron | 3,600 ticks |
+| 1 × Gold Block | 1 × Block of Fast Gold | 3,600 ticks |
+| 1 × Diamond Block | 1 × Block of Fast Diamond | 3,600 ticks |
 
 All four horizontal neighboring positions must contain lava. Boosts change work per tick, not the recipe's total work requirement. See [Accelerator](accelerator.md) for exact boosted times and capacities.
 
@@ -120,6 +150,9 @@ Each built-in raw-ore operation consumes one raw item and produces two selected 
 | Raw Iron | 2 × Crushed Iron | 4 × Crushed Iron |
 | Raw Copper | 2 × Crushed Copper | 4 × Crushed Copper |
 | Raw Gold | 2 × Crushed Gold | 4 × Crushed Gold |
+| Raw Fast Iron | 2 × Crushed Fast Iron | 4 × Crushed Fast Iron |
+| Raw Fast Gold | 2 × Crushed Fast Gold | 4 × Crushed Fast Gold |
+| Raw Fast Diamond | 2 × Crushed Fast Diamond | 4 × Crushed Fast Diamond |
 
 An external crushed item or dust replaces the shown result when discovery selects one. Modded raw ores discovered through conventional IDs or packaged raw-material tags receive equivalent recipes.
 
@@ -190,6 +223,8 @@ The Accelerator also operates without boost at one work unit per tick. See [Acce
 - Fast Coal.
 - Extreme Coal.
 - Extreme Coal Ore.
+- Fast Iron Ore, Fast Gold Ore, and Fast Diamond Ore.
+- Raw Fast Iron, Raw Fast Gold, and Raw Fast Diamond.
 - Base Fast Crusher.
 
 Their acquisition is described in [Blocks](blocks.md), [Items](items.md), and [World generation](world-generation.md). The presence of creative-tab content, upgrades, or machine conversions does not imply a survival crafting recipe. Other mods and modpacks may supply their own acquisition methods.

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "fastfurnacev2:block/fast_diamond_ore"
+  }
+}
