@@ -11,7 +11,7 @@ Fast Crushers are fuel-powered machines that turn raw ore items into matching cr
 | Gold | `fastfurnacev2:gold_fast_crusher` | 250% | 20% |
 | Diamond | `fastfurnacev2:diamond_fast_crusher` | 300% | 25% |
 
-The base Fast Crusher has no built-in crafting recipe. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching Blocks of Fast Iron, Fast Gold, or Fast Diamond. See [Recipes](recipes.md#fast-crusher-upgrades).
+Craft the base Fast Crusher with three Fast Diamonds across the top row, a Fast Furnace in the center, and Fast Iron Ingots in the remaining five slots. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching Blocks of Fast Iron, Fast Gold, or Fast Diamond. See [Recipes](recipes.md#fast-crusher).
 
 All crushers require a pickaxe, drop themselves, preserve custom names, support comparators and directional placement, and emit light level 13 while lit. Their sides and bottom use animated Netherrack textures. The top blender is static while idle and animated while lit; upgrade tiers add their metal block's texture to the stationary housing.
 

@@ -83,7 +83,7 @@ Start at the [documentation home](docs/README.md) for the complete player, modpa
 - Each completed operation independently rolls its tier's chance to double output from two crushed items to four. If a successful doubled result cannot fit, processing and fuel countdown pause without consuming the input until all four fit; the crusher never falls back to the two-item result for that operation.
 - Every tier uses animated Netherrack textures on its sides and bottom. Its top-down blender has a stationary rotor while idle and animated rotating blades with swirling contents while lit. Iron, gold, and diamond tops show the corresponding block texture in the stationary housing around the blender.
 - Every crusher requires a pickaxe, drops itself, preserves custom names, and emits light level 13 while lit. All four appear in Functional Blocks and the mod's Fast Furnace V2 creative tab.
-- The base Fast Crusher has no crafting recipe. Surround it with eight Blocks of Fast Iron to craft Iron Fast Crusher, surround that with eight Blocks of Fast Gold to craft Gold Fast Crusher, then surround that with eight Blocks of Fast Diamond to craft Diamond Fast Crusher.
+- Craft Fast Crusher with three Fast Diamonds across the top row, a Fast Furnace in the center, and Fast Iron Ingots in the remaining five slots. Surround it with eight Blocks of Fast Iron to craft Iron Fast Crusher, surround that with eight Blocks of Fast Gold to craft Gold Fast Crusher, then surround that with eight Blocks of Fast Diamond to craft Diamond Fast Crusher.
 
 ### Fast Furnace Tiers
 

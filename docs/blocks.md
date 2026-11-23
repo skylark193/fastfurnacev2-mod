@@ -22,12 +22,10 @@ Fast Furnace V2 registers **18 blocks**, each with a corresponding block item. A
 | Iron Fast Furnace | `fastfurnacev2:iron_fast_furnace` | Functional Blocks | Upgrade Fast Furnace with 8 Blocks of Fast Iron |
 | Gold Fast Furnace | `fastfurnacev2:gold_fast_furnace` | Functional Blocks | Upgrade Iron Fast Furnace with 8 Blocks of Fast Gold |
 | Diamond Fast Furnace | `fastfurnacev2:diamond_fast_furnace` | Functional Blocks | Upgrade Gold Fast Furnace with 8 Blocks of Fast Diamond |
-| Fast Crusher | `fastfurnacev2:fast_crusher` | Functional Blocks | No built-in crafting recipe |
+| Fast Crusher | `fastfurnacev2:fast_crusher` | Functional Blocks | Craft with 3 Fast Diamonds, 5 Fast Iron Ingots, and a Fast Furnace |
 | Iron Fast Crusher | `fastfurnacev2:iron_fast_crusher` | Functional Blocks | Upgrade Fast Crusher with 8 Blocks of Fast Iron |
 | Gold Fast Crusher | `fastfurnacev2:gold_fast_crusher` | Functional Blocks | Upgrade Iron Fast Crusher with 8 Blocks of Fast Gold |
 | Diamond Fast Crusher | `fastfurnacev2:diamond_fast_crusher` | Functional Blocks | Upgrade Gold Fast Crusher with 8 Blocks of Fast Diamond |
-
-“No built-in crafting recipe” means the block is available in creative mode and can be supplied by commands, another mod, or a modpack, but the base mod does not provide a survival crafting pattern.
 
 ## Fast Cobblestone
 

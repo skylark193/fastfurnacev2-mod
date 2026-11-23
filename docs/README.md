@@ -23,10 +23,11 @@ For installation and development commands, see the [project README](../README.md
 1. Mine stone with a suitable non-Silk-Touch tool for a chance at bonus **Fast Cobblestone**, or mine coal ore for a chance at bonus **Fast Coal**.
 2. Craft a **Fast Furnace** from eight Fast Cobblestone using the vanilla furnace pattern.
 3. Use ordinary smelting recipes and fuels. Fast Coal and Extreme Coal provide additional speed and burn-duration bonuses.
-4. Find Fast Iron, Fast Gold, and Fast Diamond Ore among their regular vanilla ores. Smelt their raw drops directly, or crush them into two crushed items and smelt each result. Nine finished materials craft a reversible Fast storage block.
-5. Upgrade through **Iron**, **Gold**, and **Diamond** tiers by surrounding the previous furnace with eight matching Fast storage blocks.
-6. Find **Extreme Coal Ore** among regular coal ore for a stronger special fuel.
-7. Craft an **Accelerator** by surrounding an Iron Fast Furnace with eight Redstone Blocks, then surround it with lava on four horizontal sides to convert ordinary materials and their blocks into Fast variants. The base Fast Crusher has no built-in crafting recipe.
+4. Find Fast Iron, Fast Gold, and Fast Diamond Ore among their regular vanilla ores. Smelt their raw drops directly. Nine finished materials craft a reversible Fast storage block.
+5. Craft a **Fast Crusher** with three Fast Diamonds, five Fast Iron Ingots, and a Fast Furnace, then crush raw ores into two crushed items and smelt each result.
+6. Upgrade through **Iron**, **Gold**, and **Diamond** tiers by surrounding the previous furnace or crusher with eight matching Fast storage blocks.
+7. Find **Extreme Coal Ore** among regular coal ore for a stronger special fuel.
+8. Craft an **Accelerator** by surrounding an Iron Fast Furnace with eight Redstone Blocks, then surround it with lava on four horizontal sides to convert ordinary materials and their blocks into Fast variants.
 
 See [Recipes and fuels](recipes.md) for complete patterns and [World generation and resources](world-generation.md) for acquisition chances.
 
@@ -44,9 +45,9 @@ All built-in random rolls are independent. A fuel-duration roll in a Fast Furnac
 
 ## Common questions
 
-### Why can I not craft a base Fast Crusher?
+### How do I craft a base Fast Crusher?
 
-It intentionally has no built-in crafting recipe. Obtain it in creative mode or supply it through commands, another mod, or a modpack. Crusher upgrades still require the preceding crusher tier.
+Place three Fast Diamonds across the top row, Fast Iron Ingots on both sides of a Fast Furnace in the middle row, and three Fast Iron Ingots across the bottom row. See [Recipes and fuels](recipes.md#fast-crusher).
 
 ### Why is my machine lit but not using fuel time?
 

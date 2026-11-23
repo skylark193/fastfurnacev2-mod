@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "fastfurnacev2:fast_diamond",
+    "F": "fastfurnacev2:fast_furnace",
+    "I": "fastfurnacev2:fast_iron_ingot"
+  },
+  "pattern": [
+    "DDD",
+    "IFI",
+    "III"
+  ],
+  "result": {
+    "id": "fastfurnacev2:fast_crusher"
+  }
+}

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **16 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
+This page collects the **17 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 
@@ -42,9 +42,23 @@ M  M  M
 
 Upgrades must follow this order; a lower tier cannot skip directly to Gold or Diamond.
 
+## Fast Crusher
+
+Use three Fast Diamonds, five Fast Iron Ingots, and one Fast Furnace:
+
+```text
+D  D  D
+I  F  I
+I  I  I
+```
+
+`D` = Fast Diamond; `I` = Fast Iron Ingot; `F` = Fast Furnace
+
+Output: **1 × Fast Crusher**
+
 ## Fast Crusher upgrades
 
-The **base Fast Crusher has no built-in crafting recipe**. Its upgrades use the same shaped pattern as furnace upgrades:
+Upgrades use the same shaped pattern as furnace upgrades:
 
 ```text
 M  M  M
@@ -57,8 +71,6 @@ M  M  M
 | Fast Crusher | 8 × Block of Fast Iron | Iron Fast Crusher |
 | Iron Fast Crusher | 8 × Block of Fast Gold | Gold Fast Crusher |
 | Gold Fast Crusher | 8 × Block of Fast Diamond | Diamond Fast Crusher |
-
-The base crusher must first be supplied through creative mode, commands, another mod, or a modpack.
 
 ## Block of Fast Coal
 
@@ -225,6 +237,5 @@ The Accelerator also operates without boost at one work unit per tick. See [Acce
 - Extreme Coal Ore.
 - Fast Iron Ore, Fast Gold Ore, and Fast Diamond Ore.
 - Raw Fast Iron, Raw Fast Gold, and Raw Fast Diamond.
-- Base Fast Crusher.
 
 Their acquisition is described in [Blocks](blocks.md), [Items](items.md), and [World generation](world-generation.md). The presence of creative-tab content, upgrades, or machine conversions does not imply a survival crafting recipe. Other mods and modpacks may supply their own acquisition methods.
