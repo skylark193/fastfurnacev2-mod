@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **nine checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
+This page collects the **ten checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 
@@ -86,9 +86,23 @@ Place one Block of Fast Coal in a shapeless crafting recipe:
 
 Packing and unpacking are reversible and lossless in item count.
 
+## Accelerator crafting
+
+Surround one Iron Fast Furnace with eight Redstone Blocks:
+
+```text
+R  R  R
+R  F  R
+R  R  R
+```
+
+`R` = Redstone Block; `F` = Iron Fast Furnace
+
+Output: **1 × Accelerator**
+
 ## Accelerator conversions
 
-The Accelerator has **no built-in crafting recipe** and does not use ordinary smelting JSON for these operations:
+The Accelerator does not use ordinary smelting JSON for these operations:
 
 | Input | Output | Unboosted duration |
 |---|---|---:|
@@ -177,6 +191,5 @@ The Accelerator also operates without boost at one work unit per tick. See [Acce
 - Extreme Coal.
 - Extreme Coal Ore.
 - Base Fast Crusher.
-- Accelerator.
 
 Their acquisition is described in [Blocks](blocks.md), [Items](items.md), and [World generation](world-generation.md). The presence of creative-tab content, upgrades, or machine conversions does not imply a survival crafting recipe. Other mods and modpacks may supply their own acquisition methods.

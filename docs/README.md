@@ -25,7 +25,7 @@ For installation and development commands, see the [project README](../README.md
 3. Use ordinary smelting recipes and fuels. Fast Coal and Extreme Coal provide additional speed and burn-duration bonuses.
 4. Upgrade through **Iron**, **Gold**, and **Diamond** tiers by surrounding the previous furnace with eight matching metal blocks.
 5. Find **Extreme Coal Ore** among regular coal ore for a stronger special fuel.
-6. Use an **Accelerator** surrounded by lava on four horizontal sides to convert coal into Fast Coal. The Accelerator and base Fast Crusher have no built-in crafting recipe.
+6. Craft an **Accelerator** by surrounding an Iron Fast Furnace with eight Redstone Blocks, then surround it with lava on four horizontal sides to convert coal into Fast Coal. The base Fast Crusher has no built-in crafting recipe.
 
 See [Recipes and fuels](recipes.md) for complete patterns and [World generation and resources](world-generation.md) for acquisition chances.
 
@@ -43,9 +43,9 @@ All built-in random rolls are independent. A fuel-duration roll in a Fast Furnac
 
 ## Common questions
 
-### Why can I not craft an Accelerator or base Fast Crusher?
+### Why can I not craft a base Fast Crusher?
 
-They intentionally have no built-in crafting recipe. They can be obtained in creative mode or supplied by commands, another mod, or a modpack. Crusher upgrades still require the preceding crusher tier.
+It intentionally has no built-in crafting recipe. Obtain it in creative mode or supply it through commands, another mod, or a modpack. Crusher upgrades still require the preceding crusher tier.
 
 ### Why is my machine lit but not using fuel time?
 

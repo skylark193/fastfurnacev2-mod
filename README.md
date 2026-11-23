@@ -42,7 +42,7 @@ Start at the [documentation home](docs/README.md) for the complete player, modpa
 
 ### Accelerator
 
-- Converts coal into Fast Coal in 400 ticks (20 seconds) and coal blocks into Blocks of Fast Coal in 3,600 ticks (180 seconds). Other mods can add conversions through the API. It currently has no crafting recipe.
+- Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It converts coal into Fast Coal in 400 ticks (20 seconds) and coal blocks into Blocks of Fast Coal in 3,600 ticks (180 seconds). Other mods can add conversions through the API.
 - Requires lava on all four horizontal sides. Source or flowing lava works, and no lava is required above or below. Missing lava pauses processing without losing progress or stored boost.
 - Runs at normal speed without fuel. By default, its fuel slot accepts only Fast Coal, Blocks of Fast Coal, and Extreme Coal; ordinary furnace fuels are not accepted unless another mod registers them as Accelerator boosts. Fuel is consumed only when valid work can proceed.
 - Fast Coal supplies 3,600 boosted work units, exactly nine coal conversions or one coal-block conversion. A Block of Fast Coal supplies 4,000 units, exactly ten coal conversions or one coal-block conversion with enough left over for one coal conversion. Extreme Coal supplies 7,200 units, exactly 18 coal conversions or two coal-block conversions.

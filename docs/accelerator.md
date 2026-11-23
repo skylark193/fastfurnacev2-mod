@@ -4,7 +4,7 @@
 
 The **Accelerator** (`fastfurnacev2:accelerator`) converts coal into Fast Coal and coal blocks into Blocks of Fast Coal. It is separate from ordinary smelting and the vanilla recipe book.
 
-It has no built-in crafting recipe. Obtain it through creative mode, commands, or content supplied by another mod or modpack. It requires a pickaxe, drops itself, preserves a custom name, supports directional placement and comparators, and appears in Functional Blocks and the Fast Furnace V2 creative tab.
+Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It requires a pickaxe, drops itself, preserves a custom name, supports directional placement and comparators, and appears in Functional Blocks and the Fast Furnace V2 creative tab. See [Accelerator crafting](recipes.md#accelerator-crafting) for the grid pattern.
 
 ## Lava setup
 

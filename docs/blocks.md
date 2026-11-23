@@ -11,7 +11,7 @@ Fast Furnace V2 registers **12 blocks**, each with a corresponding block item. A
 | Fast Cobblestone | `fastfurnacev2:fast_cobblestone` | Building Blocks | Bonus drop from mining stone |
 | Block of Fast Coal | `fastfurnacev2:fast_coal_block` | Building Blocks | Craft 9 Fast Coal; unpack back into 9 |
 | Extreme Coal Ore | `fastfurnacev2:extreme_coal_ore` | Natural Blocks | Replaces eligible regular coal ore during chunk processing |
-| Accelerator | `fastfurnacev2:accelerator` | Functional Blocks | No built-in crafting recipe |
+| Accelerator | `fastfurnacev2:accelerator` | Functional Blocks | Surround an Iron Fast Furnace with 8 Redstone Blocks |
 | Fast Furnace | `fastfurnacev2:fast_furnace` | Functional Blocks | Craft from 8 Fast Cobblestone |
 | Iron Fast Furnace | `fastfurnacev2:iron_fast_furnace` | Functional Blocks | Upgrade Fast Furnace with 8 Iron Blocks |
 | Gold Fast Furnace | `fastfurnacev2:gold_fast_furnace` | Functional Blocks | Upgrade Iron Fast Furnace with 8 Gold Blocks |
@@ -112,7 +112,7 @@ See [Fast Crushers](crushers.md) for processing, fuel, and pending-output rules.
 
 **ID:** `fastfurnacev2:accelerator`
 
-The Accelerator is a directional, lava-surrounded converter rather than an ordinary furnace. It has stone map color, base-drum instrument, hardness **3.5**, and blast resistance **3.5**. It requires a pickaxe, drops itself, preserves custom names, supports comparators and automation, and has no built-in crafting recipe.
+The Accelerator is a directional, lava-surrounded converter rather than an ordinary furnace. It has stone map color, base-drum instrument, hardness **3.5**, and blast resistance **3.5**. Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It requires a pickaxe, drops itself, preserves custom names, and supports comparators and automation.
 
 Its body uses animated smooth stone with lava veins. Its top face has an eleven-stage lightning bolt showing conversion progress. The block can be placed without lava, but all four horizontal neighboring positions must contain source or flowing lava before it can process.
 
