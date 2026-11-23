@@ -2,6 +2,10 @@
 
 Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal Ore and Extreme Coal, a Block of Fast Coal, a lava-powered Accelerator, four tiers of accelerated furnaces, four tiers of raw-ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
 
+## Documentation
+
+Start at the [documentation home](docs/README.md) for the complete player, modpack, and developer reference. The suite includes dedicated pages for [blocks](docs/blocks.md), [items](docs/items.md), [recipes and fuels](docs/recipes.md), [Fast Furnaces](docs/furnaces.md), [Fast Crushers](docs/crushers.md), the [Accelerator](docs/accelerator.md), [world generation and dynamic resources](docs/world-generation.md), and [automation, GUI, and JEI](docs/automation-and-jei.md). Mod developers can go directly to the [API guide](docs/api.md).
+
 ## Features
 
 ### Fast Cobblestone

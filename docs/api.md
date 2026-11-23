@@ -1,5 +1,7 @@
 # Fast Furnace V2 modding API
 
+[Documentation home](README.md)
+
 Fast Furnace V2 1.2.0 exposes API version 1.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
