@@ -1,6 +1,8 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
 import com.skylark193.fastfurnacev2.AcceleratorMenu;
+import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerMenu;
+import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerRecipes;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
@@ -9,6 +11,7 @@ import com.skylark193.fastfurnacev2.api.CrusherRecipe;
 import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
+import com.skylark193.fastfurnacev2.client.ExtremelyFastAlloyerScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,7 +57,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(
                 new FastCrusherCategory(registration.getJeiHelpers().getGuiHelper()),
                 new AcceleratorCategory(registration.getJeiHelpers().getGuiHelper()),
-                new AcceleratorFuelCategory(registration.getJeiHelpers().getGuiHelper()));
+                new AcceleratorFuelCategory(registration.getJeiHelpers().getGuiHelper()),
+                new ExtremelyFastAlloyerCategory(registration.getJeiHelpers().getGuiHelper()));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addRecipeCategories(
                     new FastFurnaceFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier));
@@ -141,6 +145,12 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.ACCELERATOR.get(),
                 Component.translatable("jei.fastfurnacev2.accelerator_info"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.EXTREMELY_FAST_ALLOYER.get(),
+                Component.translatable("jei.fastfurnacev2.alloyer_info"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(),
+                Component.translatable("jei.fastfurnacev2.extremely_fast_ingot_info"));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addIngredientInfo(
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
@@ -153,6 +163,7 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
         registration.addRecipes(AcceleratorCategory.getAcceleratorRecipeType(), createAcceleratorRecipes());
         registration.addRecipes(AcceleratorFuelCategory.getAcceleratorFuelRecipeType(), createAcceleratorFuels());
+        registration.addRecipes(ExtremelyFastAlloyerCategory.getAlloyerRecipeType(), ExtremelyFastAlloyerRecipes.recipes());
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
@@ -205,6 +216,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 AcceleratorCategory.getAcceleratorRecipeType(), FastFurnaceV2.ACCELERATOR.get());
         registration.addCraftingStation(
                 AcceleratorFuelCategory.getAcceleratorFuelRecipeType(), FastFurnaceV2.ACCELERATOR.get());
+        registration.addCraftingStation(
+                ExtremelyFastAlloyerCategory.getAlloyerRecipeType(), FastFurnaceV2.EXTREMELY_FAST_ALLOYER.get());
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addCraftingStation(RecipeTypes.SMELTING, FastFurnaceV2.getFurnaceBlock(tier).get());
             registration.addCraftingStation(
@@ -233,6 +246,14 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 AcceleratorMenu.FUEL_SLOT,
                 1,
                 AcceleratorMenu.SLOT_COUNT,
+                36);
+        registration.addRecipeTransferHandler(
+                ExtremelyFastAlloyerMenu.class,
+                FastFurnaceV2.EXTREMELY_FAST_ALLOYER_MENU.get(),
+                ExtremelyFastAlloyerCategory.getAlloyerRecipeType(),
+                ExtremelyFastAlloyerMenu.INPUT_SLOT,
+                ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT,
+                ExtremelyFastAlloyerMenu.SLOT_COUNT,
                 36);
         registerFilteredTransfer(registration, RecipeTypes.SMELTING, menu -> !menu.isFastCrusher());
         registerFilteredTransfer(
@@ -267,6 +288,20 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                                 56, 36, 14, 14, AcceleratorFuelCategory.getAcceleratorFuelRecipeType()));
             }
         });
+        registration.addGuiContainerHandler(
+                ExtremelyFastAlloyerScreen.class, new IGuiContainerHandler<ExtremelyFastAlloyerScreen>() {
+                    @Override
+                    public List<Rect2i> getGuiExtraAreas(ExtremelyFastAlloyerScreen screen) {
+                        return screen.getJeiExtraAreas();
+                    }
+
+                    @Override
+                    public List<IGuiClickableArea> getGuiClickableAreas(
+                            ExtremelyFastAlloyerScreen screen, double guiMouseX, double guiMouseY) {
+                        return List.of(IGuiClickableArea.createBasic(
+                                78, 32, 28, 23, ExtremelyFastAlloyerCategory.getAlloyerRecipeType()));
+                    }
+                });
         registerFurnaceGuiHandler(registration);
     }
 

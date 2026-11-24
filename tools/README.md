@@ -188,6 +188,22 @@ macOS/Linux:
 
 The first command writes the eight-frame body texture. The second writes `accelerator_top_0.png` through `accelerator_top_10.png`, each with eight frames and sibling animation metadata. It rejects an input path that collides with any generated PNG or metadata path before writing, protecting the square source artwork. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state. Each model puts its stage texture on the top face only and retains the body texture on the front, sides, and bottom.
 
+## Regenerate Extremely Fast Alloyer and Ingot Textures
+
+The Alloyer body and all eleven top stages use seed **440**; the Extremely Fast Ingot uses seed **441**. Both use the all-lava generator, which preserves the square source's silhouette and alpha while replacing every visible pixel with an animated shared-palette lava color. The Alloyer top generator's `--all-lava` option combines that background with the same stationary lightning-bolt geometry and eleven-stage bottom-up fill used by the Accelerator. Do not substitute the ordinary lava-vein generator.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\smooth_stone.png --output src\main\resources\assets\fastfurnacev2\textures\block\extremely_fast_alloyer.png --seed 440 --frames 8 --frame-time 2
+.venv\Scripts\python -I tools\generate_accelerator_top_texture.py --input tools\texture_sources\smooth_stone.png --output-prefix src\main\resources\assets\fastfurnacev2\textures\block\extremely_fast_alloyer_top_ --seed 440 --frames 8 --frame-time 2 --all-lava
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\iron_ingot.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_ingot.png --seed 441 --frames 8 --frame-time 2
+```
+
+On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments.
+
+The body and ingot commands write eight-frame strips with two ticks per frame and no interpolation. The top command writes `extremely_fast_alloyer_top_0.png` through `extremely_fast_alloyer_top_10.png`, each with eight frames and sibling metadata. The bolt outline and current fill remain stationary within each animation while the all-lava background moves. The same input/output and metadata collision checks as the Accelerator top generator apply.
+
 ## Regenerate Fast Crusher Sides and Bottom
 
 Windows:
@@ -297,4 +313,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, Extreme Coal's all-lava visible pixels and preserved silhouette, Block of Extreme Coal's nonuniform all-lava animation with every visible pixel changing RGB across frames, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, all-lava visible pixels and preserved silhouettes for Extreme Coal, its block, the Alloyer body, and Extremely Fast Ingot, per-pixel all-lava animation, the Accelerator and Alloyer bolts' monotonic bottom-up fill and stationary outlines, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator/Alloyer top input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

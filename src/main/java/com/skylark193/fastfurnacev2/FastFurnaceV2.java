@@ -95,6 +95,7 @@ public class FastFurnaceV2 {
             ITEMS.registerSimpleBlockItem("deepslate_fast_diamond_ore", DEEPSLATE_FAST_DIAMOND_ORE);
     public static final DeferredItem<Item> RAW_FAST_DIAMOND = ITEMS.registerSimpleItem("raw_fast_diamond");
     public static final DeferredItem<Item> FAST_DIAMOND = ITEMS.registerSimpleItem("fast_diamond");
+    public static final DeferredItem<Item> EXTREMELY_FAST_INGOT = ITEMS.registerSimpleItem("extremely_fast_ingot");
     public static final DeferredBlock<Block> FAST_DIAMOND_BLOCK = BLOCKS.registerSimpleBlock(
             "fast_diamond_block", properties -> properties
                     .mapColor(MapColor.DIAMOND)
@@ -138,6 +139,14 @@ public class FastFurnaceV2 {
                     .strength(3.5F));
     public static final DeferredItem<BlockItem> ACCELERATOR_ITEM =
             ITEMS.registerSimpleBlockItem("accelerator", ACCELERATOR);
+    public static final DeferredBlock<ExtremelyFastAlloyerBlock> EXTREMELY_FAST_ALLOYER = BLOCKS.registerBlock(
+            "extremely_fast_alloyer", ExtremelyFastAlloyerBlock::new, properties -> properties
+                    .mapColor(MapColor.STONE)
+                    .instrument(NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops()
+                    .strength(3.5F));
+    public static final DeferredItem<BlockItem> EXTREMELY_FAST_ALLOYER_ITEM =
+            ITEMS.registerSimpleBlockItem("extremely_fast_alloyer", EXTREMELY_FAST_ALLOYER);
 
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = registerFurnace(FastFurnaceTier.FAST);
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
@@ -205,6 +214,9 @@ public class FastFurnaceV2 {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AcceleratorBlockEntity>> ACCELERATOR_BLOCK_ENTITY =
             BLOCK_ENTITIES.register("accelerator", () -> new BlockEntityType<>(
                     AcceleratorBlockEntity::new, ACCELERATOR.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExtremelyFastAlloyerBlockEntity>>
+            EXTREMELY_FAST_ALLOYER_BLOCK_ENTITY = BLOCK_ENTITIES.register("extremely_fast_alloyer",
+                    () -> new BlockEntityType<>(ExtremelyFastAlloyerBlockEntity::new, EXTREMELY_FAST_ALLOYER.get()));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.FAST);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> IRON_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.IRON);
@@ -212,6 +224,9 @@ public class FastFurnaceV2 {
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> DIAMOND_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.DIAMOND);
     public static final DeferredHolder<MenuType<?>, MenuType<AcceleratorMenu>> ACCELERATOR_MENU = MENUS.register(
             "accelerator", () -> new MenuType<>(AcceleratorMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>, MenuType<ExtremelyFastAlloyerMenu>> EXTREMELY_FAST_ALLOYER_MENU =
+            MENUS.register("extremely_fast_alloyer",
+                    () -> new MenuType<>(ExtremelyFastAlloyerMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FAST_FURNACE_V2_TAB = CREATIVE_MODE_TABS.register("fast_furnace_v2_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.fastfurnacev2"))
@@ -239,6 +254,7 @@ public class FastFurnaceV2 {
                 output.accept(RAW_FAST_DIAMOND.get());
                 output.accept(FAST_DIAMOND.get());
                 output.accept(FAST_DIAMOND_BLOCK_ITEM.get());
+                output.accept(EXTREMELY_FAST_INGOT.get());
                 output.accept(FAST_IRON_PICKAXE.get());
                 output.accept(FAST_IRON_SHOVEL.get());
                 output.accept(FAST_IRON_AXE.get());
@@ -252,6 +268,7 @@ public class FastFurnaceV2 {
                 output.accept(FAST_DIAMOND_AXE.get());
                 output.accept(FAST_DIAMOND_SWORD.get());
                 output.accept(ACCELERATOR_ITEM.get());
+                output.accept(EXTREMELY_FAST_ALLOYER_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
                 }
@@ -300,6 +317,7 @@ public class FastFurnaceV2 {
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
         NeoForge.EVENT_BUS.addListener(DefaultDataComponentsBoundEvent.class, event -> {
             if (event.shouldUpdateStaticData()) {
+                ExtremelyFastAlloyerRecipes.initialize();
                 FastFurnaceApiImpl.initialize(modEventBus);
             }
         });
@@ -430,6 +448,7 @@ public class FastFurnaceV2 {
             event.accept(FAST_GOLD_INGOT);
             event.accept(RAW_FAST_DIAMOND);
             event.accept(FAST_DIAMOND);
+            event.accept(EXTREMELY_FAST_INGOT);
             CrushedOres.addCreative(event);
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
@@ -453,6 +472,7 @@ public class FastFurnaceV2 {
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(ACCELERATOR_ITEM);
+            event.accept(EXTREMELY_FAST_ALLOYER_ITEM);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 event.accept(getFurnaceItem(tier));
             }

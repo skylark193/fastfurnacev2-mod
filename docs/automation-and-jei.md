@@ -1,6 +1,6 @@
 # Automation, GUI, and JEI
 
-[Documentation home](README.md) · [Fast Furnaces](furnaces.md) · [Fast Crushers](crushers.md) · [Accelerator](accelerator.md)
+[Documentation home](README.md) · [Fast Furnaces](furnaces.md) · [Fast Crushers](crushers.md) · [Accelerator](accelerator.md) · [Extremely Fast Alloyer](alloyer.md)
 
 ## Machine slots
 
@@ -18,6 +18,8 @@ The Accelerator also has input, fuel/boost, and result slots, but no ordinary sm
 
 Shift-clicking an Accelerator-compatible item from the player inventory tries the conversion input first, then the boost slot. Unsupported items move between the main inventory and hotbar instead.
 
+The Extremely Fast Alloyer has **three ingredient slots and one result slot**, with no fuel slot or ordinary smelting recipe book. Its built-in ingredients are shapeless across the three input slots. Shift-clicking an accepted ingredient routes it into those slots; the result returns to the player inventory. Unsupported furnace, crusher, Accelerator, and crafting inputs are not thereby valid Alloyer recipes.
+
 ## Hopper and automation directions
 
 | Machine | Top | Horizontal sides | Bottom |
@@ -25,10 +27,11 @@ Shift-clicking an Accelerator-compatible item from the player inventory tries th
 | Fast Furnace | Insert smelting input | Insert fuel | Extract smelting result |
 | Fast Crusher | Insert registered crusher input | Insert fuel | Extract crushed result |
 | Accelerator | Insert registered conversion input | Insert accepted boost fuel | Extract conversion result only |
+| Extremely Fast Alloyer | Insert accepted Alloyer ingredients | Insert accepted Alloyer ingredients | Extract alloying result only |
 
-Accelerator insertion also checks ingredient acceptance. A partial input stack can accumulate until it reaches the required count; processing lookup then enforces the full input count.
+Accelerator insertion also checks ingredient acceptance. A partial input stack can accumulate until it reaches the required count; processing lookup then enforces the full input count. Alloyer insertion accepts only items used by its dedicated recipes. Its three inputs are exposed together on the top and horizontal sides, but a complete operation still requires three distinct matched slots.
 
-Fast Furnace V2 supports NeoForge item transactions around machine input changes. Aborted transfers preserve machine progress and pending crusher results; committed empty/fill transitions reset the relevant operation so a new input cannot inherit stale progress.
+Fast Furnace V2 supports NeoForge item transactions around machine input changes. Aborted transfers preserve machine progress and pending crusher results; committed empty/fill transitions reset the relevant operation so a new input cannot inherit stale progress. The Alloyer uses the same progress-preserving transaction rule.
 
 ## Information panels
 
@@ -56,6 +59,14 @@ Furnace and crusher timers are calculated from exact tick counts and displayed i
 - Remaining boosted work.
 - Built-in item/block conversion times and built-in boost capacities.
 
+### Extremely Fast Alloyer panel
+
+- Fixed 100% ordinary furnace speed.
+- The built-in recipe's ten-second processing time.
+- A reminder that only dedicated Alloyer recipes are accepted.
+
+The Alloyer GUI has no flame, fuel slot, boost display, or smelting recipe book. Its arrow shows current recipe progress.
+
 ## Comparators, naming, and drops
 
 All machines support comparator output based on their container contents. They can receive custom names through normal Minecraft naming mechanics, and their loot preserves that custom name.
@@ -67,6 +78,7 @@ Breaking a machine does **not** create a portable inventory or energy-storage it
 | Fast Furnace | Custom name | Inventory, smelting experience, progress, active fuel, burn state |
 | Fast Crusher | Custom name | Inventory, progress, active fuel, pending doubled output |
 | Accelerator | Custom name | Inventory, conversion progress, banked boost |
+| Extremely Fast Alloyer | Custom name | Three input stacks, result stack, alloying progress |
 
 Inventory, processing state, and active fuel or boost are saved while the block remains placed in the world. Fast storage blocks, Fast Cobblestone, and Fast ores use their own ordinary block loot rather than machine state rules.
 
@@ -81,6 +93,7 @@ With a JEI release compatible with both Minecraft 26.1.2 and this integration, F
 | Ore Crushing | Built-in and API-registered crusher recipes, counts, timing, and output-doubling note | All four Fast Crusher tiers |
 | Accelerator Conversions | Built-in and custom conversions, normal and registered boost-speed durations, and lava requirement | Accelerator |
 | Accelerator Boosts | Registered boost ingredients, speed, exact work, and fully boosted conversion capacities | Accelerator |
+| Extremely Fast Alloying | Three dedicated shapeless inputs, one output, and exact processing time | Extremely Fast Alloyer |
 
 ### GUI click areas
 
@@ -89,6 +102,7 @@ With a JEI release compatible with both Minecraft 26.1.2 and this integration, F
 - A furnace or crusher **flame** opens its current tier's fuel category.
 - The Accelerator's **progress arrow** opens conversions.
 - The Accelerator's **flame** opens boost fuels.
+- The Extremely Fast Alloyer's **progress arrow** opens dedicated alloying recipes, not smelting or Accelerator conversions.
 
 JEI reserves space around visible information fly-outs so they are not covered by recipe-viewer panels.
 
@@ -100,6 +114,7 @@ Recipe transfer supports:
 - Crushing input for Fast Crushers.
 - Fuel insertion for both machine families.
 - Accelerator conversion input and boost insertion.
+- All three Extremely Fast Alloyer ingredient slots.
 
 Smelting transfers and smelting click areas are deliberately disabled for crushers.
 
@@ -119,7 +134,7 @@ Custom fuels use their registered duration and speed bonuses in the same calcula
 
 ### Ingredient information
 
-JEI includes explanatory information for Fast Cobblestone, Fast Coal, both coal storage blocks, regular and deepslate Extreme Coal Ore, Extreme Coal, every regular and deepslate Fast ore, raw and finished Fast material, Fast storage block, the Accelerator, every furnace and crusher tier, and all twelve Fast tools and swords. Tool descriptions state their mining-speed, attack-speed, attack-damage, durability-saving, and repair-material bonuses as applicable. Ore Crushing displays include the built-in ore-block recipes and their three-item normal results. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
+JEI includes explanatory information for Fast Cobblestone, Fast Coal, both coal storage blocks, regular and deepslate Extreme Coal Ore, Extreme Coal, every regular and deepslate Fast ore, raw and finished Fast material, Fast storage block, the Accelerator, the Extremely Fast Alloyer and Extremely Fast Ingot, every furnace and crusher tier, and all twelve Fast tools and swords. Tool descriptions state their mining-speed, attack-speed, attack-damage, durability-saving, and repair-material bonuses as applicable. Ore Crushing displays include the built-in ore-block recipes and their three-item normal results. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
 
 ### Current compatibility boundary
 
@@ -127,4 +142,4 @@ The compile-time integration targets **JEI 29.2.0.21**, which declares support f
 
 ## Extending these behaviors
 
-Other mods do not need separate JEI integrations for content registered through Fast Furnace V2's API. Custom fuels, crusher recipes, Accelerator conversions, and boosts automatically use the real machine logic and corresponding displays. See the [modding API guide](api.md).
+Other mods do not need separate JEI integrations for content registered through Fast Furnace V2's API. Custom fuels, crusher recipes, Accelerator conversions, and boosts automatically use the real machine logic and corresponding displays. See the [modding API guide](api.md). Alloyer recipes are currently built-in only and are not registered through that public API.

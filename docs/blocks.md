@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Items](items.md) · [Recipes](recipes.md)
 
-Fast Furnace V2 registers **23 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
+Fast Furnace V2 registers **24 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
 
 ## Complete block index
 
@@ -23,6 +23,7 @@ Fast Furnace V2 registers **23 blocks**, each with a corresponding block item. A
 | Block of Fast Gold | `fastfurnacev2:fast_gold_block` | Building Blocks | Craft 9 Fast Gold Ingots or convert a Gold Block |
 | Block of Fast Diamond | `fastfurnacev2:fast_diamond_block` | Building Blocks | Craft 9 Fast Diamonds or convert a Diamond Block |
 | Accelerator | `fastfurnacev2:accelerator` | Functional Blocks | Surround an Iron Fast Furnace with 8 Redstone Blocks |
+| Extremely Fast Alloyer | `fastfurnacev2:extremely_fast_alloyer` | Functional Blocks | Surround an Accelerator with 8 Blocks of Extreme Coal |
 | Fast Furnace | `fastfurnacev2:fast_furnace` | Functional Blocks | Craft from 8 Fast Cobblestone |
 | Iron Fast Furnace | `fastfurnacev2:iron_fast_furnace` | Functional Blocks | Upgrade Fast Furnace with 8 Blocks of Fast Iron |
 | Gold Fast Furnace | `fastfurnacev2:gold_fast_furnace` | Functional Blocks | Upgrade Iron Fast Furnace with 8 Blocks of Fast Gold |
@@ -163,3 +164,13 @@ The Accelerator is a directional, lava-surrounded converter rather than an ordin
 Its body uses animated smooth stone with lava veins. Its top face has an eleven-stage lightning bolt showing conversion progress. The block can be placed without lava, but all four horizontal neighboring positions must contain source or flowing lava before it can process.
 
 Breaking the Accelerator preserves only its custom name, not inventory, conversion progress, or boost work. See the complete [Accelerator guide](accelerator.md).
+
+## Extremely Fast Alloyer
+
+**ID:** `fastfurnacev2:extremely_fast_alloyer`
+
+The Extremely Fast Alloyer is a directional, three-input alloying machine rather than a furnace, crusher, or Accelerator conversion target. It has stone map color, base-drum instrument, hardness **3.5**, and blast resistance **3.5**. Craft it by surrounding one Accelerator with eight Blocks of Extreme Coal. It requires a pickaxe, drops itself, preserves custom names, and supports comparators and automation. Its `lit` block state tracks whether work advanced on the current tick.
+
+Its body replaces every visible smooth-stone pixel with animated lava. Its top face retains the Accelerator's eleven-stage lightning bolt and fills with recipe progress. Unlike the Accelerator, it requires no surrounding lava, fuel, or boost.
+
+Its built-in recipe combines one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any input-slot order into one Extremely Fast Ingot in **200 ticks**. Breaking the Alloyer preserves only its custom name, not inventory or progress. See the complete [Extremely Fast Alloyer guide](alloyer.md).

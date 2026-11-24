@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate animated Accelerator tops with a bottom-up lightning-bolt fill."""
+"""Generate animated machine tops with a bottom-up lightning-bolt fill."""
 
 from __future__ import annotations
 
@@ -21,7 +21,18 @@ def load_lava_generator():
     return module
 
 
+def load_all_lava_generator():
+    path = Path(__file__).with_name("generate_extreme_coal_texture.py")
+    spec = importlib.util.spec_from_file_location("fastfurnacev2_all_lava_texture", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load all-lava generator from {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 LAVA_GENERATOR = load_lava_generator()
+ALL_LAVA_GENERATOR = load_all_lava_generator()
 generate_frames = LAVA_GENERATOR.generate_frames
 positive_int = LAVA_GENERATOR.positive_int
 
@@ -46,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--frame-time", type=positive_int, default=2, help="Game ticks per frame (default: 2)")
     parser.add_argument("--seed", type=int, default=418, help="Lava layout seed (default: 418)")
     parser.add_argument("--veins", type=positive_int, default=2, help="Primary lava paths (default: 2)")
+    parser.add_argument("--all-lava", action="store_true", help="Replace the background with animated lava")
     parser.add_argument("--length", type=positive_int, help="Steps per primary lava path")
     parser.add_argument("--branch-length", type=positive_int, help="Steps per lava branch")
     return parser.parse_args()
@@ -100,17 +112,21 @@ def generate_top_textures(
     branch_length: int,
     seed: int,
     max_level: int = 10,
+    all_lava: bool = False,
 ) -> list[list[Image.Image]]:
     if base.width != base.height:
-        raise ValueError("The Accelerator source must be square")
-    base_frames, _ = generate_frames(
-        base,
-        frame_count=frame_count,
-        vein_count=vein_count,
-        length=length,
-        branch_length=branch_length,
-        seed=seed,
-    )
+        raise ValueError("The machine-top source must be square")
+    if all_lava:
+        base_frames = ALL_LAVA_GENERATOR.generate_frames(base, frame_count, seed)
+    else:
+        base_frames, _ = generate_frames(
+            base,
+            frame_count=frame_count,
+            vein_count=vein_count,
+            length=length,
+            branch_length=branch_length,
+            seed=seed,
+        )
     return [
         [apply_bolt(frame, level, max_level) for frame in base_frames]
         for level in range(max_level + 1)
@@ -136,6 +152,7 @@ def main() -> None:
         length=length,
         branch_length=branch_length,
         seed=args.seed,
+        all_lava=args.all_lava,
     )
 
     args.output_prefix.parent.mkdir(parents=True, exist_ok=True)

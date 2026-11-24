@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn every visible coal pixel into animated lava while preserving its silhouette."""
+"""Turn every visible source pixel into animated lava while preserving its silhouette."""
 
 from __future__ import annotations
 
@@ -70,7 +70,7 @@ def generate_frames(source: Image.Image, frame_count: int, seed: int) -> list[Im
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", required=True, type=Path, help="Square coal source PNG")
+    parser.add_argument("--input", required=True, type=Path, help="Square source PNG")
     parser.add_argument("--output", required=True, type=Path, help="Destination animation-strip PNG")
     parser.add_argument("--frames", type=positive_int, default=8, help="Frames in the loop (default: 8)")
     parser.add_argument("--frame-time", type=positive_int, default=2, help="Game ticks per frame (default: 2)")
@@ -103,7 +103,7 @@ def main() -> None:
     }
     metadata_path = Path(f"{args.output}.mcmeta")
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
-    print(f"Generated {args.frames} all-lava coal frames at {base.width}×{base.height}: {args.output}")
+    print(f"Generated {args.frames} all-lava frames at {base.width}×{base.height}: {args.output}")
     print(f"Wrote animation metadata: {metadata_path}")
 
 

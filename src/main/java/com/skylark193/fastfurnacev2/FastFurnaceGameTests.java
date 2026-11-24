@@ -74,6 +74,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fuel_pause");
     private static final Identifier ACCELERATOR_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "accelerator");
+    private static final Identifier ALLOYER_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extremely_fast_alloyer");
     private static final Identifier EXTREME_COAL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extreme_coal");
     private static final Identifier FAST_ORE_GENERATION_TEST_ID =
@@ -110,6 +112,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FUEL_PAUSE_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> ACCELERATOR_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, ACCELERATOR_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> ALLOYER_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, ALLOYER_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> EXTREME_COAL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, EXTREME_COAL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FAST_ORE_GENERATION_FUNCTION =
@@ -131,6 +135,7 @@ final class FastFurnaceGameTests {
             Map.entry(FAST_CRUSHER_FUNCTION, FastFurnaceGameTests::fastCrusherCrushesAndDoublesOutput),
             Map.entry(FUEL_PAUSE_FUNCTION, FastFurnaceGameTests::pausesFuelWithoutProcessableWork),
             Map.entry(ACCELERATOR_FUNCTION, FastFurnaceGameTests::acceleratorConvertsCoalWithLavaAndBoosts),
+            Map.entry(ALLOYER_FUNCTION, FastFurnaceGameTests::extremelyFastAlloyerUsesOnlyShapelessAlloyingRecipes),
             Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
             Map.entry(FAST_ORE_GENERATION_FUNCTION, FastFurnaceGameTests::fastOresReplaceRegularOresOnce),
             Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
@@ -160,6 +165,7 @@ final class FastFurnaceGameTests {
         event.registerTest(FAST_CRUSHER_TEST_ID, new DirectGameTestInstance(FAST_CRUSHER_FUNCTION, testData));
         event.registerTest(FUEL_PAUSE_TEST_ID, new DirectGameTestInstance(FUEL_PAUSE_FUNCTION, testData));
         event.registerTest(ACCELERATOR_TEST_ID, new DirectGameTestInstance(ACCELERATOR_FUNCTION, testData));
+        event.registerTest(ALLOYER_TEST_ID, new DirectGameTestInstance(ALLOYER_FUNCTION, testData));
         event.registerTest(EXTREME_COAL_TEST_ID, new DirectGameTestInstance(EXTREME_COAL_FUNCTION, testData));
         event.registerTest(FAST_ORE_GENERATION_TEST_ID,
                 new DirectGameTestInstance(FAST_ORE_GENERATION_FUNCTION, testData));
@@ -1315,6 +1321,151 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void extremelyFastAlloyerUsesOnlyShapelessAlloyingRecipes(GameTestHelper helper) {
+        if (ExtremelyFastAlloyerRecipes.recipes().size() != 1
+                || ExtremelyFastAlloyerRecipes.recipes().get(0).processingTicks() != 200) {
+            throw helper.assertionException("Expected only the built-in 200-tick Extremely Fast Ingot recipe");
+        }
+        ExtremelyFastAlloyerBlockEntity alloyer = placeAlloyer(
+                helper, BlockPos.ZERO,
+                new ItemStack(FastFurnaceV2.FAST_DIAMOND.get()),
+                new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()));
+        ExtremelyFastAlloyerMenu menu = createAlloyerMenu(helper, alloyer);
+        if (!alloyer.getDisplayName().getString().equals("Extremely Fast Alloyer")
+                || menu.getRecipeTicks() != 200
+                || !menu.getSlot(0).mayPlace(new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()))
+                || menu.getSlot(ExtremelyFastAlloyerMenu.RESULT_SLOT).mayPlace(
+                        new ItemStack(FastFurnaceV2.EXTREMELY_FAST_INGOT.get()))
+                || !alloyer.canPlaceItem(0, new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()))
+                || alloyer.canPlaceItem(0, new ItemStack(Items.RAW_IRON))
+                || alloyer.getSlotsForFace(Direction.UP).length != 3
+                || alloyer.getSlotsForFace(Direction.NORTH).length != 3
+                || alloyer.getSlotsForFace(Direction.DOWN)[0] != ExtremelyFastAlloyerMenu.RESULT_SLOT) {
+            throw helper.assertionException("Alloyer menu, identity, ingredient, or automation restrictions are incorrect");
+        }
+        tickAlloyer(helper, alloyer, BlockPos.ZERO, 99);
+        if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Alloyer completed before 200 ticks");
+        }
+        tickAlloyer(helper, alloyer, BlockPos.ZERO);
+        if (helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 5) {
+            throw helper.assertionException("Alloyer bolt did not show half progress at tick 100");
+        }
+        tickAlloyer(helper, alloyer, BlockPos.ZERO, 99);
+        if (menu.getWorkProgress() != 199 || !menu.isProcessing()
+                || helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 10) {
+            throw helper.assertionException("Alloyer did not synchronize tick-199 progress and its full bolt");
+        }
+        tickAlloyer(helper, alloyer, BlockPos.ZERO);
+        if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).is(FastFurnaceV2.EXTREMELY_FAST_INGOT.get())
+                || alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1
+                || !alloyer.getItem(0).isEmpty() || !alloyer.getItem(1).isEmpty() || !alloyer.getItem(2).isEmpty()
+                || menu.getWorkProgress() != 0 || menu.getRecipeTicks() != 0
+                || helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 0) {
+            throw helper.assertionException("Alloyer did not consume one of each shapeless ingredient on tick 200");
+        }
+
+        BlockPos duplicatePos = new BlockPos(4, 0, 0);
+        ExtremelyFastAlloyerBlockEntity duplicate = placeAlloyer(
+                helper, duplicatePos,
+                new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()));
+        tickAlloyer(helper, duplicate, duplicatePos, 200);
+        if (!duplicate.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Alloyer accepted duplicate ingredients");
+        }
+
+        BlockPos foreignPos = new BlockPos(8, 0, 0);
+        ExtremelyFastAlloyerBlockEntity foreign = placeAlloyer(
+                helper, foreignPos, new ItemStack(Items.COBBLESTONE), new ItemStack(Items.RAW_IRON),
+                new ItemStack(Items.COAL));
+        ExtremelyFastAlloyerMenu foreignMenu = createAlloyerMenu(helper, foreign);
+        tickAlloyer(helper, foreign, foreignPos, 200);
+        if (foreignMenu.getWorkProgress() != 0
+                || !foreign.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Alloyer accepted furnace, crusher, or Accelerator inputs");
+        }
+
+        BlockPos blockedPos = new BlockPos(12, 0, 0);
+        ExtremelyFastAlloyerBlockEntity blocked = placeAlloyer(helper, blockedPos);
+        ExtremelyFastAlloyerMenu blockedMenu = createAlloyerMenu(helper, blocked);
+        tickAlloyer(helper, blocked, blockedPos, 25);
+        blocked.setItem(ExtremelyFastAlloyerMenu.RESULT_SLOT, new ItemStack(Items.DIRT));
+        tickAlloyer(helper, blocked, blockedPos, 20);
+        if (blockedMenu.getWorkProgress() != 25 || blockedMenu.isProcessing()) {
+            throw helper.assertionException("Blocked Alloyer output did not pause and preserve progress");
+        }
+        blocked.setItem(ExtremelyFastAlloyerMenu.RESULT_SLOT, ItemStack.EMPTY);
+        tickAlloyer(helper, blocked, blockedPos, 175);
+        if (blocked.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Alloyer did not resume its saved operation after output space returned");
+        }
+
+        BlockPos changedPos = new BlockPos(16, 0, 0);
+        ExtremelyFastAlloyerBlockEntity changed = placeAlloyer(helper, changedPos);
+        ExtremelyFastAlloyerMenu changedMenu = createAlloyerMenu(helper, changed);
+        tickAlloyer(helper, changed, changedPos, 25);
+        changed.setItem(1, new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()));
+        if (changedMenu.getWorkProgress() != 0 || changedMenu.getRecipeTicks() != 0) {
+            throw helper.assertionException("Changing Alloyer input did not reset invalid progress");
+        }
+
+        BlockPos repeatPos = new BlockPos(20, 0, 0);
+        ExtremelyFastAlloyerBlockEntity repeated = placeAlloyer(
+                helper, repeatPos,
+                new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get(), 2),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get(), 2),
+                new ItemStack(FastFurnaceV2.FAST_DIAMOND.get(), 2));
+        tickAlloyer(helper, repeated, repeatPos, 200);
+        if (repeated.getItem(0).getCount() != 1 || repeated.getItem(1).getCount() != 1
+                || repeated.getItem(2).getCount() != 1
+                || repeated.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Alloyer did not retain stacked ingredients for a second operation");
+        }
+        tickAlloyer(helper, repeated, repeatPos, 200);
+        if (repeated.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 2) {
+            throw helper.assertionException("Alloyer did not continuously process stacked ingredients");
+        }
+
+        BlockPos abortedPos = new BlockPos(24, 0, 0);
+        ExtremelyFastAlloyerBlockEntity aborted = placeAlloyer(helper, abortedPos);
+        ExtremelyFastAlloyerMenu abortedMenu = createAlloyerMenu(helper, aborted);
+        tickAlloyer(helper, aborted, abortedPos, 25);
+        ResourceHandler<ItemResource> abortedItems = VanillaContainerWrapper.of(aborted);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = abortedItems.extract(
+                    0, ItemResource.of(FastFurnaceV2.FAST_IRON_INGOT.get()), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract Alloyer input for the abort test");
+            }
+        }
+        if (!aborted.getItem(0).is(FastFurnaceV2.FAST_IRON_INGOT.get())
+                || abortedMenu.getWorkProgress() != 25 || abortedMenu.getRecipeTicks() != 200) {
+            throw helper.assertionException("An aborted Alloyer extraction erased progress or failed to restore its input");
+        }
+
+        BlockPos committedPos = new BlockPos(28, 0, 0);
+        ExtremelyFastAlloyerBlockEntity committed = placeAlloyer(helper, committedPos);
+        ExtremelyFastAlloyerMenu committedMenu = createAlloyerMenu(helper, committed);
+        tickAlloyer(helper, committed, committedPos, 25);
+        ResourceHandler<ItemResource> committedItems = VanillaContainerWrapper.of(committed);
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = committedItems.extract(
+                    0, ItemResource.of(FastFurnaceV2.FAST_IRON_INGOT.get()), 1, transaction);
+            if (extracted != 1) {
+                throw helper.assertionException("Could not extract Alloyer input for the commit test");
+            }
+            transaction.commit();
+        }
+        if (!committed.getItem(0).isEmpty()
+                || committedMenu.getWorkProgress() != 0 || committedMenu.getRecipeTicks() != 0) {
+            throw helper.assertionException("A committed Alloyer extraction did not reset its completed input state");
+        }
+        helper.succeed();
+    }
+
     private static void acceleratorBoostCapacities(GameTestHelper helper) {
         BlockPos fastCoalPos = new BlockPos(0, 8, 0);
         AcceleratorBlockEntity fastCoal = placeAccelerator(
@@ -1734,8 +1885,8 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
             }
         }
-        if (registeredBlocks != 23) {
-            throw helper.assertionException("Expected to audit all 23 registered mod blocks, found " + registeredBlocks);
+        if (registeredBlocks != 24) {
+            throw helper.assertionException("Expected to audit all 24 registered mod blocks, found " + registeredBlocks);
         }
         helper.succeed();
     }
@@ -1753,6 +1904,45 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("Nonstandard Fortune levels did not cap the bonus-drop chance at 100%");
         }
         helper.succeed();
+    }
+
+    private static ExtremelyFastAlloyerBlockEntity placeAlloyer(GameTestHelper helper, BlockPos relativePos) {
+        return placeAlloyer(
+                helper, relativePos,
+                new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()),
+                new ItemStack(FastFurnaceV2.FAST_DIAMOND.get()));
+    }
+
+    private static ExtremelyFastAlloyerBlockEntity placeAlloyer(
+            GameTestHelper helper, BlockPos relativePos, ItemStack first, ItemStack second, ItemStack third) {
+        helper.setBlock(relativePos, FastFurnaceV2.EXTREMELY_FAST_ALLOYER.get());
+        ExtremelyFastAlloyerBlockEntity alloyer =
+                helper.getBlockEntity(relativePos, ExtremelyFastAlloyerBlockEntity.class);
+        alloyer.setItem(0, first);
+        alloyer.setItem(1, second);
+        alloyer.setItem(2, third);
+        return alloyer;
+    }
+
+    private static ExtremelyFastAlloyerMenu createAlloyerMenu(
+            GameTestHelper helper, ExtremelyFastAlloyerBlockEntity alloyer) {
+        return (ExtremelyFastAlloyerMenu) alloyer.createMenu(
+                0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
+    }
+
+    private static void tickAlloyer(
+            GameTestHelper helper, ExtremelyFastAlloyerBlockEntity alloyer, BlockPos relativePos) {
+        BlockPos pos = helper.absolutePos(relativePos);
+        ExtremelyFastAlloyerBlockEntity.serverTick(
+                helper.getLevel(), pos, helper.getLevel().getBlockState(pos), alloyer);
+    }
+
+    private static void tickAlloyer(
+            GameTestHelper helper, ExtremelyFastAlloyerBlockEntity alloyer, BlockPos relativePos, int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            tickAlloyer(helper, alloyer, relativePos);
+        }
     }
 
     private static AcceleratorBlockEntity placeAccelerator(

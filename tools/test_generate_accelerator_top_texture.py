@@ -7,6 +7,7 @@ import unittest
 from PIL import Image
 
 from generate_accelerator_top_texture import (
+    ALL_LAVA_GENERATOR,
     bolt_geometry,
     filled_bolt_points,
     generate_top_textures,
@@ -57,6 +58,27 @@ class AcceleratorTopTextureGeneratorTests(unittest.TestCase):
             for frame in frames[1:]:
                 for point in interior | outline:
                     self.assertEqual(frame.getpixel(point), first.getpixel(point))
+
+    def test_all_lava_mode_animates_every_background_pixel(self) -> None:
+        stages = generate_top_textures(self.source, 8, 2, 22, 5, 440, all_lava=True)
+        repeated = generate_top_textures(self.source, 8, 2, 22, 5, 440, all_lava=True)
+        interior, outline = bolt_geometry()
+        lava_colors = {pixel[:3] for pixel in ALL_LAVA_GENERATOR.LAVA_PALETTE}
+
+        self.assertEqual(
+            [[frame.tobytes() for frame in stage] for stage in stages],
+            [[frame.tobytes() for frame in stage] for stage in repeated],
+        )
+        self.assertEqual(len({frame.tobytes() for frame in stages[0]}), 8)
+        for frames in stages:
+            first = frames[0]
+            for frame in frames:
+                for point in interior | outline:
+                    self.assertEqual(frame.getpixel(point), first.getpixel(point))
+                for y in range(frame.height):
+                    for x in range(frame.width):
+                        if (x, y) not in interior | outline:
+                            self.assertIn(frame.getpixel((x, y))[:3], lava_colors)
 
     def test_source_is_preserved_and_size_is_checked(self) -> None:
         original = self.source.tobytes()

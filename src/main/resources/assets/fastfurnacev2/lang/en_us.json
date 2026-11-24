@@ -15,6 +15,7 @@
   "block.fastfurnacev2.fast_gold_block": "Block of Fast Gold",
   "block.fastfurnacev2.fast_diamond_block": "Block of Fast Diamond",
   "block.fastfurnacev2.accelerator": "Accelerator",
+  "block.fastfurnacev2.extremely_fast_alloyer": "Extremely Fast Alloyer",
   "block.fastfurnacev2.fast_furnace": "Fast Furnace",
   "block.fastfurnacev2.iron_fast_furnace": "Iron Fast Furnace",
   "block.fastfurnacev2.gold_fast_furnace": "Gold Fast Furnace",
@@ -31,6 +32,7 @@
   "item.fastfurnacev2.fast_gold_ingot": "Fast Gold Ingot",
   "item.fastfurnacev2.raw_fast_diamond": "Raw Fast Diamond",
   "item.fastfurnacev2.fast_diamond": "Fast Diamond",
+  "item.fastfurnacev2.extremely_fast_ingot": "Extremely Fast Ingot",
   "item.fastfurnacev2.fast_iron_pickaxe": "Fast Iron Pickaxe",
   "item.fastfurnacev2.fast_iron_shovel": "Fast Iron Shovel",
   "item.fastfurnacev2.fast_iron_axe": "Fast Iron Axe",
@@ -66,6 +68,11 @@
   "gui.fastfurnacev2.accelerator.fast_coal_block_capacity": "Fast Coal Block: 10 items / 1 block",
   "gui.fastfurnacev2.accelerator.extreme_coal_capacity": "Extreme Coal: 18 items / 2 blocks",
   "gui.fastfurnacev2.accelerator.extreme_coal_block_capacity": "Extreme Coal Block: 20 items / 2 blocks",
+  "gui.fastfurnacev2.alloyer.info": "Extremely Fast Alloyer Info",
+  "gui.fastfurnacev2.alloyer.recipe_time": "Recipe: 10 seconds",
+  "gui.fastfurnacev2.alloyer.own_recipes": "Uses only Alloyer recipes",
+  "jei.fastfurnacev2.alloyer": "Extremely Fast Alloying",
+  "jei.fastfurnacev2.alloyer_duration": "%s ticks at 100%% speed",
   "jei.fastfurnacev2.accelerator": "Accelerator Conversions",
   "jei.fastfurnacev2.accelerator_fuel": "Accelerator Boosts",
   "jei.fastfurnacev2.accelerator_duration": "Normal: %s ticks",
@@ -107,5 +114,7 @@
   "jei.fastfurnacev2.fast_gold_sword": "A golden sword with 30% faster attacks. Repair with Fast Gold Ingots.",
   "jei.fastfurnacev2.fast_diamond_tool": "A diamond tool with 20% faster block breaking and a 5% chance to avoid durability damage. Repair with Fast Diamonds.",
   "jei.fastfurnacev2.fast_diamond_sword": "A diamond sword with 20% faster attacks, 20% more attack damage, and a 5% chance to avoid durability damage. Repair with Fast Diamonds.",
-  "jei.fastfurnacev2.accelerator_info": "Converts coal, iron, gold, diamond, and their blocks into Fast variants. Requires lava on all four horizontal sides. Fast Coal and its block optionally triple processing speed; Extreme Coal and its block provide 5× speed."
+  "jei.fastfurnacev2.accelerator_info": "Converts coal, iron, gold, diamond, and their blocks into Fast variants. Requires lava on all four horizontal sides. Fast Coal and its block optionally triple processing speed; Extreme Coal and its block provide 5× speed.",
+  "jei.fastfurnacev2.alloyer_info": "Combines three shapeless ingredients in 200 ticks at 100% furnace speed. Requires no fuel or surrounding lava and accepts only dedicated Alloyer recipes. Its eleven-stage top bolt shows progress.",
+  "jei.fastfurnacev2.extremely_fast_ingot_info": "Alloy one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in an Extremely Fast Alloyer."
 }

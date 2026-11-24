@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "front": "fastfurnacev2:block/extremely_fast_alloyer",
+    "side": "fastfurnacev2:block/extremely_fast_alloyer",
+    "top": "fastfurnacev2:block/extremely_fast_alloyer_top_9",
+    "bottom": "fastfurnacev2:block/extremely_fast_alloyer"
+  }
+}

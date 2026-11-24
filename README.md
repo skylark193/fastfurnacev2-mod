@@ -1,10 +1,10 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal, Fast Iron/Gold/Diamond materials and their regular and deepslate ores, reversible storage blocks, enhanced Fast tools and swords, a lava-powered Accelerator, four tiers of accelerated furnaces, four tiers of ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal, Fast Iron/Gold/Diamond materials and their regular and deepslate ores, reversible storage blocks, enhanced Fast tools and swords, a lava-powered Accelerator, an Extremely Fast Alloyer and Extremely Fast Ingot, four tiers of accelerated furnaces, four tiers of ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
 
 ## Documentation
 
-Start at the [documentation home](docs/README.md) for the complete player, modpack, and developer reference. The suite includes dedicated pages for [blocks](docs/blocks.md), [items](docs/items.md), [recipes and fuels](docs/recipes.md), [Fast Furnaces](docs/furnaces.md), [Fast Crushers](docs/crushers.md), the [Accelerator](docs/accelerator.md), [world generation and dynamic resources](docs/world-generation.md), and [automation, GUI, and JEI](docs/automation-and-jei.md). Mod developers can go directly to the [API guide](docs/api.md).
+Start at the [documentation home](docs/README.md) for the complete player, modpack, and developer reference. The suite includes dedicated pages for [blocks](docs/blocks.md), [items](docs/items.md), [recipes and fuels](docs/recipes.md), [Fast Furnaces](docs/furnaces.md), [Fast Crushers](docs/crushers.md), the [Accelerator](docs/accelerator.md), the [Extremely Fast Alloyer](docs/alloyer.md), [world generation and dynamic resources](docs/world-generation.md), and [automation, GUI, and JEI](docs/automation-and-jei.md). Mod developers can go directly to the [API guide](docs/api.md).
 
 ## Features
 
@@ -74,6 +74,15 @@ Start at the [documentation home](docs/README.md) for the complete player, modpa
 - Uses animated smooth stone with lava veins. Its top face has a lightning bolt that fills from bottom to top through eleven block-state stages as recipe progress advances; the front and other faces retain the smooth-stone body texture.
 - Requires a pickaxe, drops itself, preserves custom names, supports directional placement and comparator output, and appears in Functional Blocks and the mod's creative tab. Its furnace-style GUI has no ordinary smelting recipe book and includes an information fly-out for lava, boost, and recipe timing.
 
+### Extremely Fast Alloyer and Extremely Fast Ingot
+
+- Craft the Alloyer by surrounding one Accelerator with eight Blocks of Extreme Coal. Its Accelerator-style body is made entirely from animated lava, and its top retains the eleven-stage lightning-bolt progress animation.
+- The Alloyer has three input slots and one output slot. It uses only dedicated Alloyer recipes, never ordinary furnace, crusher, Accelerator, or crafting recipes.
+- Combine one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any input-slot order to produce one Extremely Fast Ingot in exactly 200 ticks (10 seconds), matching 100% ordinary furnace speed.
+- The machine needs no fuel or surrounding lava. Empty, incomplete, duplicated, unsupported, or changed inputs reset progress; a blocked output pauses without consuming ingredients or losing progress. Ingredients are consumed only when the result fits.
+- The Extremely Fast Ingot preserves an ingot silhouette with every visible pixel colored as animated lava. It appears in Ingredients and the mod's creative tab; the Alloyer appears in Functional Blocks and the mod's creative tab.
+- Top and horizontal-side automation inserts accepted ingredients, while the bottom extracts results. The GUI and dedicated JEI category show all three inputs, output, and exact processing time. See the [Extremely Fast Alloyer guide](docs/alloyer.md).
+
 ### Crushed Ores
 
 - Discovers vanilla and modded raw ore items during registration, including conventional `raw_...`, `..._raw`, and `..._raw_ore` item IDs and items listed in packaged `c:raw_materials` tags or their subtags.
@@ -138,12 +147,13 @@ With a compatible JEI release installed:
 
 - Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Every crusher's progress arrow opens the dedicated crushing category, and each is a catalyst for crushing and its own tier's fuel category, not smelting.
 - The Accelerator's progress arrow opens its built-in and API-registered conversions, while its fire icon opens accepted boosts and explains their processing speed, exact boosted work, and fully boosted conversion capacities. The Accelerator is a catalyst for both categories.
+- The Extremely Fast Alloyer's progress arrow opens its dedicated alloying category, which shows all three shapeless inputs, the output, and exact processing time. The Alloyer is the category catalyst and supports three-input recipe transfer.
 - Looking up Fast Coal, a Fast material, or its storage block shows its Accelerator conversion recipe alongside its other crafting sources. The conversion category displays normal and registered boost-speed durations and the four-side lava requirement.
 - The crushing category contains the discovered raw-ore recipes and API-registered custom recipes, including input counts, output counts, and the tier-dependent 10–25% chance to double the complete result. Looking up a crushed item shows how it is made, while looking up a raw ore shows its crushing use.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including built-in and API-registered fuel speed and duration bonuses.
-- Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, Accelerator conversions, and fuel or boost insertion for every machine. Smelting transfers and click areas remain disabled for crushers.
-- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, Fast ores explain new and retroactive generation and drops, Fast materials explain their processing chains and storage blocks, special fuels explain their bonuses, and every Fast tool and sword includes a simple description of its advantages and repair material.
-- JEI reserves space around the furnace and Accelerator information fly-outs.
+- Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, Accelerator conversions, three-input Alloyer recipes, and fuel or boost insertion for the machines that use them. Smelting transfers and click areas remain disabled for crushers.
+- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, Fast ores explain new and retroactive generation and drops, Fast materials explain their processing chains and storage blocks, special fuels explain their bonuses, the Alloyer and Extremely Fast Ingot explain alloying, and every Fast tool and sword includes a simple description of its advantages and repair material.
+- JEI reserves space around the furnace, Accelerator, and Alloyer information fly-outs.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.
 

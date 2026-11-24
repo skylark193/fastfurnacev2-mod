@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **31 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
+This page collects the **32 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md). The Alloyer currently uses its own built-in recipe registry rather than the public extension API.
 
 ## Crafting conventions
 
@@ -161,6 +161,31 @@ R  R  R
 
 Output: **1 × Accelerator**
 
+## Extremely Fast Alloyer crafting
+
+Surround one Accelerator with eight Blocks of Extreme Coal:
+
+```text
+E  E  E
+E  A  E
+E  E  E
+```
+
+`E` = Block of Extreme Coal; `A` = Accelerator
+
+Output: **1 × Extremely Fast Alloyer**
+
+## Extremely Fast Alloying
+
+The Alloyer has three input slots and one output slot. Its built-in recipe is shapeless across those inputs:
+
+```text
+1 × Fast Iron Ingot + 1 × Fast Gold Ingot + 1 × Fast Diamond
+    → 1 × Extremely Fast Ingot
+```
+
+The three ingredients can occupy the input slots in any order, but every ingredient must be present in a distinct slot. Processing takes exactly **200 ticks (10 seconds)** at 100% ordinary furnace speed. The Alloyer uses no fuel or surrounding lava and does not accept ordinary smelting, crushing, Accelerator, or crafting recipes. A blocked result pauses without consuming input or losing progress. See [Extremely Fast Alloyer](alloyer.md) for complete behavior.
+
 ## Accelerator conversions
 
 The Accelerator does not use ordinary smelting JSON for these operations:
@@ -273,5 +298,6 @@ The Accelerator also operates without boost at one work unit per tick. See [Acce
 - Regular and Deepslate Extreme Coal Ore.
 - Regular and deepslate Fast Iron Ore, Fast Gold Ore, and Fast Diamond Ore.
 - Raw Fast Iron, Raw Fast Gold, and Raw Fast Diamond.
+- Extremely Fast Ingot, which instead has the dedicated machine recipe described in [Extremely Fast Alloying](#extremely-fast-alloying).
 
 Their acquisition is described in [Blocks](blocks.md), [Items](items.md), and [World generation](world-generation.md). The presence of creative-tab content, upgrades, or machine conversions does not imply a survival crafting recipe. Other mods and modpacks may supply their own acquisition methods.

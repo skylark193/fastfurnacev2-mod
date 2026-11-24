@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": "fastfurnacev2:extreme_coal_block",
+    "A": "fastfurnacev2:accelerator"
+  },
+  "pattern": [
+    "EEE",
+    "EAE",
+    "EEE"
+  ],
+  "result": {
+    "id": "fastfurnacev2:extremely_fast_alloyer"
+  }
+}

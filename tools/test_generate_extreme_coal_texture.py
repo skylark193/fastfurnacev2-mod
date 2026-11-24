@@ -33,6 +33,32 @@ class ExtremeCoalTextureGeneratorTests(unittest.TestCase):
                 if source_pixel[3] > 0:
                     self.assertIn(result_pixel[:3], lava_colors)
 
+    def test_alloyer_body_and_ingot_are_animated_all_lava(self) -> None:
+        lava_colors = {pixel[:3] for pixel in LAVA_PALETTE}
+        for filename, seed in (("smooth_stone.png", 440), ("iron_ingot.png", 441)):
+            with self.subTest(source=filename):
+                source_path = Path(__file__).parent / "texture_sources" / filename
+                with Image.open(source_path) as image:
+                    source = image.convert("RGBA")
+                original = source.tobytes()
+                frames = generate_frames(source, 8, seed)
+                repeated = generate_frames(source, 8, seed)
+                colors_over_time = [set() for _ in range(source.width * source.height)]
+
+                self.assertEqual(source.tobytes(), original)
+                self.assertEqual([frame.tobytes() for frame in frames], [frame.tobytes() for frame in repeated])
+                self.assertEqual(len({frame.tobytes() for frame in frames}), 8)
+                for frame in frames:
+                    for index, (source_pixel, result_pixel) in enumerate(zip(
+                            source.get_flattened_data(), frame.get_flattened_data())):
+                        self.assertEqual(source_pixel[3], result_pixel[3])
+                        if source_pixel[3] > 0:
+                            self.assertIn(result_pixel[:3], lava_colors)
+                            colors_over_time[index].add(result_pixel[:3])
+                for index, source_pixel in enumerate(source.get_flattened_data()):
+                    if source_pixel[3] > 0:
+                        self.assertGreater(len(colors_over_time[index]), 1)
+
     def test_fully_transparent_source_is_unchanged(self) -> None:
         transparent = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
         for frame in generate_frames(transparent, 8, 420):
