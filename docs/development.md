@@ -85,13 +85,16 @@ Keep `API_VERSION` and [the API guide](api.md) synchronized. Internal implementa
 3. Make focused changes. Remove obsolete code, imports, comments, and resources without changing behavior unintentionally.
 4. Add or extend regression tests for behavior changes, especially timing, synchronization, persistence, transactions, and random-roll boundaries.
 5. Update affected player or developer documentation in the same change. Keep one authoritative home for each topic and link to it rather than duplicating tables.
-6. Run required validation, review the complete diff, and commit only intended files.
-7. Report compilation, automated tests, runtime testing, and visual/manual validation separately, including anything not run.
+6. Run required validation, review the complete staged diff, and commit only intended files on the appropriate release branch.
+7. Push the release branch, merge it into `main`, and push `main` automatically. Return to the release branch for subsequent patches.
+8. Report compilation, automated tests, runtime testing, visual/manual validation, commit hashes, and push results separately, including anything not run.
 
-## Commit and safety rules
+## Branch, commit, and safety rules
 
-- Work on the maintainer's local branch literally named `main`; do not create or substitute another branch.
-- Commit all changes that pass validation when working on a maintainer-requested task, as required by the repository's maintainer workflow. Do not push unless requested or otherwise clearly authorized.
+- For every MAJOR or MINOR mod update, create `release/<major>.<minor>` from `main`, such as `release/2.0` or `release/1.6`. Keep all PATCH updates for that series on the same release branch rather than creating per-patch branches.
+- Use `main` to integrate validated release branches, not for ongoing development. Commit all changes that pass validation when working on a maintainer-requested task.
+- After each commit, automatically push the release branch, merge it into `main` with `--no-ff`, and push `main`. No additional push or merge confirmation is required. Return to the release branch afterward.
+- Never force-push or bypass merge conflicts. If a merge or push fails, stop, preserve local work, and report the exact failure.
 - Never commit while relevant validation is failing.
 - Do not edit generated files under `build/` or Gradle caches. Edit `src/main/templates/META-INF/neoforge.mods.toml` and `gradle.properties` for metadata; `generateModMetadata` creates the build output.
 - Do not automatically launch a Minecraft client or control device inputs.

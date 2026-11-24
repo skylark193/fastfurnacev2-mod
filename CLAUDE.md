@@ -6,7 +6,7 @@ Project instructions for Claude Code. Keep this file focused on durable workflow
 
 Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces and crushers, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
 
-- Current mod version: `1.5.1`; public API version: `1.1.0`.
+- Current mod version: `1.5.2`; public API version: `1.1.0`.
 - Mod ID and base package: `fastfurnacev2` and `com.skylark193.fastfurnacev2`.
 - Versions and metadata: `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`.
 - Player behavior and numeric tables: [`docs/README.md`](docs/README.md).
@@ -21,10 +21,11 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang
 3. Keep changes focused. Do not rewrite working systems merely for style; optimize only where the benefit is clear and regression checks cover the risk.
 4. Update affected documentation and tests in the same change. When documentation and implementation disagree, verify the implementation, correct the documentation, and mention the correction.
 5. Run required validation, review the complete staged diff, and run `git diff --cached --check`.
-6. Commit all changes that pass validation, as requested by the maintainer. Do not push unless requested or otherwise clearly authorized.
-7. Report what was validated and what was not, distinguishing compilation, automated tests, runtime testing, and visual/manual validation. Include the commit hash when committed.
+6. Commit validated changes on the appropriate release branch and push that branch automatically.
+7. Merge the release branch into `main` with `--no-ff`, push `main` automatically, and return to the release branch.
+8. Report what was validated and what was not, distinguishing compilation, automated tests, runtime testing, and visual/manual validation. Include commit hashes and push results.
 
-Work on the sole local branch literally named `main`; do not create or substitute another branch. If validation cannot run or fails, report the exact failure and leave the changes uncommitted.
+Create `release/<major>.<minor>` from `main` for every MAJOR or MINOR mod update. Keep PATCH updates on the same minor release branch; use `main` only to integrate validated release branches. Never force-push or bypass merge conflicts. If validation fails, leave changes uncommitted; if a merge or push fails, preserve local work and report the exact failure.
 
 ## Commands
 
