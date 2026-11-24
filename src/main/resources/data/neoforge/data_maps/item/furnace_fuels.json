@@ -8,6 +8,9 @@
     },
     "fastfurnacev2:fast_coal_block": {
       "burn_time": 16000
+    },
+    "fastfurnacev2:extreme_coal_block": {
+      "burn_time": 16000
     }
   }
 }

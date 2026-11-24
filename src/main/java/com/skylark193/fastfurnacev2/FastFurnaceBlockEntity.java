@@ -151,7 +151,8 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 && (this.activeFuel.id().equals(FastFurnaceApi.FAST_COAL_FUEL_ID)
                 || this.activeFuel.id().equals(FastFurnaceApi.FAST_COAL_BLOCK_FUEL_ID)));
         output.putBoolean("extreme_coal_burning", this.activeFuel != null
-                && this.activeFuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID));
+                && (this.activeFuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID)
+                || this.activeFuel.id().equals(FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID)));
         output.putBoolean("fast_crusher_double_output_pending", this.crusherDoubleOutputPending);
     }
 
@@ -364,7 +365,8 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                 ? this.tier.getSpeedPercent()
                 : fuel.getSpeedPercent(this.tier);
         this.synchronizedFuelType = fuel == null ? 0
-                : fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID) ? 2
+                : fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID)
+                        || fuel.id().equals(FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID) ? 2
                 : fuel.id().equals(FastFurnaceApi.FAST_COAL_FUEL_ID)
                         || fuel.id().equals(FastFurnaceApi.FAST_COAL_BLOCK_FUEL_ID) ? 1 : 3;
     }

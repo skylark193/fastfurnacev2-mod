@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "M": "fastfurnacev2:fast_diamond",
+    "#": "minecraft:stick"
+  },
+  "pattern": [
+    "M",
+    "#",
+    "#"
+  ],
+  "result": {
+    "id": "fastfurnacev2:fast_diamond_shovel"
+  }
+}

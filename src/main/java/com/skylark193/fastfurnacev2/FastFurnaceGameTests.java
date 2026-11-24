@@ -28,6 +28,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -37,6 +41,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
@@ -75,6 +80,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_ore_generation");
     private static final Identifier MINING_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "mining_tags");
+    private static final Identifier FAST_TOOL_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_tools");
     private static final Identifier API_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "api_extensions");
     private static final Identifier API_FUEL_ID =
@@ -109,6 +116,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_ORE_GENERATION_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> MINING_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, MINING_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> FAST_TOOL_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, FAST_TOOL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, API_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
@@ -125,6 +134,7 @@ final class FastFurnaceGameTests {
             Map.entry(EXTREME_COAL_FUNCTION, FastFurnaceGameTests::extremeCoalDoublesFastCoalBonuses),
             Map.entry(FAST_ORE_GENERATION_FUNCTION, FastFurnaceGameTests::fastOresReplaceRegularOresOnce),
             Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
+            Map.entry(FAST_TOOL_FUNCTION, FastFurnaceGameTests::fastToolsApplyVanillaBonuses),
             Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
     private FastFurnaceGameTests() {
@@ -154,6 +164,7 @@ final class FastFurnaceGameTests {
         event.registerTest(FAST_ORE_GENERATION_TEST_ID,
                 new DirectGameTestInstance(FAST_ORE_GENERATION_FUNCTION, testData));
         event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
+        event.registerTest(FAST_TOOL_TEST_ID, new DirectGameTestInstance(FAST_TOOL_FUNCTION, testData));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
             event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
         }
@@ -220,6 +231,7 @@ final class FastFurnaceGameTests {
         if (crushedIron == null) {
             throw helper.assertionException("Raw iron did not have a crushed variant");
         }
+        assertBuiltInOreCrusherRecipes(helper);
 
         FastFurnaceBlockEntity crusher = placeCrusher(helper, BlockPos.ZERO);
         FastFurnaceMenu menu = createMenu(helper, crusher);
@@ -859,7 +871,61 @@ final class FastFurnaceGameTests {
             assertBurnState(helper, doubledMenu, expectedBurnTime * 2, expectedBurnTime * 2, true, true,
                     tier + " did not independently double Extreme Coal duration");
         }
+        assertExtremeCoalBlockFuel(helper);
         helper.succeed();
+    }
+
+    private static void assertExtremeCoalBlockFuel(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ItemStack extremeCoalBlock = new ItemStack(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get());
+        if (extremeCoalBlock.getBurnTime(RecipeType.SMELTING, level.fuelValues())
+                != FastFurnaceBlockEntity.VANILLA_COAL_BLOCK_BURN_TIME) {
+            throw helper.assertionException("Extreme Coal Block did not retain a coal block's ordinary 16000-tick fuel value");
+        }
+        FastFuel definition = FastFurnaceApi.findFuel(FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID)
+                .orElseThrow(() -> helper.assertionException("Extreme Coal Block was not registered through the fuel API"));
+        if (!FastFurnaceV2.isExtremeCoalFuel(extremeCoalBlock)
+                || definition.speedBonusPercent() != FastFurnaceTier.EXTREME_COAL_SPEED_BONUS_PERCENT
+                || definition.acceleratorWork() != AcceleratorBlockEntity.EXTREME_COAL_BLOCK_BOOST_WORK
+                || definition.acceleratorWorkPerTick() != AcceleratorBlockEntity.EXTREME_COAL_BOOSTED_WORK_PER_TICK
+                || !AcceleratorBlockEntity.isAcceleratorFuel(extremeCoalBlock)) {
+            throw helper.assertionException("Extreme Coal Block has incorrect Extreme Coal or Accelerator bonuses");
+        }
+
+        int[] expectedCookTimes = {80, 66, 57, 50};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int tierIndex = tier.ordinal();
+            int expectedBurnTime = tier.scaleExtremeCoalBurnTime(FastFurnaceBlockEntity.VANILLA_COAL_BLOCK_BURN_TIME);
+            BlockPos relativePos = new BlockPos(tierIndex * 4, 8, 0);
+            FastFurnaceBlockEntity furnace = placeFurnace(helper, relativePos, extremeCoalBlock.copy(), tier);
+            FastFurnaceMenu menu = createMenu(helper, furnace);
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), false));
+            tickFurnace(helper, furnace, relativePos);
+            assertBurnState(helper, menu, expectedBurnTime, expectedBurnTime, true, true,
+                    tier + " did not synchronize Extreme Coal Block");
+            if (menu.getSpeedPercent() != tier.getSpeedPercent(false, true)) {
+                throw helper.assertionException(tier + " did not apply Extreme Coal Block's speed bonus");
+            }
+
+            int expectedCookTime = expectedCookTimes[tierIndex];
+            for (int tick = 2; tick <= expectedCookTime; tick++) {
+                tickFurnace(helper, furnace, relativePos);
+                if (tick < expectedCookTime && !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
+                    throw helper.assertionException(tier + " smelted before Extreme Coal Block tick " + expectedCookTime);
+                }
+            }
+            if (!furnace.getItem(FastFurnaceMenu.RESULT_SLOT).is(Items.STONE)) {
+                throw helper.assertionException(tier + " did not smelt with Extreme Coal Block");
+            }
+
+            BlockPos doubledPos = relativePos.above(4);
+            FastFurnaceBlockEntity doubledFurnace = placeFurnace(helper, doubledPos, extremeCoalBlock.copy(), tier);
+            FastFurnaceMenu doubledMenu = createMenu(helper, doubledFurnace);
+            level.getRandom().setSeed(findChanceRollSeed(tier.getDoubleBurnChance(), true));
+            tickFurnace(helper, doubledFurnace, doubledPos);
+            assertBurnState(helper, doubledMenu, expectedBurnTime * 2, expectedBurnTime * 2, true, true,
+                    tier + " did not independently double Extreme Coal Block duration");
+        }
     }
 
     private static void fastOresReplaceRegularOresOnce(GameTestHelper helper) {
@@ -868,18 +934,15 @@ final class FastFurnaceGameTests {
         var chunkPos = new net.minecraft.world.level.ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
         List<Map.Entry<Block, Block>> orePairs = List.of(
                 Map.entry(Blocks.COAL_ORE, FastFurnaceV2.EXTREME_COAL_ORE.get()),
+                Map.entry(Blocks.DEEPSLATE_COAL_ORE, FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE.get()),
                 Map.entry(Blocks.IRON_ORE, FastFurnaceV2.FAST_IRON_ORE.get()),
+                Map.entry(Blocks.DEEPSLATE_IRON_ORE, FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE.get()),
                 Map.entry(Blocks.GOLD_ORE, FastFurnaceV2.FAST_GOLD_ORE.get()),
-                Map.entry(Blocks.DIAMOND_ORE, FastFurnaceV2.FAST_DIAMOND_ORE.get()));
-        Block[] deepslateOres = {
-            Blocks.DEEPSLATE_COAL_ORE,
-            Blocks.DEEPSLATE_IRON_ORE,
-            Blocks.DEEPSLATE_GOLD_ORE,
-            Blocks.DEEPSLATE_DIAMOND_ORE
-        };
+                Map.entry(Blocks.DEEPSLATE_GOLD_ORE, FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE.get()),
+                Map.entry(Blocks.DIAMOND_ORE, FastFurnaceV2.FAST_DIAMOND_ORE.get()),
+                Map.entry(Blocks.DEEPSLATE_DIAMOND_ORE, FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE.get()));
         BlockPos[] replacedPositions = new BlockPos[orePairs.size()];
         BlockPos[] retainedPositions = new BlockPos[orePairs.size()];
-        BlockPos[] deepslatePositions = new BlockPos[orePairs.size()];
 
         for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
             Block source = orePairs.get(oreIndex).getKey();
@@ -904,24 +967,20 @@ final class FastFurnaceGameTests {
             }
             level.setBlock(replacedPositions[oreIndex], source.defaultBlockState(), 0);
             level.setBlock(retainedPositions[oreIndex], source.defaultBlockState(), 0);
-            deepslatePositions[oreIndex] = retainedPositions[oreIndex].above();
-            level.setBlock(deepslatePositions[oreIndex], deepslateOres[oreIndex].defaultBlockState(), 0);
         }
 
         net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         chunk.setData(FastFurnaceV2.EXTREME_COAL_CHUNK_PROCESSED, true);
         chunk.setData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED, false);
+        chunk.setData(FastFurnaceV2.DEEPSLATE_FAST_ORE_CHUNK_PROCESSED, false);
         int replacements = FastOreGeneration.processChunk(level.getSeed(), chunk);
-        if (replacements < orePairs.size() || !chunk.getData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED)) {
-            throw helper.assertionException("Fast ore generation did not process a legacy chunk and set its new marker");
+        if (replacements < orePairs.size()
+                || !chunk.getData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED)
+                || !chunk.getData(FastFurnaceV2.DEEPSLATE_FAST_ORE_CHUNK_PROCESSED)) {
+            throw helper.assertionException("Fast ore generation did not process regular and deepslate ores once");
         }
+        assertOreReplacementStates(helper, level, orePairs, replacedPositions, retainedPositions);
         for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
-            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getValue())
-                    || !level.getBlockState(retainedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())
-                    || !level.getBlockState(deepslatePositions[oreIndex]).is(deepslateOres[oreIndex])) {
-                throw helper.assertionException("Fast ore generation replaced the wrong blocks for "
-                        + orePairs.get(oreIndex).getKey());
-            }
             level.setBlock(replacedPositions[oreIndex], orePairs.get(oreIndex).getKey().defaultBlockState(), 0);
         }
 
@@ -929,12 +988,42 @@ final class FastFurnaceGameTests {
         if (repeatedReplacements != 0) {
             throw helper.assertionException("A processed chunk rolled for Fast ores more than once");
         }
-        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
-            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())) {
-                throw helper.assertionException("A processed chunk replaced newly placed regular ore");
+        for (Map.Entry<Block, Block> orePair : orePairs) {
+            int oreIndex = orePairs.indexOf(orePair);
+            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePair.getKey())) {
+                throw helper.assertionException("A processed chunk replaced newly placed ore");
+            }
+        }
+
+        // A 1.3.0 chunk has only the regular marker. Its deepslate pass must not reroll regular ores.
+        chunk.setData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED, true);
+        chunk.setData(FastFurnaceV2.DEEPSLATE_FAST_ORE_CHUNK_PROCESSED, false);
+        int deepslateReplacements = FastOreGeneration.processChunk(level.getSeed(), chunk);
+        if (deepslateReplacements < 4) {
+            throw helper.assertionException("A legacy chunk did not receive its deepslate-only Fast ore pass");
+        }
+        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex += 2) {
+            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())
+                    || !level.getBlockState(replacedPositions[oreIndex + 1]).is(orePairs.get(oreIndex + 1).getValue())) {
+                throw helper.assertionException("The deepslate migration pass rerolled a regular ore or missed deepslate");
             }
         }
         helper.succeed();
+    }
+
+    private static void assertOreReplacementStates(
+            GameTestHelper helper,
+            ServerLevel level,
+            List<Map.Entry<Block, Block>> orePairs,
+            BlockPos[] replacedPositions,
+            BlockPos[] retainedPositions) {
+        for (int oreIndex = 0; oreIndex < orePairs.size(); oreIndex++) {
+            if (!level.getBlockState(replacedPositions[oreIndex]).is(orePairs.get(oreIndex).getValue())
+                    || !level.getBlockState(retainedPositions[oreIndex]).is(orePairs.get(oreIndex).getKey())) {
+                throw helper.assertionException("Fast ore generation replaced the wrong blocks for "
+                        + orePairs.get(oreIndex).getKey());
+            }
+        }
     }
 
     private static void crushedOresMatchRawOreSmelting(GameTestHelper helper) {
@@ -1477,6 +1566,40 @@ final class FastFurnaceGameTests {
         }
     }
 
+    private static void assertBuiltInOreCrusherRecipes(GameTestHelper helper) {
+        assertOreCrusherRecipe(helper, FastFurnaceV2.EXTREME_COAL_ORE_ITEM.get(), FastFurnaceV2.EXTREME_COAL.get());
+        assertOreCrusherRecipe(helper,
+                FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE_ITEM.get(), FastFurnaceV2.EXTREME_COAL.get());
+        String[] materials = {"iron", "gold", "diamond"};
+        Item[] regularOres = {
+            FastFurnaceV2.FAST_IRON_ORE_ITEM.get(),
+            FastFurnaceV2.FAST_GOLD_ORE_ITEM.get(),
+            FastFurnaceV2.FAST_DIAMOND_ORE_ITEM.get()
+        };
+        Item[] deepslateOres = {
+            FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE_ITEM.get(),
+            FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE_ITEM.get(),
+            FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE_ITEM.get()
+        };
+        for (int index = 0; index < materials.length; index++) {
+            Item crushed = CrushedOres.forRawOre(Identifier.fromNamespaceAndPath(
+                    FastFurnaceV2.MODID, "raw_fast_" + materials[index]));
+            if (crushed == null) {
+                throw helper.assertionException("Missing crushed Fast material for " + materials[index]);
+            }
+            assertOreCrusherRecipe(helper, regularOres[index], crushed);
+            assertOreCrusherRecipe(helper, deepslateOres[index], crushed);
+        }
+    }
+
+    private static void assertOreCrusherRecipe(GameTestHelper helper, Item ore, Item expectedOutput) {
+        CrusherRecipe recipe = FastFurnaceApi.findCrusherRecipe(ore.getDefaultInstance())
+                .orElseThrow(() -> helper.assertionException("No ore-block crusher recipe for " + ore));
+        if (!recipe.output().is(expectedOutput) || recipe.output().getCount() != 3) {
+            throw helper.assertionException("Ore-block crusher recipe did not produce three matching outputs for " + ore);
+        }
+    }
+
     private static void assertAcceleratorConversion(
             GameTestHelper helper, Item input, Item expectedOutput, int expectedWork) {
         AcceleratorConversion conversion = FastFurnaceApi.findAcceleratorRecipe(input.getDefaultInstance())
@@ -1484,6 +1607,117 @@ final class FastFurnaceGameTests {
         ItemStack output = conversion.output();
         if (!output.is(expectedOutput) || output.getCount() != 1 || conversion.workUnits() != expectedWork) {
             throw helper.assertionException("Incorrect Accelerator conversion for " + input);
+        }
+    }
+
+    private static void fastToolsApplyVanillaBonuses(GameTestHelper helper) {
+        assertMiningTool(helper, Items.IRON_PICKAXE, FastFurnaceV2.FAST_IRON_PICKAXE.get(),
+                Blocks.STONE, 1.20F, ItemTags.PICKAXES, FastTools.FAST_IRON.repairItems(),
+                FastFurnaceV2.FAST_IRON_INGOT.get());
+        assertMiningTool(helper, Items.IRON_SHOVEL, FastFurnaceV2.FAST_IRON_SHOVEL.get(),
+                Blocks.DIRT, 1.20F, ItemTags.SHOVELS, FastTools.FAST_IRON.repairItems(),
+                FastFurnaceV2.FAST_IRON_INGOT.get());
+        assertMiningTool(helper, Items.IRON_AXE, FastFurnaceV2.FAST_IRON_AXE.get(),
+                Blocks.OAK_LOG, 1.20F, ItemTags.AXES, FastTools.FAST_IRON.repairItems(),
+                FastFurnaceV2.FAST_IRON_INGOT.get());
+        assertMiningTool(helper, Items.GOLDEN_PICKAXE, FastFurnaceV2.FAST_GOLD_PICKAXE.get(),
+                Blocks.STONE, 1.30F, ItemTags.PICKAXES, FastTools.FAST_GOLD.repairItems(),
+                FastFurnaceV2.FAST_GOLD_INGOT.get());
+        assertMiningTool(helper, Items.GOLDEN_SHOVEL, FastFurnaceV2.FAST_GOLD_SHOVEL.get(),
+                Blocks.DIRT, 1.30F, ItemTags.SHOVELS, FastTools.FAST_GOLD.repairItems(),
+                FastFurnaceV2.FAST_GOLD_INGOT.get());
+        assertMiningTool(helper, Items.GOLDEN_AXE, FastFurnaceV2.FAST_GOLD_AXE.get(),
+                Blocks.OAK_LOG, 1.30F, ItemTags.AXES, FastTools.FAST_GOLD.repairItems(),
+                FastFurnaceV2.FAST_GOLD_INGOT.get());
+        assertMiningTool(helper, Items.DIAMOND_PICKAXE, FastFurnaceV2.FAST_DIAMOND_PICKAXE.get(),
+                Blocks.STONE, 1.20F, ItemTags.PICKAXES, FastTools.FAST_DIAMOND.repairItems(),
+                FastFurnaceV2.FAST_DIAMOND.get());
+        assertMiningTool(helper, Items.DIAMOND_SHOVEL, FastFurnaceV2.FAST_DIAMOND_SHOVEL.get(),
+                Blocks.DIRT, 1.20F, ItemTags.SHOVELS, FastTools.FAST_DIAMOND.repairItems(),
+                FastFurnaceV2.FAST_DIAMOND.get());
+        assertMiningTool(helper, Items.DIAMOND_AXE, FastFurnaceV2.FAST_DIAMOND_AXE.get(),
+                Blocks.OAK_LOG, 1.20F, ItemTags.AXES, FastTools.FAST_DIAMOND.repairItems(),
+                FastFurnaceV2.FAST_DIAMOND.get());
+
+        assertSword(helper, Items.IRON_SWORD, FastFurnaceV2.FAST_IRON_SWORD.get(),
+                1.20F, 1.0F, FastTools.FAST_IRON.repairItems(), FastFurnaceV2.FAST_IRON_INGOT.get());
+        assertSword(helper, Items.GOLDEN_SWORD, FastFurnaceV2.FAST_GOLD_SWORD.get(),
+                1.30F, 1.0F, FastTools.FAST_GOLD.repairItems(), FastFurnaceV2.FAST_GOLD_INGOT.get());
+        assertSword(helper, Items.DIAMOND_SWORD, FastFurnaceV2.FAST_DIAMOND_SWORD.get(),
+                1.20F, 1.20F, FastTools.FAST_DIAMOND.repairItems(), FastFurnaceV2.FAST_DIAMOND.get());
+
+        Item[] diamondTools = {
+            FastFurnaceV2.FAST_DIAMOND_PICKAXE.get(),
+            FastFurnaceV2.FAST_DIAMOND_SHOVEL.get(),
+            FastFurnaceV2.FAST_DIAMOND_AXE.get(),
+            FastFurnaceV2.FAST_DIAMOND_SWORD.get()
+        };
+        var player = helper.makeMockPlayer(GameType.SURVIVAL);
+        long savedSeed = findChanceRollSeed(FastTools.DURABILITY_SAVE_CHANCE, true);
+        long damagedSeed = findChanceRollSeed(FastTools.DURABILITY_SAVE_CHANCE, false);
+        for (Item tool : diamondTools) {
+            helper.getLevel().getRandom().setSeed(savedSeed);
+            int savedDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
+            helper.getLevel().getRandom().setSeed(damagedSeed);
+            int ordinaryDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
+            if (savedDamage != 0 || ordinaryDamage != 1) {
+                throw helper.assertionException(tool + " did not apply its deterministic 5% durability-saving roll");
+            }
+        }
+        helper.succeed();
+    }
+
+    private static void assertMiningTool(
+            GameTestHelper helper,
+            Item vanilla,
+            Item fast,
+            Block efficientBlock,
+            float speedMultiplier,
+            TagKey<Item> toolTag,
+            TagKey<Item> repairTag,
+            Item repairItem) {
+        ItemStack vanillaStack = vanilla.getDefaultInstance();
+        ItemStack fastStack = fast.getDefaultInstance();
+        var vanillaTool = vanillaStack.get(DataComponents.TOOL);
+        var fastTool = fastStack.get(DataComponents.TOOL);
+        if (vanillaTool == null || fastTool == null) {
+            throw helper.assertionException(fast + " is missing its vanilla-style tool component");
+        }
+        float vanillaSpeed = vanillaTool.getMiningSpeed(efficientBlock.defaultBlockState());
+        float fastSpeed = fastTool.getMiningSpeed(efficientBlock.defaultBlockState());
+        if (Math.abs(fastSpeed - vanillaSpeed * speedMultiplier) > 0.0001F
+                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage()
+                || !fastStack.is(toolTag)
+                || !repairItem.getDefaultInstance().is(repairTag)) {
+            throw helper.assertionException(fast + " has incorrect mining speed, durability, tags, or repair material");
+        }
+    }
+
+    private static void assertSword(
+            GameTestHelper helper,
+            Item vanilla,
+            Item fast,
+            float speedMultiplier,
+            float damageMultiplier,
+            TagKey<Item> repairTag,
+            Item repairItem) {
+        ItemStack vanillaStack = vanilla.getDefaultInstance();
+        ItemStack fastStack = fast.getDefaultInstance();
+        var vanillaModifiers = vanillaStack.get(DataComponents.ATTRIBUTE_MODIFIERS);
+        var fastModifiers = fastStack.get(DataComponents.ATTRIBUTE_MODIFIERS);
+        if (vanillaModifiers == null || fastModifiers == null) {
+            throw helper.assertionException(fast + " is missing its vanilla-style weapon attributes");
+        }
+        double vanillaSpeed = vanillaModifiers.compute(Attributes.ATTACK_SPEED, 4.0, EquipmentSlot.MAINHAND);
+        double fastSpeed = fastModifiers.compute(Attributes.ATTACK_SPEED, 4.0, EquipmentSlot.MAINHAND);
+        double vanillaDamage = vanillaModifiers.compute(Attributes.ATTACK_DAMAGE, 1.0, EquipmentSlot.MAINHAND);
+        double fastDamage = fastModifiers.compute(Attributes.ATTACK_DAMAGE, 1.0, EquipmentSlot.MAINHAND);
+        if (Math.abs(fastSpeed - vanillaSpeed * speedMultiplier) > 0.0001
+                || Math.abs(fastDamage - vanillaDamage * damageMultiplier) > 0.0001
+                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage()
+                || !fastStack.is(ItemTags.SWORDS)
+                || !repairItem.getDefaultInstance().is(repairTag)) {
+            throw helper.assertionException(fast + " has incorrect attack speed, damage, durability, tags, or repair material");
         }
     }
 
@@ -1500,8 +1734,8 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
             }
         }
-        if (registeredBlocks != 18) {
-            throw helper.assertionException("Expected to audit all 18 registered mod blocks, found " + registeredBlocks);
+        if (registeredBlocks != 23) {
+            throw helper.assertionException("Expected to audit all 23 registered mod blocks, found " + registeredBlocks);
         }
         helper.succeed();
     }

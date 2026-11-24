@@ -8,11 +8,14 @@ import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -55,6 +58,9 @@ public class FastFurnaceV2 {
     public static final DeferredBlock<Block> FAST_IRON_ORE = registerOre("fast_iron_ore");
     public static final DeferredItem<BlockItem> FAST_IRON_ORE_ITEM =
             ITEMS.registerSimpleBlockItem("fast_iron_ore", FAST_IRON_ORE);
+    public static final DeferredBlock<Block> DEEPSLATE_FAST_IRON_ORE = registerDeepslateOre("deepslate_fast_iron_ore");
+    public static final DeferredItem<BlockItem> DEEPSLATE_FAST_IRON_ORE_ITEM =
+            ITEMS.registerSimpleBlockItem("deepslate_fast_iron_ore", DEEPSLATE_FAST_IRON_ORE);
     public static final DeferredItem<Item> RAW_FAST_IRON = ITEMS.registerSimpleItem("raw_fast_iron");
     public static final DeferredItem<Item> FAST_IRON_INGOT = ITEMS.registerSimpleItem("fast_iron_ingot");
     public static final DeferredBlock<Block> FAST_IRON_BLOCK = BLOCKS.registerSimpleBlock(
@@ -68,6 +74,9 @@ public class FastFurnaceV2 {
     public static final DeferredBlock<Block> FAST_GOLD_ORE = registerOre("fast_gold_ore");
     public static final DeferredItem<BlockItem> FAST_GOLD_ORE_ITEM =
             ITEMS.registerSimpleBlockItem("fast_gold_ore", FAST_GOLD_ORE);
+    public static final DeferredBlock<Block> DEEPSLATE_FAST_GOLD_ORE = registerDeepslateOre("deepslate_fast_gold_ore");
+    public static final DeferredItem<BlockItem> DEEPSLATE_FAST_GOLD_ORE_ITEM =
+            ITEMS.registerSimpleBlockItem("deepslate_fast_gold_ore", DEEPSLATE_FAST_GOLD_ORE);
     public static final DeferredItem<Item> RAW_FAST_GOLD = ITEMS.registerSimpleItem("raw_fast_gold");
     public static final DeferredItem<Item> FAST_GOLD_INGOT = ITEMS.registerSimpleItem("fast_gold_ingot");
     public static final DeferredBlock<Block> FAST_GOLD_BLOCK = BLOCKS.registerSimpleBlock(
@@ -81,6 +90,9 @@ public class FastFurnaceV2 {
     public static final DeferredBlock<Block> FAST_DIAMOND_ORE = registerOre("fast_diamond_ore");
     public static final DeferredItem<BlockItem> FAST_DIAMOND_ORE_ITEM =
             ITEMS.registerSimpleBlockItem("fast_diamond_ore", FAST_DIAMOND_ORE);
+    public static final DeferredBlock<Block> DEEPSLATE_FAST_DIAMOND_ORE = registerDeepslateOre("deepslate_fast_diamond_ore");
+    public static final DeferredItem<BlockItem> DEEPSLATE_FAST_DIAMOND_ORE_ITEM =
+            ITEMS.registerSimpleBlockItem("deepslate_fast_diamond_ore", DEEPSLATE_FAST_DIAMOND_ORE);
     public static final DeferredItem<Item> RAW_FAST_DIAMOND = ITEMS.registerSimpleItem("raw_fast_diamond");
     public static final DeferredItem<Item> FAST_DIAMOND = ITEMS.registerSimpleItem("fast_diamond");
     public static final DeferredBlock<Block> FAST_DIAMOND_BLOCK = BLOCKS.registerSimpleBlock(
@@ -99,6 +111,9 @@ public class FastFurnaceV2 {
                     .strength(3.0F, 3.0F));
     public static final DeferredItem<BlockItem> EXTREME_COAL_ORE_ITEM =
             ITEMS.registerSimpleBlockItem("extreme_coal_ore", EXTREME_COAL_ORE);
+    public static final DeferredBlock<Block> DEEPSLATE_EXTREME_COAL_ORE = registerDeepslateOre("deepslate_extreme_coal_ore");
+    public static final DeferredItem<BlockItem> DEEPSLATE_EXTREME_COAL_ORE_ITEM =
+            ITEMS.registerSimpleBlockItem("deepslate_extreme_coal_ore", DEEPSLATE_EXTREME_COAL_ORE);
     public static final DeferredItem<Item> EXTREME_COAL = ITEMS.registerSimpleItem("extreme_coal");
     // Matches vanilla coal blocks without copying their loot-table key or description ID.
     public static final DeferredBlock<Block> FAST_COAL_BLOCK = BLOCKS.registerSimpleBlock("fast_coal_block", properties -> properties
@@ -107,6 +122,14 @@ public class FastFurnaceV2 {
             .requiresCorrectToolForDrops()
             .strength(5.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_COAL_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("fast_coal_block", FAST_COAL_BLOCK);
+    public static final DeferredBlock<Block> EXTREME_COAL_BLOCK = BLOCKS.registerSimpleBlock(
+            "extreme_coal_block", properties -> properties
+                    .mapColor(MapColor.COLOR_BLACK)
+                    .instrument(NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops()
+                    .strength(5.0F, 6.0F));
+    public static final DeferredItem<BlockItem> EXTREME_COAL_BLOCK_ITEM =
+            ITEMS.registerSimpleBlockItem("extreme_coal_block", EXTREME_COAL_BLOCK);
     public static final DeferredBlock<AcceleratorBlock> ACCELERATOR = BLOCKS.registerBlock(
             "accelerator", AcceleratorBlock::new, properties -> properties
                     .mapColor(MapColor.STONE)
@@ -132,6 +155,40 @@ public class FastFurnaceV2 {
     public static final DeferredItem<BlockItem> IRON_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_crusher", IRON_FAST_CRUSHER);
     public static final DeferredItem<BlockItem> GOLD_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_crusher", GOLD_FAST_CRUSHER);
     public static final DeferredItem<BlockItem> DIAMOND_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_crusher", DIAMOND_FAST_CRUSHER);
+
+    public static final DeferredItem<Item> FAST_IRON_PICKAXE = ITEMS.registerSimpleItem(
+            "fast_iron_pickaxe", properties -> properties.pickaxe(FastTools.FAST_IRON, 1.0F, -2.8F));
+    public static final DeferredItem<ShovelItem> FAST_IRON_SHOVEL = ITEMS.registerItem(
+            "fast_iron_shovel", properties -> new ShovelItem(FastTools.FAST_IRON, 1.5F, -3.0F, properties));
+    public static final DeferredItem<AxeItem> FAST_IRON_AXE = ITEMS.registerItem(
+            "fast_iron_axe", properties -> new AxeItem(FastTools.FAST_IRON, 6.0F, -3.1F, properties));
+    public static final DeferredItem<Item> FAST_IRON_SWORD = ITEMS.registerSimpleItem(
+            "fast_iron_sword", properties -> properties.sword(
+                    FastTools.FAST_IRON, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F)));
+    public static final DeferredItem<Item> FAST_GOLD_PICKAXE = ITEMS.registerSimpleItem(
+            "fast_gold_pickaxe", properties -> properties.pickaxe(FastTools.FAST_GOLD, 1.0F, -2.8F));
+    public static final DeferredItem<ShovelItem> FAST_GOLD_SHOVEL = ITEMS.registerItem(
+            "fast_gold_shovel", properties -> new ShovelItem(FastTools.FAST_GOLD, 1.5F, -3.0F, properties));
+    public static final DeferredItem<AxeItem> FAST_GOLD_AXE = ITEMS.registerItem(
+            "fast_gold_axe", properties -> new AxeItem(FastTools.FAST_GOLD, 6.0F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_GOLD_SWORD = ITEMS.registerSimpleItem(
+            "fast_gold_sword", properties -> properties.sword(
+                    FastTools.FAST_GOLD, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.30F)));
+    public static final DeferredItem<FastTools.Standard> FAST_DIAMOND_PICKAXE = ITEMS.registerItem(
+            "fast_diamond_pickaxe", FastTools.Standard::new,
+            properties -> properties.pickaxe(FastTools.FAST_DIAMOND, 1.0F, -2.8F));
+    public static final DeferredItem<FastTools.Shovel> FAST_DIAMOND_SHOVEL = ITEMS.registerItem(
+            "fast_diamond_shovel",
+            properties -> new FastTools.Shovel(FastTools.FAST_DIAMOND, 1.5F, -3.0F, properties));
+    public static final DeferredItem<FastTools.Axe> FAST_DIAMOND_AXE = ITEMS.registerItem(
+            "fast_diamond_axe",
+            properties -> new FastTools.Axe(FastTools.FAST_DIAMOND, 5.0F, -3.0F, properties));
+    public static final DeferredItem<FastTools.Standard> FAST_DIAMOND_SWORD = ITEMS.registerItem(
+            "fast_diamond_sword", FastTools.Standard::new,
+            properties -> properties.sword(
+                    FastTools.FAST_DIAMOND,
+                    FastTools.scaleSwordDamage(ToolMaterial.DIAMOND, FastTools.FAST_DIAMOND, 3.0F, 1.20F),
+                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F)));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastFurnaceBlockEntity>> FAST_FURNACE_BLOCK_ENTITY = BLOCK_ENTITIES.register(
             "fast_furnace",
@@ -163,20 +220,37 @@ public class FastFurnaceV2 {
                 output.accept(FAST_COBBLESTONE_ITEM.get());
                 output.accept(FAST_COAL.get());
                 output.accept(EXTREME_COAL_ORE_ITEM.get());
+                output.accept(DEEPSLATE_EXTREME_COAL_ORE_ITEM.get());
                 output.accept(EXTREME_COAL.get());
                 output.accept(FAST_COAL_BLOCK_ITEM.get());
+                output.accept(EXTREME_COAL_BLOCK_ITEM.get());
                 output.accept(FAST_IRON_ORE_ITEM.get());
+                output.accept(DEEPSLATE_FAST_IRON_ORE_ITEM.get());
                 output.accept(RAW_FAST_IRON.get());
                 output.accept(FAST_IRON_INGOT.get());
                 output.accept(FAST_IRON_BLOCK_ITEM.get());
                 output.accept(FAST_GOLD_ORE_ITEM.get());
+                output.accept(DEEPSLATE_FAST_GOLD_ORE_ITEM.get());
                 output.accept(RAW_FAST_GOLD.get());
                 output.accept(FAST_GOLD_INGOT.get());
                 output.accept(FAST_GOLD_BLOCK_ITEM.get());
                 output.accept(FAST_DIAMOND_ORE_ITEM.get());
+                output.accept(DEEPSLATE_FAST_DIAMOND_ORE_ITEM.get());
                 output.accept(RAW_FAST_DIAMOND.get());
                 output.accept(FAST_DIAMOND.get());
                 output.accept(FAST_DIAMOND_BLOCK_ITEM.get());
+                output.accept(FAST_IRON_PICKAXE.get());
+                output.accept(FAST_IRON_SHOVEL.get());
+                output.accept(FAST_IRON_AXE.get());
+                output.accept(FAST_IRON_SWORD.get());
+                output.accept(FAST_GOLD_PICKAXE.get());
+                output.accept(FAST_GOLD_SHOVEL.get());
+                output.accept(FAST_GOLD_AXE.get());
+                output.accept(FAST_GOLD_SWORD.get());
+                output.accept(FAST_DIAMOND_PICKAXE.get());
+                output.accept(FAST_DIAMOND_SHOVEL.get());
+                output.accept(FAST_DIAMOND_AXE.get());
+                output.accept(FAST_DIAMOND_SWORD.get());
                 output.accept(ACCELERATOR_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getFurnaceItem(tier).get());
@@ -198,6 +272,10 @@ public class FastFurnaceV2 {
                     .build());
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> FAST_ORE_CHUNK_PROCESSED =
             ATTACHMENT_TYPES.register("fast_ore_chunk_processed", () -> AttachmentType.builder(() -> false)
+                    .serialize(Codec.BOOL.fieldOf("processed"))
+                    .build());
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> DEEPSLATE_FAST_ORE_CHUNK_PROCESSED =
+            ATTACHMENT_TYPES.register("deepslate_fast_ore_chunk_processed", () -> AttachmentType.builder(() -> false)
                     .serialize(Codec.BOOL.fieldOf("processed"))
                     .build());
 
@@ -236,7 +314,7 @@ public class FastFurnaceV2 {
     }
 
     public static boolean isExtremeCoalFuel(ItemStack stack) {
-        return stack.is(EXTREME_COAL.get());
+        return stack.is(EXTREME_COAL.get()) || stack.is(EXTREME_COAL_BLOCK_ITEM.get());
     }
 
     public static DeferredBlock<FastFurnaceBlock> getFurnaceBlock(FastFurnaceTier tier) {
@@ -292,6 +370,14 @@ public class FastFurnaceV2 {
                 .strength(3.0F, 3.0F));
     }
 
+    private static DeferredBlock<Block> registerDeepslateOre(String id) {
+        return BLOCKS.registerSimpleBlock(id, properties -> properties
+                .mapColor(MapColor.DEEPSLATE)
+                .instrument(NoteBlockInstrument.BASEDRUM)
+                .requiresCorrectToolForDrops()
+                .strength(4.5F, 3.0F));
+    }
+
     private static DeferredBlock<FastFurnaceBlock> registerFurnace(FastFurnaceTier tier) {
         return registerMachine(tier.getId(), tier, false);
     }
@@ -320,15 +406,20 @@ public class FastFurnaceV2 {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(FAST_COBBLESTONE_ITEM);
             event.accept(FAST_COAL_BLOCK_ITEM);
+            event.accept(EXTREME_COAL_BLOCK_ITEM);
             event.accept(FAST_IRON_BLOCK_ITEM);
             event.accept(FAST_GOLD_BLOCK_ITEM);
             event.accept(FAST_DIAMOND_BLOCK_ITEM);
         }
         if (event.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
             event.accept(EXTREME_COAL_ORE_ITEM);
+            event.accept(DEEPSLATE_EXTREME_COAL_ORE_ITEM);
             event.accept(FAST_IRON_ORE_ITEM);
+            event.accept(DEEPSLATE_FAST_IRON_ORE_ITEM);
             event.accept(FAST_GOLD_ORE_ITEM);
+            event.accept(DEEPSLATE_FAST_GOLD_ORE_ITEM);
             event.accept(FAST_DIAMOND_ORE_ITEM);
+            event.accept(DEEPSLATE_FAST_DIAMOND_ORE_ITEM);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(FAST_COAL);
@@ -340,6 +431,25 @@ public class FastFurnaceV2 {
             event.accept(RAW_FAST_DIAMOND);
             event.accept(FAST_DIAMOND);
             CrushedOres.addCreative(event);
+        }
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(FAST_IRON_PICKAXE);
+            event.accept(FAST_IRON_SHOVEL);
+            event.accept(FAST_IRON_AXE);
+            event.accept(FAST_GOLD_PICKAXE);
+            event.accept(FAST_GOLD_SHOVEL);
+            event.accept(FAST_GOLD_AXE);
+            event.accept(FAST_DIAMOND_PICKAXE);
+            event.accept(FAST_DIAMOND_SHOVEL);
+            event.accept(FAST_DIAMOND_AXE);
+        }
+        if (event.getTabKey() == CreativeModeTabs.COMBAT) {
+            event.accept(FAST_IRON_SWORD);
+            event.accept(FAST_IRON_AXE);
+            event.accept(FAST_GOLD_SWORD);
+            event.accept(FAST_GOLD_AXE);
+            event.accept(FAST_DIAMOND_SWORD);
+            event.accept(FAST_DIAMOND_AXE);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(ACCELERATOR_ITEM);

@@ -17,10 +17,18 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 final class FastOreGeneration {
     static final float REPLACEMENT_CHANCE = 0.05F;
     private static final List<OreReplacement> REPLACEMENTS = List.of(
-            new OreReplacement(Blocks.COAL_ORE, FastFurnaceV2.EXTREME_COAL_ORE, 0x4D4F9B2D6C31A57EL),
-            new OreReplacement(Blocks.IRON_ORE, FastFurnaceV2.FAST_IRON_ORE, 0x1931A77E29BC4501L),
-            new OreReplacement(Blocks.GOLD_ORE, FastFurnaceV2.FAST_GOLD_ORE, 0x19360D1DE5A248B3L),
-            new OreReplacement(Blocks.DIAMOND_ORE, FastFurnaceV2.FAST_DIAMOND_ORE, 0x193D1A0D4E2F65C7L));
+            new OreReplacement(Blocks.COAL_ORE, FastFurnaceV2.EXTREME_COAL_ORE, 0x4D4F9B2D6C31A57EL, false),
+            new OreReplacement(Blocks.DEEPSLATE_COAL_ORE,
+                    FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE, 0x4D4F9B2D6C31A57FL, true),
+            new OreReplacement(Blocks.IRON_ORE, FastFurnaceV2.FAST_IRON_ORE, 0x1931A77E29BC4501L, false),
+            new OreReplacement(Blocks.DEEPSLATE_IRON_ORE,
+                    FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE, 0x1931A77E29BC4503L, true),
+            new OreReplacement(Blocks.GOLD_ORE, FastFurnaceV2.FAST_GOLD_ORE, 0x19360D1DE5A248B3L, false),
+            new OreReplacement(Blocks.DEEPSLATE_GOLD_ORE,
+                    FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE, 0x19360D1DE5A248B5L, true),
+            new OreReplacement(Blocks.DIAMOND_ORE, FastFurnaceV2.FAST_DIAMOND_ORE, 0x193D1A0D4E2F65C7L, false),
+            new OreReplacement(Blocks.DEEPSLATE_DIAMOND_ORE,
+                    FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE, 0x193D1A0D4E2F65C9L, true));
 
     private FastOreGeneration() {
     }
@@ -33,7 +41,9 @@ final class FastOreGeneration {
     }
 
     static int processChunk(long worldSeed, ChunkAccess chunk) {
-        if (chunk.getData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED)) {
+        boolean processRegular = !chunk.getData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED);
+        boolean processDeepslate = !chunk.getData(FastFurnaceV2.DEEPSLATE_FAST_ORE_CHUNK_PROCESSED);
+        if (!processRegular && !processDeepslate) {
             return 0;
         }
 
@@ -51,7 +61,8 @@ final class FastOreGeneration {
                     for (int x = 0; x < 16; x++) {
                         BlockState state = section.getBlockState(x, y, z);
                         OreReplacement replacement = replacementFor(state);
-                        if (replacement == null) {
+                        if (replacement == null
+                                || (replacement.deepslate() ? !processDeepslate : !processRegular)) {
                             continue;
                         }
                         pos.set(chunkPos.getMinBlockX() + x, sectionMinY + y, chunkPos.getMinBlockZ() + z);
@@ -65,7 +76,12 @@ final class FastOreGeneration {
             }
         }
 
-        chunk.setData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED, true);
+        if (processRegular) {
+            chunk.setData(FastFurnaceV2.FAST_ORE_CHUNK_PROCESSED, true);
+        }
+        if (processDeepslate) {
+            chunk.setData(FastFurnaceV2.DEEPSLATE_FAST_ORE_CHUNK_PROCESSED, true);
+        }
         chunk.markUnsaved();
         return replacements;
     }
@@ -95,6 +111,6 @@ final class FastOreGeneration {
         return value ^ value >>> 31;
     }
 
-    private record OreReplacement(Block source, DeferredBlock<Block> result, long salt) {
+    private record OreReplacement(Block source, DeferredBlock<Block> result, long salt, boolean deepslate) {
     }
 }

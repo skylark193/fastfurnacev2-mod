@@ -30,6 +30,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     public static final int FAST_COAL_BOOST_WORK = 3600;
     public static final int FAST_COAL_BLOCK_BOOST_WORK = 4000;
     public static final int EXTREME_COAL_BOOST_WORK = FAST_COAL_BOOST_WORK * 2;
+    public static final int EXTREME_COAL_BLOCK_BOOST_WORK = FAST_COAL_BLOCK_BOOST_WORK * 2;
     public static final int BOOSTED_WORK_PER_TICK = 3;
     public static final int EXTREME_COAL_BOOSTED_WORK_PER_TICK = BOOSTED_WORK_PER_TICK * 2 - 1;
     public static final int REQUIRED_LAVA_SIDES = 4;

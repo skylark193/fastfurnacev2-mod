@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.3.0 exposes API version 1.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.4.0 exposes API version 1.1 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.3.0"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.4.0"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.3.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.4.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.3.0,)"
+versionRange="[1.4.0,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -107,7 +107,7 @@ The parameters are:
 - `acceleratorBoost(work, workPerTick)`: optional exact boosted work and its maximum work advance per tick. Both values must be positive together or both zero. The Accelerator still runs without boost fuel.
 - `priority`: ingredient-match precedence; later registration breaks equal-priority ties.
 
-Active fuel identity is saved by definition ID. The machine continues using the consumed fuel's bonuses even if the fuel slot subsequently contains another item. The built-in Fast Coal, Block of Fast Coal, and Extreme Coal definitions use IDs exposed as `FastFurnaceApi.FAST_COAL_FUEL_ID`, `FAST_COAL_BLOCK_FUEL_ID`, and `EXTREME_COAL_FUEL_ID`.
+Active fuel identity is saved by definition ID. The machine continues using the consumed fuel's bonuses even if the fuel slot subsequently contains another item. The built-in Fast Coal, Block of Fast Coal, Extreme Coal, and Block of Extreme Coal definitions use IDs exposed as `FastFurnaceApi.FAST_COAL_FUEL_ID`, `FAST_COAL_BLOCK_FUEL_ID`, `EXTREME_COAL_FUEL_ID`, and `EXTREME_COAL_BLOCK_FUEL_ID`. Block of Extreme Coal has an ordinary burn time of 16,000 ticks, uses Extreme Coal's tier-duration and +100-percentage-point speed bonuses, and supplies 8,000 Accelerator work units at five work per tick. Its item accessor is `FastFurnaceApi.extremeCoalBlock()`.
 
 `FastFuel.inputItems()` returns fresh display stacks for recipe viewers. `scaleBurnTime(...)` and `getSpeedPercent(...)` expose the same calculations used by the machines.
 
@@ -134,6 +134,7 @@ The full constructor is `(id, ingredient, inputCount, output, processingTime, pr
 - The output can have any count that leaves room for the tier's output-doubling roll. For example, three gravel can double to six. A blocked doubled result remains pending without consuming input or rerolling.
 - A recipe is processable only when the input stack contains at least `inputCount`. Successful processing consumes exactly that many items.
 - Built-in raw-ore recipes use IDs of the form `fastfurnacev2:crusher/<raw namespace>/<raw path>` and priority zero.
+- Built-in ore-block recipes use `fastfurnacev2:crusher/ore/<ore path>` for `extreme_coal_ore`, `deepslate_extreme_coal_ore`, `fast_iron_ore`, `deepslate_fast_iron_ore`, `fast_gold_ore`, `deepslate_fast_gold_ore`, `fast_diamond_ore`, and `deepslate_fast_diamond_ore`. Each consumes one ore block and produces three Extreme Coal or three matching crushed Fast materials; the normal output-doubling roll produces six.
 
 The API does not add an ordinary smelting recipe or generate a crushed item for custom crusher output. Register those separately if desired.
 
@@ -175,6 +176,7 @@ Item fastCoal = FastFurnaceApi.fastCoal();
 Item fastCoalBlock = FastFurnaceApi.fastCoalBlock();
 Item extremeCoalOre = FastFurnaceApi.extremeCoalOre();
 Item extremeCoal = FastFurnaceApi.extremeCoal();
+Item extremeCoalBlock = FastFurnaceApi.extremeCoalBlock();
 
 List<FastFuel> fuels = FastFurnaceApi.fuels();
 Optional<FastFuel> byId = FastFurnaceApi.findFuel(fuelId);

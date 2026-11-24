@@ -5,7 +5,7 @@
 Fast Furnace V2 adds materials through three separate systems:
 
 1. Bonus drops appended while mining stone or coal ore.
-2. Deterministic replacement of regular coal, iron, gold, and diamond ore with their modded variants.
+2. Deterministic replacement of regular and deepslate coal, iron, gold, and diamond ore with their modded variants.
 3. Startup discovery and generation of crushed-ore processing items and smelting recipes.
 
 These systems do not replace ordinary stone or coal-ore drops, add a new ore distribution noise generator, or require a fixed set of crushed items from another mod.
@@ -52,28 +52,32 @@ Each eligible block makes its own roll. Fortune increases the chance of the one-
 
 ## Fast and Extreme ore generation
 
-Fast and Extreme ores are created by replacing existing regular vanilla ore blocks, rather than by adding separate ore-vein distributions.
+Fast and Extreme ores are created by replacing existing regular and deepslate vanilla ore blocks, rather than by adding separate ore-vein distributions.
 
 ### Replacement rule
 
-During chunk loading, Fast Furnace V2 examines positions that can contain any eligible regular ore. Each actual matching ore position receives an independent deterministic roll:
+During chunk loading, Fast Furnace V2 examines positions that can contain any eligible ore. Each actual matching ore position receives an independent deterministic roll:
 
 | Vanilla source | 5% replacement result |
 |---|---|
 | `minecraft:coal_ore` | `fastfurnacev2:extreme_coal_ore` |
+| `minecraft:deepslate_coal_ore` | `fastfurnacev2:deepslate_extreme_coal_ore` |
 | `minecraft:iron_ore` | `fastfurnacev2:fast_iron_ore` |
+| `minecraft:deepslate_iron_ore` | `fastfurnacev2:deepslate_fast_iron_ore` |
 | `minecraft:gold_ore` | `fastfurnacev2:fast_gold_ore` |
+| `minecraft:deepslate_gold_ore` | `fastfurnacev2:deepslate_fast_gold_ore` |
 | `minecraft:diamond_ore` | `fastfurnacev2:fast_diamond_ore` |
+| `minecraft:deepslate_diamond_ore` | `fastfurnacev2:deepslate_fast_diamond_ore` |
 
 The other 95% of rolls leave the vanilla ore unchanged.
 
-- Only the regular ore blocks listed above are eligible.
-- Deepslate coal, iron, gold, and diamond ores are explicitly excluded; Nether Gold Ore is also excluded.
+- Only the eight regular and deepslate ore blocks listed above are eligible.
+- Nether Gold Ore and other ore variants are excluded.
 - Other blocks in broader ore tags are not replaced.
 - No ore is inserted into stone or empty space.
 - Each replacement preserves the original block position.
 
-Each source material has its own fixed salt. A roll is derived from the world seed, block position, and that salt, so it does not depend on chunk-load order or a changing random-number sequence.
+Each source block has its own fixed salt, including separate regular and deepslate salts. A roll is derived from the world seed, block position, and that salt, so it does not depend on chunk-load order or a changing random-number sequence.
 
 ### New and existing chunks
 
@@ -82,24 +86,24 @@ The same replacement pass handles:
 - Newly generated chunks when they are loaded.
 - Chunks generated before Fast Furnace V2 was installed, when those chunks are subsequently loaded.
 
-A persistent Boolean `fast_ore_chunk_processed` chunk attachment marks a completed pass. Existing chunks are processed **once**, so unloading and reloading them does not reroll ores or continue converting more blocks over time. The former coal-only `extreme_coal_chunk_processed` attachment remains readable for old saves but does not suppress the new combined pass, allowing existing worlds to receive Fast Iron, Gold, and Diamond generation.
+Persistent Boolean `fast_ore_chunk_processed` and `deepslate_fast_ore_chunk_processed` chunk attachments independently mark the regular and deepslate passes. Existing chunks are processed **once per family**, so unloading and reloading them does not reroll ores or continue converting more blocks over time. A chunk processed by version 1.3.0 can receive the new deepslate pass without rerolling its regular ores. The former coal-only `extreme_coal_chunk_processed` attachment remains readable for old saves but does not suppress either current pass.
 
 This also means that manually placing an eligible vanilla ore in an already processed chunk does not schedule another conversion pass.
 
 ### Drops and acquisition
 
-All four replacement ores follow the corresponding vanilla ore's Silk Touch alternatives and Fortune-scaled `minecraft:ore_drops` formula:
+All eight replacement ores follow the corresponding vanilla ore's Silk Touch alternatives and Fortune-scaled `minecraft:ore_drops` formula:
 
 | Replacement ore | Ordinary drop |
 |---|---|
-| Extreme Coal Ore | Extreme Coal |
-| Fast Iron Ore | Raw Fast Iron |
-| Fast Gold Ore | Raw Fast Gold |
-| Fast Diamond Ore | Raw Fast Diamond |
+| Regular or Deepslate Extreme Coal Ore | Extreme Coal |
+| Regular or Deepslate Fast Iron Ore | Raw Fast Iron |
+| Regular or Deepslate Fast Gold Ore | Raw Fast Gold |
+| Regular or Deepslate Fast Diamond Ore | Raw Fast Diamond |
 
-Without Silk Touch, Fortune can increase the drop quantity. With Silk Touch, each ore drops itself. Fast ore mining tiers match their vanilla equivalents: Fast Iron Ore requires a stone pickaxe or better, while Fast Gold and Fast Diamond Ore require an iron pickaxe or better.
+Without Silk Touch, Fortune can increase the drop quantity. With Silk Touch, each ore drops itself. Fast ore mining tiers match their vanilla equivalents in both regular and deepslate forms: Fast Iron Ore requires a stone pickaxe or better, while Fast Gold and Fast Diamond Ore require an iron pickaxe or better.
 
-See [Extreme Coal Ore](blocks.md#extreme-coal-ore), [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), and [Fast material items](items.md#fast-material-items).
+See [Extreme Coal Ores](blocks.md#extreme-coal-ores), [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), and [Fast material items](items.md#fast-material-items).
 
 ## Dynamic crushed ores
 

@@ -38,6 +38,29 @@ class ExtremeCoalTextureGeneratorTests(unittest.TestCase):
         for frame in generate_frames(transparent, 8, 420):
             self.assertEqual(frame.tobytes(), transparent.tobytes())
 
+    def test_coal_block_is_fully_animated_lava_with_preserved_detail(self) -> None:
+        source_path = Path(__file__).parent / "texture_sources" / "coal_block.png"
+        with Image.open(source_path) as image:
+            source = image.convert("RGBA")
+        original = source.tobytes()
+        frames = generate_frames(source, 8, 437)
+        repeated = generate_frames(source, 8, 437)
+        lava_colors = {pixel[:3] for pixel in LAVA_PALETTE}
+
+        self.assertEqual(source.tobytes(), original)
+        self.assertEqual([frame.tobytes() for frame in frames], [frame.tobytes() for frame in repeated])
+        self.assertEqual(len({frame.tobytes() for frame in frames}), 8)
+        colors_over_time = [set() for _ in range(source.width * source.height)]
+        for frame in frames:
+            self.assertGreater(len(set(frame.get_flattened_data())), 1)
+            for index, (source_pixel, result_pixel) in enumerate(zip(
+                    source.get_flattened_data(), frame.get_flattened_data())):
+                self.assertEqual(source_pixel[3], result_pixel[3])
+                if source_pixel[3] > 0:
+                    self.assertIn(result_pixel[:3], lava_colors)
+                    colors_over_time[index].add(result_pixel[:3])
+        self.assertTrue(all(len(colors) > 1 for colors in colors_over_time))
+
 
 if __name__ == "__main__":
     unittest.main()

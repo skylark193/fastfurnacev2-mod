@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **17 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
+This page collects the **31 checked-in crafting recipes**, built-in machine conversions, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 
@@ -98,6 +98,18 @@ Place one Block of Fast Coal in a shapeless crafting recipe:
 
 Packing and unpacking are reversible and lossless in item count.
 
+## Block of Extreme Coal
+
+Use the same reversible storage pattern with Extreme Coal:
+
+```text
+E  E  E
+E  E  E
+E  E  E
+```
+
+`E` = Extreme Coal. Output: **1 × Block of Extreme Coal**. One block also has a shapeless unpacking recipe back into **9 × Extreme Coal**.
+
 ## Fast material storage blocks
 
 Fast Iron Ingots, Fast Gold Ingots, and Fast Diamonds each have a reversible storage block:
@@ -109,6 +121,19 @@ M  M  M
 ```
 
 `M` is nine matching Fast Iron Ingots, Fast Gold Ingots, or Fast Diamonds for the shaped packing recipe. The three Fast storage blocks are also required for furnace and crusher upgrades.
+
+## Fast tools and swords
+
+All twelve tools use vanilla patterns with sticks and the matching Fast material. `M` is Fast Iron Ingot, Fast Gold Ingot, or Fast Diamond; `#` is Stick.
+
+```text
+Pickaxe       Shovel        Axe           Sword
+M  M  M       M             M  M          M
+   #             #          M  #          M
+   #             #             #          #
+```
+
+Each recipe produces one `fastfurnacev2:fast_<material>_<tool>` item. Axe recipes use the left-handed vanilla orientation shown above. The finished Fast material also repairs its corresponding tool set. See [Fast tools and swords](items.md#fast-tools-and-swords) for exact bonuses.
 
 ## Raw Fast material smelting
 
@@ -168,7 +193,16 @@ Each built-in raw-ore operation consumes one raw item and produces two selected 
 
 An external crushed item or dust replaces the shown result when discovery selects one. Modded raw ores discovered through conventional IDs or packaged raw-material tags receive equivalent recipes.
 
-The tier's 10% / 15% / 20% / 25% output roll is independent for each completed operation. A blocked doubled result remains pending rather than becoming two items. See [Fast Crushers](crushers.md).
+Built-in ore blocks instead produce three items per operation:
+
+| Input | Normal output | Successful output-doubling roll |
+|---|---|---|
+| Regular or Deepslate Extreme Coal Ore | 3 × Extreme Coal | 6 × Extreme Coal |
+| Regular or Deepslate Fast Iron Ore | 3 × Crushed Fast Iron | 6 × Crushed Fast Iron |
+| Regular or Deepslate Fast Gold Ore | 3 × Crushed Fast Gold | 6 × Crushed Fast Gold |
+| Regular or Deepslate Fast Diamond Ore | 3 × Crushed Fast Diamond | 6 × Crushed Fast Diamond |
+
+The tier's 10% / 15% / 20% / 25% output roll is independent for each completed operation. A blocked doubled result remains pending rather than becoming the smaller result. See [Fast Crushers](crushers.md).
 
 ## Crushed-ore smelting
 
@@ -201,19 +235,20 @@ These values apply in ordinary furnaces and other machines using the normal fuel
 | Fast Coal | 1,600 ticks |
 | Extreme Coal | 1,600 ticks |
 | Block of Fast Coal | 16,000 ticks |
+| Block of Extreme Coal | 16,000 ticks |
 
-Fast Coal and Extreme Coal match vanilla coal. Block of Fast Coal matches a vanilla coal block, not the combined 14,400-tick value of nine Fast Coal items.
+Fast Coal and Extreme Coal match vanilla coal. Both storage blocks match a vanilla coal block, not the combined 14,400-tick value of nine individual coal items.
 
 ### Fast Furnace durations
 
 The following values include tier scaling and the independent per-item duration roll where shown:
 
-| Tier | Fast Coal before / after doubling | Extreme Coal before / after doubling | Block of Fast Coal before / after doubling |
-|---|---:|---:|---:|
-| Fast | 2,400 / 4,800 | 3,200 / 6,400 | 24,000 / 48,000 |
-| Iron | 2,800 / 5,600 | 4,000 / 8,000 | 28,000 / 56,000 |
-| Gold | 3,200 / 6,400 | 4,800 / 9,600 | 32,000 / 64,000 |
-| Diamond | 3,600 / 7,200 | 5,600 / 11,200 | 36,000 / 72,000 |
+| Tier | Fast Coal before / after doubling | Extreme Coal before / after doubling | Block of Fast Coal before / after doubling | Block of Extreme Coal before / after doubling |
+|---|---:|---:|---:|---:|
+| Fast | 2,400 / 4,800 | 3,200 / 6,400 | 24,000 / 48,000 | 32,000 / 64,000 |
+| Iron | 2,800 / 5,600 | 4,000 / 8,000 | 28,000 / 56,000 | 40,000 / 80,000 |
+| Gold | 3,200 / 6,400 | 4,800 / 9,600 | 32,000 / 64,000 | 48,000 / 96,000 |
+| Diamond | 3,600 / 7,200 | 5,600 / 11,200 | 36,000 / 72,000 | 56,000 / 112,000 |
 
 All values are ticks. Every valid fuel consumed by a Fast Furnace makes the tier's independent duration roll, including ordinary fuels. Fast Crushers use the **before doubling** values and never roll for fuel duration.
 
@@ -226,6 +261,7 @@ Accelerator boosts use work units rather than ordinary furnace burn time:
 | Fast Coal | 3,600 | 3 |
 | Block of Fast Coal | 4,000 | 3 |
 | Extreme Coal | 7,200 | 5 |
+| Block of Extreme Coal | 8,000 | 5 |
 
 The Accelerator also operates without boost at one work unit per tick. See [Accelerator conversion capacities](accelerator.md#conversion-times-and-capacities).
 
@@ -234,8 +270,8 @@ The Accelerator also operates without boost at one work unit per tick. See [Acce
 - Fast Cobblestone.
 - Fast Coal.
 - Extreme Coal.
-- Extreme Coal Ore.
-- Fast Iron Ore, Fast Gold Ore, and Fast Diamond Ore.
+- Regular and Deepslate Extreme Coal Ore.
+- Regular and deepslate Fast Iron Ore, Fast Gold Ore, and Fast Diamond Ore.
 - Raw Fast Iron, Raw Fast Gold, and Raw Fast Diamond.
 
 Their acquisition is described in [Blocks](blocks.md), [Items](items.md), and [World generation](world-generation.md). The presence of creative-tab content, upgrades, or machine conversions does not imply a survival crafting recipe. Other mods and modpacks may supply their own acquisition methods.

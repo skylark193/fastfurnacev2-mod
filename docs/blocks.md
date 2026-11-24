@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Items](items.md) · [Recipes](recipes.md)
 
-Fast Furnace V2 registers **18 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
+Fast Furnace V2 registers **23 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
 
 ## Complete block index
 
@@ -10,10 +10,15 @@ Fast Furnace V2 registers **18 blocks**, each with a corresponding block item. A
 |---|---|---|---|
 | Fast Cobblestone | `fastfurnacev2:fast_cobblestone` | Building Blocks | Bonus drop from mining stone |
 | Block of Fast Coal | `fastfurnacev2:fast_coal_block` | Building Blocks | Craft 9 Fast Coal; unpack back into 9 |
+| Block of Extreme Coal | `fastfurnacev2:extreme_coal_block` | Building Blocks | Craft 9 Extreme Coal; unpack back into 9 |
 | Extreme Coal Ore | `fastfurnacev2:extreme_coal_ore` | Natural Blocks | Replaces eligible regular coal ore during chunk processing |
+| Deepslate Extreme Coal Ore | `fastfurnacev2:deepslate_extreme_coal_ore` | Natural Blocks | Replaces eligible deepslate coal ore during chunk processing |
 | Fast Iron Ore | `fastfurnacev2:fast_iron_ore` | Natural Blocks | Replaces eligible regular iron ore during chunk processing |
+| Deepslate Fast Iron Ore | `fastfurnacev2:deepslate_fast_iron_ore` | Natural Blocks | Replaces eligible deepslate iron ore during chunk processing |
 | Fast Gold Ore | `fastfurnacev2:fast_gold_ore` | Natural Blocks | Replaces eligible regular gold ore during chunk processing |
+| Deepslate Fast Gold Ore | `fastfurnacev2:deepslate_fast_gold_ore` | Natural Blocks | Replaces eligible deepslate gold ore during chunk processing |
 | Fast Diamond Ore | `fastfurnacev2:fast_diamond_ore` | Natural Blocks | Replaces eligible regular diamond ore during chunk processing |
+| Deepslate Fast Diamond Ore | `fastfurnacev2:deepslate_fast_diamond_ore` | Natural Blocks | Replaces eligible deepslate diamond ore during chunk processing |
 | Block of Fast Iron | `fastfurnacev2:fast_iron_block` | Building Blocks | Craft 9 Fast Iron Ingots or convert an Iron Block |
 | Block of Fast Gold | `fastfurnacev2:fast_gold_block` | Building Blocks | Craft 9 Fast Gold Ingots or convert a Gold Block |
 | Block of Fast Diamond | `fastfurnacev2:fast_diamond_block` | Building Blocks | Craft 9 Fast Diamonds or convert a Diamond Block |
@@ -56,31 +61,40 @@ It is a reversible storage block and a fuel:
 
 Its ordinary 16,000-tick value matches a vanilla coal block rather than the 14,400 ticks supplied by nine individual Fast Coal items. See [Fast Furnace fuel durations](furnaces.md#fuel-duration-bonuses) and [Accelerator boosts](accelerator.md#boost-fuels).
 
-## Extreme Coal Ore
+## Block of Extreme Coal
 
-**ID:** `fastfurnacev2:extreme_coal_ore`
+**ID:** `fastfurnacev2:extreme_coal_block`
 
-Extreme Coal Ore mirrors regular coal ore's physical properties without inheriting vanilla coal ore's loot table or translation key. It has stone map color, base-drum instrument, hardness **3.0**, and blast resistance **3.0**, and requires a pickaxe.
+Block of Extreme Coal mirrors a vanilla coal block's black map color, base-drum instrument, hardness **5.0**, blast resistance **6.0**, and correct-tool drop requirement. Use a pickaxe; it drops itself. Nine Extreme Coal craft one block, and one block unpacks into nine Extreme Coal.
 
-- Without Silk Touch, it drops Extreme Coal using vanilla coal ore's Fortune-scaled ore-drop formula.
-- With Silk Touch, it drops the ore block itself.
-- Its texture resembles coal ore with animated lava veins.
+Its ordinary burn time is **16,000 ticks**. It receives Extreme Coal's speed and duration bonuses in Fast Furnaces and Fast Crushers, and supplies **8,000 Accelerator work units** at up to **5 work per tick**. Its texture replaces every visible coal-block pixel with animated lava while retaining the source's luminance detail.
 
-Each eligible regular coal-ore position has an independent deterministic 5% replacement chance. Deepslate coal ore is excluded. Existing chunks are processed once when loaded after the mod is added. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
+## Extreme Coal Ores
+
+**IDs:** `fastfurnacev2:extreme_coal_ore`, `fastfurnacev2:deepslate_extreme_coal_ore`
+
+These blocks mirror regular or deepslate coal ore's physical properties without inheriting vanilla loot tables or translation keys. Regular Extreme Coal Ore has stone map color and hardness/blast resistance **3.0/3.0**; the deepslate variant has deepslate map color and **4.5/3.0**. Both require a pickaxe.
+
+- Without Silk Touch, each drops Extreme Coal using vanilla coal ore's Fortune-scaled ore-drop formula.
+- With Silk Touch, each drops the ore block itself.
+- Their textures resemble the corresponding vanilla ore with animated lava veins.
+- Either block can be crushed into three Extreme Coal.
+
+Each eligible regular or deepslate coal-ore position has an independent deterministic 5% replacement chance. Existing chunks receive separate once-only regular and deepslate passes. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
 
 ## Fast Iron, Gold, and Diamond Ores
 
-**IDs:** `fastfurnacev2:fast_iron_ore`, `fastfurnacev2:fast_gold_ore`, `fastfurnacev2:fast_diamond_ore`
+**IDs:** `fastfurnacev2:fast_iron_ore`, `fastfurnacev2:fast_gold_ore`, `fastfurnacev2:fast_diamond_ore`, and their `deepslate_`-prefixed variants.
 
-These blocks resemble their corresponding vanilla ores with animated lava veins. Each has stone map color, base-drum instrument, hardness **3.0**, and blast resistance **3.0**, with the same correct-tool requirement as ordinary ores.
+These blocks resemble their corresponding vanilla regular or deepslate ores with animated lava veins. Regular variants use stone map color and hardness/blast resistance **3.0/3.0**; deepslate variants use deepslate map color and **4.5/3.0**. All have the same correct-tool requirement as their vanilla counterparts.
 
-| Ore | Required pickaxe tier | Ordinary drop | Silk Touch drop |
+| Ore family | Required pickaxe tier | Ordinary drop | Silk Touch drop |
 |---|---|---|---|
-| Fast Iron Ore | Stone or better | Raw Fast Iron | Fast Iron Ore |
-| Fast Gold Ore | Iron or better | Raw Fast Gold | Fast Gold Ore |
-| Fast Diamond Ore | Iron or better | Raw Fast Diamond | Fast Diamond Ore |
+| Regular or Deepslate Fast Iron Ore | Stone or better | Raw Fast Iron | The mined ore |
+| Regular or Deepslate Fast Gold Ore | Iron or better | Raw Fast Gold | The mined ore |
+| Regular or Deepslate Fast Diamond Ore | Iron or better | Raw Fast Diamond | The mined ore |
 
-Ordinary drops use vanilla's `minecraft:ore_drops` Fortune formula and explosion decay. Each matching regular iron, gold, or diamond ore has an independent deterministic 5% replacement chance in newly generated chunks and once in existing chunks. Deepslate variants are excluded. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
+Ordinary drops use vanilla's `minecraft:ore_drops` Fortune formula and explosion decay. Each matching regular or deepslate ore has an independent deterministic 5% replacement chance in newly generated chunks and once in existing chunks. Every Fast ore block can also be crushed into three matching crushed Fast materials. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation).
 
 ## Fast material storage blocks
 

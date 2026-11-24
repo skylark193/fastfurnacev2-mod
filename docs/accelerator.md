@@ -39,13 +39,14 @@ The Accelerator does not require fuel to perform these conversions. Other mods c
 
 ## Boost fuels
 
-By default, only Fast Coal, Block of Fast Coal, and Extreme Coal are accepted as Accelerator boosts. Ordinary coal and other unregistered furnace fuels are rejected by the boost slot and automation.
+By default, only Fast Coal, Block of Fast Coal, Extreme Coal, and Block of Extreme Coal are accepted as Accelerator boosts. Ordinary coal and other unregistered furnace fuels are rejected by the boost slot and automation.
 
 | Boost item | Work supplied | Maximum work per tick | Effective speed |
 |---|---:|---:|---:|
 | Fast Coal | 3,600 | 3 | 300% |
 | Block of Fast Coal | 4,000 | 3 | 300% |
 | Extreme Coal | 7,200 | 5 | 500% |
+| Block of Extreme Coal | 8,000 | 5 | 500% |
 
 When valid work can proceed and no boost remains, one accepted boost item is consumed and its full work capacity is banked. Each active tick advances by the smallest of:
 
@@ -63,8 +64,9 @@ This clamping prevents wasted partial ticks or boost work.
 | Fast Coal | 134 ticks | 1,200 ticks | 9 item conversions, or 1 block conversion |
 | Block of Fast Coal | 134 ticks | 1,200 ticks | 10 item conversions, or 1 block conversion plus 1 item conversion |
 | Extreme Coal | 80 ticks | 720 ticks | 18 item conversions, or 2 block conversions |
+| Block of Extreme Coal | 80 ticks | 720 ticks | 20 item conversions, or 2 block conversions plus 2 item conversions |
 
-Boost work can be spent across different conversion types. For example, a Block of Fast Coal can fund one 3,600-work block conversion and then one 400-work item conversion, regardless of which supported materials are used.
+Boost work can be spent across different conversion types. For example, a Block of Fast Coal can fund one 3,600-work block conversion and then one 400-work item conversion, regardless of which supported materials are used. A Block of Extreme Coal funds two block conversions with 800 work left, enough for two more item conversions.
 
 ## Pause and reset rules
 

@@ -78,10 +78,19 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.EXTREME_COAL.get(),
                 Component.translatable("jei.fastfurnacev2.extreme_coal"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.EXTREME_COAL_BLOCK.get(),
+                Component.translatable("jei.fastfurnacev2.extreme_coal_block"));
+        registration.addIngredientInfo(
+                FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE.get(),
+                Component.translatable("jei.fastfurnacev2.deepslate_extreme_coal_ore"));
         for (var ore : List.of(
                 FastFurnaceV2.FAST_IRON_ORE.get(),
                 FastFurnaceV2.FAST_GOLD_ORE.get(),
-                FastFurnaceV2.FAST_DIAMOND_ORE.get())) {
+                FastFurnaceV2.FAST_DIAMOND_ORE.get(),
+                FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE.get(),
+                FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE.get(),
+                FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE.get())) {
             registration.addIngredientInfo(ore, Component.translatable("jei.fastfurnacev2.fast_ore"));
         }
         for (var rawMaterial : List.of(
@@ -102,6 +111,33 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 FastFurnaceV2.FAST_DIAMOND_BLOCK.get())) {
             registration.addIngredientInfo(block, Component.translatable("jei.fastfurnacev2.fast_material_block"));
         }
+        for (var tool : List.of(
+                FastFurnaceV2.FAST_IRON_PICKAXE.get(),
+                FastFurnaceV2.FAST_IRON_SHOVEL.get(),
+                FastFurnaceV2.FAST_IRON_AXE.get())) {
+            registration.addIngredientInfo(tool, Component.translatable("jei.fastfurnacev2.fast_iron_tool"));
+        }
+        registration.addIngredientInfo(
+                FastFurnaceV2.FAST_IRON_SWORD.get(),
+                Component.translatable("jei.fastfurnacev2.fast_iron_sword"));
+        for (var tool : List.of(
+                FastFurnaceV2.FAST_GOLD_PICKAXE.get(),
+                FastFurnaceV2.FAST_GOLD_SHOVEL.get(),
+                FastFurnaceV2.FAST_GOLD_AXE.get())) {
+            registration.addIngredientInfo(tool, Component.translatable("jei.fastfurnacev2.fast_gold_tool"));
+        }
+        registration.addIngredientInfo(
+                FastFurnaceV2.FAST_GOLD_SWORD.get(),
+                Component.translatable("jei.fastfurnacev2.fast_gold_sword"));
+        for (var tool : List.of(
+                FastFurnaceV2.FAST_DIAMOND_PICKAXE.get(),
+                FastFurnaceV2.FAST_DIAMOND_SHOVEL.get(),
+                FastFurnaceV2.FAST_DIAMOND_AXE.get())) {
+            registration.addIngredientInfo(tool, Component.translatable("jei.fastfurnacev2.fast_diamond_tool"));
+        }
+        registration.addIngredientInfo(
+                FastFurnaceV2.FAST_DIAMOND_SWORD.get(),
+                Component.translatable("jei.fastfurnacev2.fast_diamond_sword"));
         registration.addIngredientInfo(
                 FastFurnaceV2.ACCELERATOR.get(),
                 Component.translatable("jei.fastfurnacev2.accelerator_info"));

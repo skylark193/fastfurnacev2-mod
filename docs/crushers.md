@@ -32,6 +32,17 @@ Without external replacements, the vanilla built-ins are:
 
 Crushing does not use the raw ore's ordinary smelting result. Ordinary furnace inputs such as cobblestone are not accepted unless another mod registers a crusher recipe for them. Built-in crushing does not award ordinary smelting experience.
 
+Fast Furnace V2 also registers these ore-block recipes:
+
+| Input | Normal output | Successful output-doubling roll |
+|---|---|---|
+| Regular or Deepslate Extreme Coal Ore | 3 × Extreme Coal | 6 × Extreme Coal |
+| Regular or Deepslate Fast Iron Ore | 3 × Crushed Fast Iron | 6 × Crushed Fast Iron |
+| Regular or Deepslate Fast Gold Ore | 3 × Crushed Fast Gold | 6 × Crushed Fast Gold |
+| Regular or Deepslate Fast Diamond Ore | 3 × Crushed Fast Diamond | 6 × Crushed Fast Diamond |
+
+The selected external crushed item or dust is used when discovery supplies one. These recipes inherit ordinary-smelting-time fallback and tier/fuel timing like other built-in crusher definitions.
+
 Generated crushed items receive ordinary smelting recipes when needed, so crushing remains useful as a two-step ore-processing chain. See [Dynamic crushed ores](world-generation.md#dynamic-crushed-ores).
 
 ## Processing time
@@ -55,14 +66,14 @@ Custom API recipes can specify their own base processing time. A custom time of 
 
 ## Fuel behavior
 
-Fast Coal and Block of Fast Coal add 50 percentage points to active processing speed; Extreme Coal adds 100. Their adjusted durations are identical to the **before doubling** values used by furnaces:
+Fast Coal and Block of Fast Coal add 50 percentage points to active processing speed; Extreme Coal and Block of Extreme Coal add 100. Their adjusted durations are identical to the **before doubling** values used by furnaces:
 
-| Tier | Fast Coal | Block of Fast Coal | Extreme Coal |
-|---|---:|---:|---:|
-| Fast | 2,400 | 24,000 | 3,200 |
-| Iron | 2,800 | 28,000 | 4,000 |
-| Gold | 3,200 | 32,000 | 4,800 |
-| Diamond | 3,600 | 36,000 | 5,600 |
+| Tier | Fast Coal | Block of Fast Coal | Extreme Coal | Block of Extreme Coal |
+|---|---:|---:|---:|---:|
+| Fast | 2,400 | 24,000 | 3,200 | 32,000 |
+| Iron | 2,800 | 28,000 | 4,000 | 40,000 |
+| Gold | 3,200 | 32,000 | 4,800 | 48,000 |
+| Diamond | 3,600 | 36,000 | 5,600 | 56,000 |
 
 All durations are in ticks. **No crusher tier rolls for doubled fuel duration.** Ordinary and custom fuels are otherwise supported through the same fuel system as furnaces.
 
@@ -70,8 +81,8 @@ All durations are in ticks. **No crusher tier rolls for doubled fuel duration.**
 
 Once per completed crushing operation, the crusher rolls its tier's output-doubling chance:
 
-- A normal built-in result is two crushed items.
-- A successful built-in roll produces four crushed items.
+- A normal built-in raw-item result is two crushed items and doubles to four.
+- A normal built-in ore-block result is three items and doubles to six.
 - A custom recipe's complete output stack is doubled, whatever its output count is.
 
 Input is consumed only when the selected result can be inserted. A failed roll still produces the normal result.

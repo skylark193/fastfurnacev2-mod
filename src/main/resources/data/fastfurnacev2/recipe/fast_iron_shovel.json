@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "M": "fastfurnacev2:fast_iron_ingot",
+    "#": "minecraft:stick"
+  },
+  "pattern": [
+    "M",
+    "#",
+    "#"
+  ],
+  "result": {
+    "id": "fastfurnacev2:fast_iron_shovel"
+  }
+}

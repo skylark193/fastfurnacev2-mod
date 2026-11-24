@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "fastfurnacev2:extreme_coal_block"
+  ],
+  "result": {
+    "count": 9,
+    "id": "fastfurnacev2:extreme_coal"
+  }
+}

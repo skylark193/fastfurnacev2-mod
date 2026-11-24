@@ -1,15 +1,15 @@
 # Fast Furnace V2 documentation
 
-This documentation applies to **Fast Furnace V2 1.3.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
+This documentation applies to **Fast Furnace V2 1.4.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
 
 ## Documentation map
 
 | Page | Contents |
 |---|---|
 | [Blocks](blocks.md) | Every registered block, its ID, acquisition, mining behavior, drops, and creative-tab placement |
-| [Items](items.md) | Fast Coal, Extreme Coal, raw and finished Fast materials, block items, and generated or reused crushed-ore items |
+| [Items](items.md) | Special fuels, Fast materials, enhanced tools and swords, block items, and generated or reused crushed-ore items |
 | [Fast Furnaces](furnaces.md) | Tier speeds, fuel duration bonuses, fuel doubling, smelting behavior, and saved progress |
-| [Fast Crushers](crushers.md) | Raw-ore crushing, custom recipes, tier timing, output doubling, and pending results |
+| [Fast Crushers](crushers.md) | Raw-item and ore-block crushing, custom recipes, tier timing, output doubling, and pending results |
 | [Accelerator](accelerator.md) | Fast-material conversion, lava placement, exact-work boosts, automation, and visual progress |
 | [Recipes and fuels](recipes.md) | Crafting patterns, machine conversions, smelting behavior, and fuel reference tables |
 | [World generation and resources](world-generation.md) | Mining bonuses, Fast and Extreme ore generation, and dynamic crushed-ore discovery |
@@ -23,10 +23,10 @@ For installation and development commands, see the [project README](../README.md
 1. Mine stone with a suitable non-Silk-Touch tool for a chance at bonus **Fast Cobblestone**, or mine coal ore for a chance at bonus **Fast Coal**.
 2. Craft a **Fast Furnace** from eight Fast Cobblestone using the vanilla furnace pattern.
 3. Use ordinary smelting recipes and fuels. Fast Coal and Extreme Coal provide additional speed and burn-duration bonuses.
-4. Find Fast Iron, Fast Gold, and Fast Diamond Ore among their regular vanilla ores. Smelt their raw drops directly. Nine finished materials craft a reversible Fast storage block.
+4. Find Fast Iron, Fast Gold, and Fast Diamond Ore among their regular and deepslate vanilla ores. Smelt their raw drops directly. Nine finished materials craft a reversible Fast storage block or enhanced vanilla-style tools.
 5. Craft a **Fast Crusher** with three Fast Diamonds, five Fast Iron Ingots, and a Fast Furnace, then crush raw ores into two crushed items and smelt each result.
 6. Upgrade through **Iron**, **Gold**, and **Diamond** tiers by surrounding the previous furnace or crusher with eight matching Fast storage blocks.
-7. Find **Extreme Coal Ore** among regular coal ore for a stronger special fuel.
+7. Find **Extreme Coal Ore** among regular or deepslate coal ore for a stronger special fuel, and optionally pack nine Extreme Coal into a reversible storage block.
 8. Craft an **Accelerator** by surrounding an Iron Fast Furnace with eight Redstone Blocks, then surround it with lava on four horizontal sides to convert ordinary materials and their blocks into Fast variants.
 
 See [Recipes and fuels](recipes.md) for complete patterns and [World generation and resources](world-generation.md) for acquisition chances.

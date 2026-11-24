@@ -21,7 +21,7 @@ Processing time is calculated from the recipe's ordinary smelting time:
 processing ticks = max(1, floor(ordinary ticks × 100 / effective speed percent))
 ```
 
-Fast Coal and Block of Fast Coal add **50 percentage points** to the tier's speed while actively burning. Extreme Coal adds **100 percentage points**. These are additions to the tier speed, not multipliers.
+Fast Coal and Block of Fast Coal add **50 percentage points** to the tier's speed while actively burning. Extreme Coal and Block of Extreme Coal add **100 percentage points**. These are additions to the tier speed, not multipliers.
 
 The following table uses a standard 200-tick smelting recipe:
 
@@ -36,7 +36,7 @@ Recipes with other ordinary cooking times use the same formula. Another mod can 
 
 ## Fuel-duration bonuses
 
-Outside these machines, Fast Coal and Extreme Coal have the same ordinary fuel value as vanilla coal: **1,600 ticks**. Block of Fast Coal has the same ordinary value as a vanilla coal block: **16,000 ticks**.
+Outside these machines, Fast Coal and Extreme Coal have the same ordinary fuel value as vanilla coal: **1,600 ticks**. Block of Fast Coal and Block of Extreme Coal have the same ordinary value as a vanilla coal block: **16,000 ticks**.
 
 Fast Coal and its block use these tier duration multipliers:
 
@@ -63,12 +63,12 @@ Extreme Coal duration = ordinary duration + 2 × (Fast Coal duration - ordinary 
 | Gold | 3,200 | 6,400 | 4,800 | 9,600 |
 | Diamond | 3,600 | 7,200 | 5,600 | 11,200 |
 
-| Tier | Block of Fast Coal | Block after doubling |
-|---|---:|---:|
-| Fast | 24,000 | 48,000 |
-| Iron | 28,000 | 56,000 |
-| Gold | 32,000 | 64,000 |
-| Diamond | 36,000 | 72,000 |
+| Tier | Block of Fast Coal | Fast block after doubling | Block of Extreme Coal | Extreme block after doubling |
+|---|---:|---:|---:|---:|
+| Fast | 24,000 | 48,000 | 32,000 | 64,000 |
+| Iron | 28,000 | 56,000 | 40,000 | 80,000 |
+| Gold | 32,000 | 64,000 | 48,000 | 96,000 |
+| Diamond | 36,000 | 72,000 | 56,000 | 112,000 |
 
 All durations are in ticks.
 
@@ -83,7 +83,7 @@ Every valid fuel item consumed by a Fast Furnace independently rolls the tier's 
 | Gold | 20% |
 | Diamond | 25% |
 
-This roll applies to ordinary fuels as well as Fast Coal, Block of Fast Coal, Extreme Coal, and registered custom fuels. It is a duration roll, not an output-doubling roll. Fast Crushers never make this roll; their equivalent percentage applies to completed output instead.
+This roll applies to ordinary fuels as well as Fast Coal, Block of Fast Coal, Extreme Coal, Block of Extreme Coal, and registered custom fuels. It is a duration roll, not an output-doubling roll. Fast Crushers never make this roll; their equivalent percentage applies to completed output instead.
 
 The machine tracks the definition from the fuel stack actually consumed. Replacing the item in the fuel slot does not remove the active fuel's speed or duration effect.
 

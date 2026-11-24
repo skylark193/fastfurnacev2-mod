@@ -10,7 +10,7 @@ The lava-vein generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. The Fast material sources are preserved as `iron_ore.png`, `gold_ore.png`, `diamond_ore.png`, `raw_iron.png`, `raw_gold.png`, `raw_diamond.png`, `iron_ingot.png`, `gold_ingot.png`, and `diamond.png` in the same directory. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Regular and deepslate Fast material ore sources are preserved as `iron_ore.png`, `deepslate_iron_ore.png`, `gold_ore.png`, `deepslate_gold_ore.png`, `diamond_ore.png`, and `deepslate_diamond_ore.png`; `deepslate_coal_ore.png` supplies Deepslate Extreme Coal Ore. Raw and finished Fast material sources are `raw_iron.png`, `raw_gold.png`, `raw_diamond.png`, `iron_ingot.png`, `gold_ingot.png`, and `diamond.png`. Vanilla tool sources are the four `iron_*`, four `golden_*`, and four `diamond_*` PNGs for pickaxes, shovels, axes, and swords in the same directory. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -74,6 +74,45 @@ macOS/Linux:
 ```
 
 Both commands write eight-frame vertical strips and sibling `.png.mcmeta` files with two ticks per frame and no interpolation. The Extreme Coal generator's `--seed`, `--frames`, and `--frame-time` options control deterministic heat variation and animation timing.
+
+## Regenerate Deepslate Ores and Block of Extreme Coal
+
+Deepslate Extreme Coal Ore uses seed **433**, Deepslate Fast Iron Ore **434**, Deepslate Fast Gold Ore **435**, and Deepslate Fast Diamond Ore **436**. Block of Extreme Coal uses seed **437** with the all-lava generator, preserving the coal-block source's alpha and luminance detail while changing every visible pixel's color over time. All five outputs have eight frames at two ticks per frame with no interpolation.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\deepslate_coal_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\deepslate_extreme_coal_ore.png --seed 433 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\deepslate_iron_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\deepslate_fast_iron_ore.png --seed 434 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\deepslate_gold_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\deepslate_fast_gold_ore.png --seed 435 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\deepslate_diamond_ore.png --output src\main\resources\assets\fastfurnacev2\textures\block\deepslate_fast_diamond_ore.png --seed 436 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\coal_block.png --output src\main\resources\assets\fastfurnacev2\textures\block\extreme_coal_block.png --seed 437 --frames 8 --frame-time 2
+```
+
+On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments.
+
+## Regenerate Fast Tools and Swords
+
+All twelve tool textures use shared seed **439**, eight frames, two ticks per frame, no interpolation, and two primary veins. The shared seed intentionally gives identical tool silhouettes the same vein placement across material tiers.
+
+Windows:
+
+```bash
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_pickaxe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_iron_pickaxe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_shovel.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_iron_shovel.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_axe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_iron_axe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\iron_sword.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_iron_sword.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\golden_pickaxe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_gold_pickaxe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\golden_shovel.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_gold_shovel.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\golden_axe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_gold_axe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\golden_sword.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_gold_sword.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_pickaxe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_diamond_pickaxe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_shovel.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_diamond_shovel.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_axe.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_diamond_axe.png --seed 439 --frames 8 --frame-time 2 --veins 2
+.venv\Scripts\python -I tools\generate_lava_texture.py --input tools\texture_sources\diamond_sword.png --output src\main\resources\assets\fastfurnacev2\textures\item\fast_diamond_sword.png --seed 439 --frames 8 --frame-time 2 --veins 2
+```
+
+On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments. The checked-in tests cover all twelve concrete outputs.
 
 ## Regenerate Block of Fast Coal
 
@@ -258,4 +297,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, Extreme Coal's all-lava visible pixels and preserved silhouette, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, Extreme Coal's all-lava visible pixels and preserved silhouette, Block of Extreme Coal's nonuniform all-lava animation with every visible pixel changing RGB across frames, the Accelerator bolt's monotonic bottom-up fill and stationary outline, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

@@ -182,6 +182,16 @@ public final class FastFurnaceApiImpl {
                         AcceleratorBlockEntity.EXTREME_COAL_BOOST_WORK,
                         AcceleratorBlockEntity.EXTREME_COAL_BOOSTED_WORK_PER_TICK)
                 .build());
+        registerFuel(FastFuel.builder(
+                        FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID,
+                        Ingredient.of(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get()),
+                        FastFurnaceBlockEntity.VANILLA_COAL_BLOCK_BURN_TIME)
+                .burnTimePercent(tier -> 2 * tier.getFastCoalBurnTimePercent() - 100)
+                .speedBonusPercent(FastFurnaceTier.EXTREME_COAL_SPEED_BONUS_PERCENT)
+                .acceleratorBoost(
+                        AcceleratorBlockEntity.EXTREME_COAL_BLOCK_BOOST_WORK,
+                        AcceleratorBlockEntity.EXTREME_COAL_BOOSTED_WORK_PER_TICK)
+                .build());
     }
 
     private static void registerDefaultCrusherRecipes() {
@@ -198,6 +208,34 @@ public final class FastFurnaceApiImpl {
                     new ItemStack(crushed, FastFurnaceBlockEntity.FAST_CRUSHER_OUTPUT_COUNT),
                     0));
         }
+        registerOreCrusherRecipe("extreme_coal_ore",
+                FastFurnaceV2.EXTREME_COAL_ORE_ITEM.get(), FastFurnaceV2.EXTREME_COAL.get());
+        registerOreCrusherRecipe("deepslate_extreme_coal_ore",
+                FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE_ITEM.get(), FastFurnaceV2.EXTREME_COAL.get());
+        registerFastMaterialOreCrusherRecipes("iron",
+                FastFurnaceV2.FAST_IRON_ORE_ITEM.get(), FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE_ITEM.get());
+        registerFastMaterialOreCrusherRecipes("gold",
+                FastFurnaceV2.FAST_GOLD_ORE_ITEM.get(), FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE_ITEM.get());
+        registerFastMaterialOreCrusherRecipes("diamond",
+                FastFurnaceV2.FAST_DIAMOND_ORE_ITEM.get(), FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE_ITEM.get());
+    }
+
+    private static void registerFastMaterialOreCrusherRecipes(String material, Item regularOre, Item deepslateOre) {
+        Item crushed = CrushedOres.forRawOre(Identifier.fromNamespaceAndPath(
+                FastFurnaceV2.MODID, "raw_fast_" + material));
+        if (crushed == null) {
+            throw new IllegalStateException("Missing built-in crushed Fast material: " + material);
+        }
+        registerOreCrusherRecipe("fast_" + material + "_ore", regularOre, crushed);
+        registerOreCrusherRecipe("deepslate_fast_" + material + "_ore", deepslateOre, crushed);
+    }
+
+    private static void registerOreCrusherRecipe(String path, Item input, Item output) {
+        registerCrusherRecipe(new CrusherRecipe(
+                Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "crusher/ore/" + path),
+                Ingredient.of(input),
+                new ItemStack(output, 3),
+                0));
     }
 
     private static void registerDefaultAcceleratorRecipes() {

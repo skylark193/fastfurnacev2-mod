@@ -113,12 +113,13 @@ JEI calculates smelt count from adjusted burn time divided by that tier's actual
 | Fast Coal | 24 | 35 | 48.48 | 63.16 |
 | Block of Fast Coal | 240 | 350 | 484.85 | 631.58 |
 | Extreme Coal | 40 | 60.61 | 84.21 | 112 |
+| Block of Extreme Coal | 400 | 606.06 | 842.11 | 1,120 |
 
 Custom fuels use their registered duration and speed bonuses in the same calculation.
 
 ### Ingredient information
 
-JEI includes explanatory information for Fast Cobblestone, Fast Coal, Block of Fast Coal, Extreme Coal Ore, Extreme Coal, every Fast ore, raw and finished Fast material, Fast storage block, the Accelerator, and every furnace and crusher tier. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
+JEI includes explanatory information for Fast Cobblestone, Fast Coal, both coal storage blocks, regular and deepslate Extreme Coal Ore, Extreme Coal, every regular and deepslate Fast ore, raw and finished Fast material, Fast storage block, the Accelerator, every furnace and crusher tier, and all twelve Fast tools and swords. Tool descriptions state their mining-speed, attack-speed, attack-damage, durability-saving, and repair-material bonuses as applicable. Ore Crushing displays include the built-in ore-block recipes and their three-item normal results. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
 
 ### Current compatibility boundary
 

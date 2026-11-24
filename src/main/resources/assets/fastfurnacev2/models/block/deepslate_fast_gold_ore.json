@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "fastfurnacev2:block/deepslate_fast_gold_ore"
+  }
+}
