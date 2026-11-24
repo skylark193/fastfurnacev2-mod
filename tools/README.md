@@ -198,6 +198,10 @@ Windows:
 .venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\smooth_stone.png --output src\main\resources\assets\fastfurnacev2\textures\block\extremely_fast_alloyer.png --seed 440 --frames 8 --frame-time 2
 .venv\Scripts\python -I tools\generate_accelerator_top_texture.py --input tools\texture_sources\smooth_stone.png --output-prefix src\main\resources\assets\fastfurnacev2\textures\block\extremely_fast_alloyer_top_ --seed 440 --frames 8 --frame-time 2 --all-lava
 .venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\iron_ingot.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_ingot.png --seed 441 --frames 8 --frame-time 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\diamond_pickaxe.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_pickaxe.png --seed 442 --frames 8 --frame-time 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\diamond_shovel.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_shovel.png --seed 442 --frames 8 --frame-time 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\diamond_axe.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_axe.png --seed 442 --frames 8 --frame-time 2
+.venv\Scripts\python -I tools\generate_extreme_coal_texture.py --input tools\texture_sources\diamond_sword.png --output src\main\resources\assets\fastfurnacev2\textures\item\extremely_fast_sword.png --seed 442 --frames 8 --frame-time 2
 ```
 
 On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments.

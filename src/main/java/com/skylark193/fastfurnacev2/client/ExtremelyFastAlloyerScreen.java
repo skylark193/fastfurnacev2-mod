@@ -1,7 +1,9 @@
 package com.skylark193.fastfurnacev2.client;
 
+import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerBlockEntity;
 import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerMenu;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -14,15 +16,20 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class ExtremelyFastAlloyerScreen extends AbstractContainerScreen<ExtremelyFastAlloyerMenu> {
     private static final Identifier TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/furnace.png");
+    private static final Identifier LIT_PROGRESS_SPRITE =
+            Identifier.withDefaultNamespace("container/furnace/lit_progress");
     private static final Identifier BURN_PROGRESS_SPRITE =
             Identifier.withDefaultNamespace("container/furnace/burn_progress");
     private static final int INFO_BUTTON_X = 160;
     private static final int INFO_BUTTON_Y = 4;
     private static final int INFO_BUTTON_SIZE = 12;
     private static final int INFO_PANEL_WIDTH = 176;
-    private static final int INFO_PANEL_HEIGHT = 55;
+    private static final int INFO_PANEL_HEIGHT = 77;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.alloyer.info");
-    private static final Component RECIPE_TIME = Component.translatable("gui.fastfurnacev2.alloyer.recipe_time");
+    private static final Component FUEL = Component.translatable("gui.fastfurnacev2.alloyer.fuel");
+    private static final Component BASE_TIME = Component.translatable("gui.fastfurnacev2.alloyer.base_time");
+    private static final Component CURRENT_TIME = Component.translatable("gui.fastfurnacev2.alloyer.current_time");
+    private static final Component SECONDS = Component.translatable("gui.fastfurnacev2.seconds");
     private static final Component OWN_RECIPES = Component.translatable("gui.fastfurnacev2.alloyer.own_recipes");
 
     private boolean infoVisible;
@@ -70,7 +77,13 @@ public class ExtremelyFastAlloyerScreen extends AbstractContainerScreen<Extremel
             drawSlot(graphics, x + ExtremelyFastAlloyerMenu.getInputX(slot),
                     y + ExtremelyFastAlloyerMenu.getInputY(slot));
         }
+        drawSlot(graphics, x + 47, y + 53);
         drawSlot(graphics, x + 116, y + 35);
+        if (this.menu.getBurnTimeRemaining() > 0) {
+            int height = Mth.ceil(this.menu.getBurnProgress() * 13.0F) + 1;
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS_SPRITE, 14, 14,
+                    0, 14 - height, x + 25, y + 36 + 14 - height, 14, height);
+        }
         int width = Mth.ceil(this.menu.getProgress() * 24.0F);
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BURN_PROGRESS_SPRITE, 24, 16,
                 0, 0, x + 79, y + 34, width, 16);
@@ -109,10 +122,24 @@ public class ExtremelyFastAlloyerScreen extends AbstractContainerScreen<Extremel
             graphics.fill(x - 1, y - 1, x + INFO_PANEL_WIDTH + 1, y + INFO_PANEL_HEIGHT + 1, 0xFFC6C6C6);
             graphics.fill(x, y, x + INFO_PANEL_WIDTH, y + INFO_PANEL_HEIGHT, 0xF0181818);
             graphics.text(this.font, INFO_TITLE, x + 6, y + 6, 0xFFFFFFFF, false);
-            graphics.text(this.font, Component.translatable("gui.fastfurnacev2.speed", 100),
-                    x + 6, y + 20, 0xFFE0E0E0, false);
-            graphics.text(this.font, RECIPE_TIME, x + 6, y + 31, 0xFFE0E0E0, false);
-            graphics.text(this.font, OWN_RECIPES, x + 6, y + 42, 0xFFE0E0E0, false);
+            graphics.text(this.font, FUEL, x + 6, y + 20, 0xFFE0E0E0, false);
+            this.drawTimer(graphics, BASE_TIME, ExtremelyFastAlloyerBlockEntity.RECIPE_TICKS, x + 6, y + 31);
+            int currentTicks = ExtremelyFastAlloyerBlockEntity.getProcessingTicks(
+                    ExtremelyFastAlloyerBlockEntity.RECIPE_TICKS, this.menu.getLavaSides());
+            this.drawTimer(graphics, CURRENT_TIME, currentTicks, x + 6, y + 42);
+            graphics.text(this.font, Component.translatable(
+                            "gui.fastfurnacev2.alloyer.lava_sides", this.menu.getLavaSides()),
+                    x + 6, y + 53, 0xFFE0E0E0, false);
+            graphics.text(this.font, OWN_RECIPES, x + 6, y + 64, 0xFFE0E0E0, false);
         }
+    }
+
+    private void drawTimer(GuiGraphicsExtractor graphics, Component label, int ticks, int x, int y) {
+        String value = String.format(Locale.ROOT, "%.1f", ticks / 20.0F);
+        int valueX = x + this.font.width(label) + this.font.width(" ");
+        graphics.text(this.font, label, x, y, 0xFFE0E0E0, false);
+        graphics.text(this.font, value, valueX, y, 0xFFE0E0E0, false);
+        graphics.text(this.font, SECONDS, valueX + this.font.width(value) + this.font.width(" "),
+                y, 0xFFE0E0E0, false);
     }
 }

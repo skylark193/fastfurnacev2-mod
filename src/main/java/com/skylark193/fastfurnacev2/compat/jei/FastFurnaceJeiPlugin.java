@@ -142,6 +142,15 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.FAST_DIAMOND_SWORD.get(),
                 Component.translatable("jei.fastfurnacev2.fast_diamond_sword"));
+        for (var tool : List.of(
+                FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
+                FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
+                FastFurnaceV2.EXTREMELY_FAST_AXE.get())) {
+            registration.addIngredientInfo(tool, Component.translatable("jei.fastfurnacev2.extremely_fast_tool"));
+        }
+        registration.addIngredientInfo(
+                FastFurnaceV2.EXTREMELY_FAST_SWORD.get(),
+                Component.translatable("jei.fastfurnacev2.extremely_fast_sword"));
         registration.addIngredientInfo(
                 FastFurnaceV2.ACCELERATOR.get(),
                 Component.translatable("jei.fastfurnacev2.accelerator_info"));

@@ -9,6 +9,7 @@ import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.api.event.RegisterAcceleratorRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastCrusherRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastFuelsEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -31,6 +32,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -41,13 +43,18 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
@@ -1323,8 +1330,8 @@ final class FastFurnaceGameTests {
 
     private static void extremelyFastAlloyerUsesOnlyShapelessAlloyingRecipes(GameTestHelper helper) {
         if (ExtremelyFastAlloyerRecipes.recipes().size() != 1
-                || ExtremelyFastAlloyerRecipes.recipes().get(0).processingTicks() != 200) {
-            throw helper.assertionException("Expected only the built-in 200-tick Extremely Fast Ingot recipe");
+                || ExtremelyFastAlloyerRecipes.recipes().get(0).processingTicks() != 800) {
+            throw helper.assertionException("Expected only the built-in 800-tick Extremely Fast Ingot recipe");
         }
         ExtremelyFastAlloyerBlockEntity alloyer = placeAlloyer(
                 helper, BlockPos.ZERO,
@@ -1333,37 +1340,48 @@ final class FastFurnaceGameTests {
                 new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()));
         ExtremelyFastAlloyerMenu menu = createAlloyerMenu(helper, alloyer);
         if (!alloyer.getDisplayName().getString().equals("Extremely Fast Alloyer")
-                || menu.getRecipeTicks() != 200
+                || menu.getRecipeTicks() != 800
                 || !menu.getSlot(0).mayPlace(new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()))
+                || !menu.getSlot(ExtremelyFastAlloyerMenu.FUEL_SLOT).mayPlace(
+                        new ItemStack(FastFurnaceV2.EXTREME_COAL.get()))
+                || menu.getSlot(ExtremelyFastAlloyerMenu.FUEL_SLOT).mayPlace(
+                        new ItemStack(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get()))
+                || menu.getSlot(ExtremelyFastAlloyerMenu.FUEL_SLOT).mayPlace(new ItemStack(Items.COAL))
                 || menu.getSlot(ExtremelyFastAlloyerMenu.RESULT_SLOT).mayPlace(
                         new ItemStack(FastFurnaceV2.EXTREMELY_FAST_INGOT.get()))
                 || !alloyer.canPlaceItem(0, new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()))
                 || alloyer.canPlaceItem(0, new ItemStack(Items.RAW_IRON))
                 || alloyer.getSlotsForFace(Direction.UP).length != 3
-                || alloyer.getSlotsForFace(Direction.NORTH).length != 3
+                || alloyer.getSlotsForFace(Direction.NORTH).length != 1
+                || alloyer.getSlotsForFace(Direction.NORTH)[0] != ExtremelyFastAlloyerMenu.FUEL_SLOT
                 || alloyer.getSlotsForFace(Direction.DOWN)[0] != ExtremelyFastAlloyerMenu.RESULT_SLOT) {
-            throw helper.assertionException("Alloyer menu, identity, ingredient, or automation restrictions are incorrect");
+            throw helper.assertionException("Alloyer menu, identity, fuel, ingredient, or automation restrictions are incorrect");
         }
-        tickAlloyer(helper, alloyer, BlockPos.ZERO, 99);
-        if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
-            throw helper.assertionException("Alloyer completed before 200 ticks");
+        tickAlloyer(helper, alloyer, BlockPos.ZERO, 399);
+        if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()
+                || menu.getBurnTimeRemaining() != 1201
+                || menu.getTotalBurnTime() != 1600) {
+            throw helper.assertionException("Alloyer completed early or did not consume exactly one Extreme Coal");
         }
         tickAlloyer(helper, alloyer, BlockPos.ZERO);
         if (helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 5) {
-            throw helper.assertionException("Alloyer bolt did not show half progress at tick 100");
+            throw helper.assertionException("Alloyer bolt did not show half progress at tick 400: progress="
+                    + menu.getWorkProgress() + ", duration=" + menu.getRecipeTicks()
+                    + ", lava=" + menu.getLavaSides() + ", bolt="
+                    + helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL));
         }
-        tickAlloyer(helper, alloyer, BlockPos.ZERO, 99);
-        if (menu.getWorkProgress() != 199 || !menu.isProcessing()
+        tickAlloyer(helper, alloyer, BlockPos.ZERO, 399);
+        if (menu.getWorkProgress() != 799 || !menu.isProcessing()
                 || helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 10) {
-            throw helper.assertionException("Alloyer did not synchronize tick-199 progress and its full bolt");
+            throw helper.assertionException("Alloyer did not synchronize tick-799 progress and its full bolt");
         }
         tickAlloyer(helper, alloyer, BlockPos.ZERO);
         if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).is(FastFurnaceV2.EXTREMELY_FAST_INGOT.get())
                 || alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1
                 || !alloyer.getItem(0).isEmpty() || !alloyer.getItem(1).isEmpty() || !alloyer.getItem(2).isEmpty()
-                || menu.getWorkProgress() != 0 || menu.getRecipeTicks() != 0
+                || menu.getWorkProgress() != 0 || menu.getRecipeTicks() != 0 || menu.getBurnTimeRemaining() != 800
                 || helper.getBlockState(BlockPos.ZERO).getValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL) != 0) {
-            throw helper.assertionException("Alloyer did not consume one of each shapeless ingredient on tick 200");
+            throw helper.assertionException("Alloyer did not consume one of each shapeless ingredient on tick 800");
         }
 
         BlockPos duplicatePos = new BlockPos(4, 0, 0);
@@ -1372,7 +1390,7 @@ final class FastFurnaceGameTests {
                 new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()),
                 new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()),
                 new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()));
-        tickAlloyer(helper, duplicate, duplicatePos, 200);
+        tickAlloyer(helper, duplicate, duplicatePos, 800);
         if (!duplicate.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
             throw helper.assertionException("Alloyer accepted duplicate ingredients");
         }
@@ -1382,7 +1400,7 @@ final class FastFurnaceGameTests {
                 helper, foreignPos, new ItemStack(Items.COBBLESTONE), new ItemStack(Items.RAW_IRON),
                 new ItemStack(Items.COAL));
         ExtremelyFastAlloyerMenu foreignMenu = createAlloyerMenu(helper, foreign);
-        tickAlloyer(helper, foreign, foreignPos, 200);
+        tickAlloyer(helper, foreign, foreignPos, 800);
         if (foreignMenu.getWorkProgress() != 0
                 || !foreign.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
             throw helper.assertionException("Alloyer accepted furnace, crusher, or Accelerator inputs");
@@ -1394,11 +1412,12 @@ final class FastFurnaceGameTests {
         tickAlloyer(helper, blocked, blockedPos, 25);
         blocked.setItem(ExtremelyFastAlloyerMenu.RESULT_SLOT, new ItemStack(Items.DIRT));
         tickAlloyer(helper, blocked, blockedPos, 20);
-        if (blockedMenu.getWorkProgress() != 25 || blockedMenu.isProcessing()) {
+        if (blockedMenu.getWorkProgress() != 25 || blockedMenu.isProcessing()
+                || blockedMenu.getBurnTimeRemaining() != 1575) {
             throw helper.assertionException("Blocked Alloyer output did not pause and preserve progress");
         }
         blocked.setItem(ExtremelyFastAlloyerMenu.RESULT_SLOT, ItemStack.EMPTY);
-        tickAlloyer(helper, blocked, blockedPos, 175);
+        tickAlloyer(helper, blocked, blockedPos, 775);
         if (blocked.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
             throw helper.assertionException("Alloyer did not resume its saved operation after output space returned");
         }
@@ -1418,13 +1437,13 @@ final class FastFurnaceGameTests {
                 new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get(), 2),
                 new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get(), 2),
                 new ItemStack(FastFurnaceV2.FAST_DIAMOND.get(), 2));
-        tickAlloyer(helper, repeated, repeatPos, 200);
+        tickAlloyer(helper, repeated, repeatPos, 800);
         if (repeated.getItem(0).getCount() != 1 || repeated.getItem(1).getCount() != 1
                 || repeated.getItem(2).getCount() != 1
                 || repeated.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
             throw helper.assertionException("Alloyer did not retain stacked ingredients for a second operation");
         }
-        tickAlloyer(helper, repeated, repeatPos, 200);
+        tickAlloyer(helper, repeated, repeatPos, 800);
         if (repeated.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 2) {
             throw helper.assertionException("Alloyer did not continuously process stacked ingredients");
         }
@@ -1442,7 +1461,7 @@ final class FastFurnaceGameTests {
             }
         }
         if (!aborted.getItem(0).is(FastFurnaceV2.FAST_IRON_INGOT.get())
-                || abortedMenu.getWorkProgress() != 25 || abortedMenu.getRecipeTicks() != 200) {
+                || abortedMenu.getWorkProgress() != 25 || abortedMenu.getRecipeTicks() != 800) {
             throw helper.assertionException("An aborted Alloyer extraction erased progress or failed to restore its input");
         }
 
@@ -1462,6 +1481,84 @@ final class FastFurnaceGameTests {
         if (!committed.getItem(0).isEmpty()
                 || committedMenu.getWorkProgress() != 0 || committedMenu.getRecipeTicks() != 0) {
             throw helper.assertionException("A committed Alloyer extraction did not reset its completed input state");
+        }
+
+        int[] expectedTimes = {800, 700, 600, 500, 400};
+        for (int lavaSides = 0; lavaSides <= 4; lavaSides++) {
+            BlockPos lavaPos = new BlockPos(32 + lavaSides * 4, 0, 0);
+            ExtremelyFastAlloyerBlockEntity lavaAlloyer = placeAlloyer(helper, lavaPos);
+            int placedLava = 0;
+            for (Direction direction : Direction.Plane.HORIZONTAL) {
+                if (placedLava++ < lavaSides) {
+                    helper.setBlock(lavaPos.relative(direction), Blocks.LAVA);
+                }
+            }
+            int expectedTime = expectedTimes[lavaSides];
+            tickAlloyer(helper, lavaAlloyer, lavaPos, expectedTime - 1);
+            ExtremelyFastAlloyerMenu lavaMenu = createAlloyerMenu(helper, lavaAlloyer);
+            if (lavaMenu.getRecipeTicks() != expectedTime || lavaMenu.getLavaSides() != lavaSides
+                    || !lavaAlloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+                throw helper.assertionException("Alloyer did not pause before its " + expectedTime + "-tick lava-scaled operation");
+            }
+            tickAlloyer(helper, lavaAlloyer, lavaPos);
+            if (lavaAlloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
+                throw helper.assertionException("Alloyer did not finish on its " + expectedTime + "-tick lava-scaled operation");
+            }
+        }
+
+        BlockPos exhaustionPos = new BlockPos(52, 0, 0);
+        ExtremelyFastAlloyerBlockEntity exhausted = placeAlloyer(
+                helper, exhaustionPos,
+                new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get(), 4),
+                new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get(), 4),
+                new ItemStack(FastFurnaceV2.FAST_DIAMOND.get(), 4));
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (direction != Direction.SOUTH) {
+                helper.setBlock(exhaustionPos.relative(direction), Blocks.LAVA);
+            }
+        }
+        ExtremelyFastAlloyerMenu exhaustedMenu = createAlloyerMenu(helper, exhausted);
+        tickAlloyer(helper, exhausted, exhaustionPos, 1600);
+        if (exhaustedMenu.getBurnTimeRemaining() != 0 || exhaustedMenu.getWorkProgress() != 100
+                || exhausted.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 3) {
+            throw helper.assertionException("Alloyer did not exhaust Extreme Coal after exactly 1,600 valid work ticks");
+        }
+        tickAlloyer(helper, exhausted, exhaustionPos, 25);
+        if (exhaustedMenu.getWorkProgress() != 100) {
+            throw helper.assertionException("Missing Alloyer fuel did not preserve saved progress");
+        }
+        exhausted.setItem(ExtremelyFastAlloyerMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.EXTREME_COAL.get()));
+        tickAlloyer(helper, exhausted, exhaustionPos, 399);
+        if (exhausted.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 3) {
+            throw helper.assertionException("Refueled Alloyer completed before restoring the remaining work");
+        }
+        tickAlloyer(helper, exhausted, exhaustionPos);
+        if (exhausted.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 4) {
+            throw helper.assertionException("Refueled Alloyer did not resume its saved operation");
+        }
+
+        BlockPos wrongFuelPos = new BlockPos(56, 0, 0);
+        ExtremelyFastAlloyerBlockEntity wrongFuel = placeAlloyer(helper, wrongFuelPos);
+        wrongFuel.setItem(ExtremelyFastAlloyerMenu.FUEL_SLOT, new ItemStack(Items.COAL));
+        tickAlloyer(helper, wrongFuel, wrongFuelPos, 800);
+        if (!wrongFuel.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()
+                || wrongFuel.getItem(ExtremelyFastAlloyerMenu.FUEL_SLOT).getCount() != 1) {
+            throw helper.assertionException("Alloyer processed with or consumed a non-Extreme-Coal fuel");
+        }
+
+        BlockPos changedLavaPos = new BlockPos(60, 0, 0);
+        ExtremelyFastAlloyerBlockEntity changedLava = placeAlloyer(helper, changedLavaPos);
+        tickAlloyer(helper, changedLava, changedLavaPos, 100);
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            helper.setBlock(changedLavaPos.relative(direction), Blocks.LAVA);
+        }
+        tickAlloyer(helper, changedLava, changedLavaPos, 299);
+        if (!changedLava.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Alloyer mishandled elapsed work when its lava count changed");
+        }
+        tickAlloyer(helper, changedLava, changedLavaPos);
+        if (changedLava.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).getCount() != 1) {
+            throw helper.assertionException("Alloyer did not preserve elapsed work while recalculating lava-scaled time");
         }
         helper.succeed();
     }
@@ -1796,6 +1893,31 @@ final class FastFurnaceGameTests {
                 1.30F, 1.0F, FastTools.FAST_GOLD.repairItems(), FastFurnaceV2.FAST_GOLD_INGOT.get());
         assertSword(helper, Items.DIAMOND_SWORD, FastFurnaceV2.FAST_DIAMOND_SWORD.get(),
                 1.20F, 1.20F, FastTools.FAST_DIAMOND.repairItems(), FastFurnaceV2.FAST_DIAMOND.get());
+        assertMiningTool(helper, Items.DIAMOND_PICKAXE, FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
+                Blocks.STONE, 1.50F, ItemTags.PICKAXES, FastTools.EXTREMELY_FAST.repairItems(),
+                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(), 2.0F);
+        assertMiningTool(helper, Items.DIAMOND_SHOVEL, FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
+                Blocks.DIRT, 1.50F, ItemTags.SHOVELS, FastTools.EXTREMELY_FAST.repairItems(),
+                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(), 2.0F);
+        assertMiningTool(helper, Items.DIAMOND_AXE, FastFurnaceV2.EXTREMELY_FAST_AXE.get(),
+                Blocks.OAK_LOG, 1.50F, ItemTags.AXES, FastTools.EXTREMELY_FAST.repairItems(),
+                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(), 2.0F);
+        assertSword(helper, Items.DIAMOND_SWORD, FastFurnaceV2.EXTREMELY_FAST_SWORD.get(),
+                1.50F, 1.0F, FastTools.EXTREMELY_FAST.repairItems(),
+                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(), 2.0F);
+        for (Item tool : List.of(
+                FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
+                FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
+                FastFurnaceV2.EXTREMELY_FAST_AXE.get())) {
+            if (tool.getDefaultInstance().getEnchantmentLevel(
+                    helper.getLevel().registryAccess().getOrThrow(Enchantments.FORTUNE)) != 2) {
+                throw helper.assertionException(tool + " is missing its built-in Fortune II");
+            }
+        }
+        if (FastFurnaceV2.EXTREMELY_FAST_SWORD.get().getDefaultInstance().getEnchantmentLevel(
+                helper.getLevel().registryAccess().getOrThrow(Enchantments.LOOTING)) != 2) {
+            throw helper.assertionException("Extremely Fast Sword is missing its built-in Looting II");
+        }
 
         Item[] diamondTools = {
             FastFurnaceV2.FAST_DIAMOND_PICKAXE.get(),
@@ -1815,6 +1937,53 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(tool + " did not apply its deterministic 5% durability-saving roll");
             }
         }
+
+        long doubledDropSeed = findChanceRollSeed(ExtremelyFastToolEffects.DROP_DOUBLE_CHANCE, true);
+        long ordinaryDropSeed = findChanceRollSeed(ExtremelyFastToolEffects.DROP_DOUBLE_CHANCE, false);
+        Item[] extremelyFastTools = {
+            FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
+            FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
+            FastFurnaceV2.EXTREMELY_FAST_AXE.get()
+        };
+        Block[] brokenBlocks = {Blocks.STONE, Blocks.DIRT, Blocks.OAK_LOG};
+        for (int index = 0; index < extremelyFastTools.length; index++) {
+            player.setItemSlot(EquipmentSlot.MAINHAND, extremelyFastTools[index].getDefaultInstance());
+            for (boolean doubled : new boolean[] {false, true}) {
+                helper.getLevel().getRandom().setSeed(doubled ? doubledDropSeed : ordinaryDropSeed);
+                List<ItemEntity> drops = new ArrayList<>();
+                drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.COBBLESTONE, 3)));
+                BlockDropsEvent event = new BlockDropsEvent(
+                        helper.getLevel(), helper.absolutePos(BlockPos.ZERO), brokenBlocks[index].defaultBlockState(),
+                        null, drops, player, extremelyFastTools[index].getDefaultInstance());
+                ExtremelyFastToolEffects.onBlockDrops(event);
+                if (drops.size() != (doubled ? 2 : 1)
+                        || doubled && !ItemStack.isSameItemSameComponents(drops.get(0).getItem(), drops.get(1).getItem())) {
+                    throw helper.assertionException(extremelyFastTools[index] + " did not apply its independent 5% drop roll");
+                }
+            }
+        }
+
+        player.setItemSlot(EquipmentSlot.MAINHAND, FastFurnaceV2.EXTREMELY_FAST_SWORD.get().getDefaultInstance());
+        var damageSource = player.damageSources().playerAttack(player);
+        for (boolean doubled : new boolean[] {false, true}) {
+            helper.getLevel().getRandom().setSeed(doubled ? doubledDropSeed : ordinaryDropSeed);
+            List<ItemEntity> drops = new ArrayList<>();
+            drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.BONE, 2)));
+            LivingDropsEvent event = new LivingDropsEvent(player, damageSource, drops, true);
+            ExtremelyFastToolEffects.onLivingDrops(event);
+            if (drops.size() != (doubled ? 2 : 1)) {
+                throw helper.assertionException("Extremely Fast Sword did not apply its independent 5% kill-drop roll");
+            }
+
+            helper.getLevel().getRandom().setSeed(findChanceRollSeed(
+                    ExtremelyFastToolEffects.DAMAGE_DOUBLE_CHANCE, doubled));
+            LivingIncomingDamageEvent damageEvent = new LivingIncomingDamageEvent(
+                    player, new DamageContainer(damageSource, 7.0F));
+            ExtremelyFastToolEffects.onIncomingDamage(damageEvent);
+            if (damageEvent.getAmount() != (doubled ? 14.0F : 7.0F)) {
+                throw helper.assertionException("Extremely Fast Sword did not apply its independent 10% damage roll");
+            }
+        }
         helper.succeed();
     }
 
@@ -1827,6 +1996,19 @@ final class FastFurnaceGameTests {
             TagKey<Item> toolTag,
             TagKey<Item> repairTag,
             Item repairItem) {
+        assertMiningTool(helper, vanilla, fast, efficientBlock, speedMultiplier, toolTag, repairTag, repairItem, 1.0F);
+    }
+
+    private static void assertMiningTool(
+            GameTestHelper helper,
+            Item vanilla,
+            Item fast,
+            Block efficientBlock,
+            float speedMultiplier,
+            TagKey<Item> toolTag,
+            TagKey<Item> repairTag,
+            Item repairItem,
+            float durabilityMultiplier) {
         ItemStack vanillaStack = vanilla.getDefaultInstance();
         ItemStack fastStack = fast.getDefaultInstance();
         var vanillaTool = vanillaStack.get(DataComponents.TOOL);
@@ -1837,7 +2019,7 @@ final class FastFurnaceGameTests {
         float vanillaSpeed = vanillaTool.getMiningSpeed(efficientBlock.defaultBlockState());
         float fastSpeed = fastTool.getMiningSpeed(efficientBlock.defaultBlockState());
         if (Math.abs(fastSpeed - vanillaSpeed * speedMultiplier) > 0.0001F
-                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage()
+                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage() * durabilityMultiplier
                 || !fastStack.is(toolTag)
                 || !repairItem.getDefaultInstance().is(repairTag)) {
             throw helper.assertionException(fast + " has incorrect mining speed, durability, tags, or repair material");
@@ -1852,6 +2034,18 @@ final class FastFurnaceGameTests {
             float damageMultiplier,
             TagKey<Item> repairTag,
             Item repairItem) {
+        assertSword(helper, vanilla, fast, speedMultiplier, damageMultiplier, repairTag, repairItem, 1.0F);
+    }
+
+    private static void assertSword(
+            GameTestHelper helper,
+            Item vanilla,
+            Item fast,
+            float speedMultiplier,
+            float damageMultiplier,
+            TagKey<Item> repairTag,
+            Item repairItem,
+            float durabilityMultiplier) {
         ItemStack vanillaStack = vanilla.getDefaultInstance();
         ItemStack fastStack = fast.getDefaultInstance();
         var vanillaModifiers = vanillaStack.get(DataComponents.ATTRIBUTE_MODIFIERS);
@@ -1865,7 +2059,7 @@ final class FastFurnaceGameTests {
         double fastDamage = fastModifiers.compute(Attributes.ATTACK_DAMAGE, 1.0, EquipmentSlot.MAINHAND);
         if (Math.abs(fastSpeed - vanillaSpeed * speedMultiplier) > 0.0001
                 || Math.abs(fastDamage - vanillaDamage * damageMultiplier) > 0.0001
-                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage()
+                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage() * durabilityMultiplier
                 || !fastStack.is(ItemTags.SWORDS)
                 || !repairItem.getDefaultInstance().is(repairTag)) {
             throw helper.assertionException(fast + " has incorrect attack speed, damage, durability, tags, or repair material");
@@ -1917,11 +2111,15 @@ final class FastFurnaceGameTests {
     private static ExtremelyFastAlloyerBlockEntity placeAlloyer(
             GameTestHelper helper, BlockPos relativePos, ItemStack first, ItemStack second, ItemStack third) {
         helper.setBlock(relativePos, FastFurnaceV2.EXTREMELY_FAST_ALLOYER.get());
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            helper.setBlock(relativePos.relative(direction), Blocks.STONE);
+        }
         ExtremelyFastAlloyerBlockEntity alloyer =
                 helper.getBlockEntity(relativePos, ExtremelyFastAlloyerBlockEntity.class);
         alloyer.setItem(0, first);
         alloyer.setItem(1, second);
         alloyer.setItem(2, third);
+        alloyer.setItem(ExtremelyFastAlloyerMenu.FUEL_SLOT, new ItemStack(FastFurnaceV2.EXTREME_COAL.get()));
         return alloyer;
     }
 

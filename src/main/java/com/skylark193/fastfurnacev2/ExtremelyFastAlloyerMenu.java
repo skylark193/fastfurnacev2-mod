@@ -14,15 +14,16 @@ import net.minecraft.world.item.ItemStack;
 public class ExtremelyFastAlloyerMenu extends AbstractContainerMenu {
     public static final int INPUT_SLOT = 0;
     public static final int INPUT_SLOT_COUNT = 3;
-    public static final int RESULT_SLOT = 3;
-    public static final int SLOT_COUNT = 4;
-    public static final int DATA_COUNT = 3;
+    public static final int FUEL_SLOT = 3;
+    public static final int RESULT_SLOT = 4;
+    public static final int SLOT_COUNT = 5;
+    public static final int DATA_COUNT = 6;
     private static final int INVENTORY_SLOT_START = SLOT_COUNT;
     private static final int INVENTORY_SLOT_END = INVENTORY_SLOT_START + 27;
     private static final int HOTBAR_SLOT_START = INVENTORY_SLOT_END;
     private static final int HOTBAR_SLOT_END = HOTBAR_SLOT_START + 9;
     private static final int[] INPUT_X = {38, 56, 47};
-    private static final int[] INPUT_Y = {17, 17, 53};
+    private static final int[] INPUT_Y = {17, 17, 35};
 
     private final Container container;
     private final ContainerData data;
@@ -46,6 +47,12 @@ public class ExtremelyFastAlloyerMenu extends AbstractContainerMenu {
                 }
             });
         }
+        this.addSlot(new Slot(container, FUEL_SLOT, 47, 53) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return ExtremelyFastAlloyerBlockEntity.isExtremeCoal(stack);
+            }
+        });
         this.addSlot(new Slot(container, RESULT_SLOT, 116, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -86,6 +93,10 @@ public class ExtremelyFastAlloyerMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(stack, INPUT_SLOT, INPUT_SLOT_COUNT, false)) {
                         return ItemStack.EMPTY;
                     }
+                } else if (ExtremelyFastAlloyerBlockEntity.isExtremeCoal(stack)) {
+                    if (!this.moveItemStackTo(stack, FUEL_SLOT, FUEL_SLOT + 1, false)) {
+                        return ItemStack.EMPTY;
+                    }
                 } else if (slotIndex < INVENTORY_SLOT_END) {
                     if (!this.moveItemStackTo(stack, HOTBAR_SLOT_START, HOTBAR_SLOT_END, false)) {
                         return ItemStack.EMPTY;
@@ -116,6 +127,11 @@ public class ExtremelyFastAlloyerMenu extends AbstractContainerMenu {
         return total == 0 ? 0.0F : Mth.clamp(this.getWorkProgress() / (float) total, 0.0F, 1.0F);
     }
 
+    public float getBurnProgress() {
+        int total = this.getTotalBurnTime();
+        return total == 0 ? 0.0F : Mth.clamp(this.getBurnTimeRemaining() / (float) total, 0.0F, 1.0F);
+    }
+
     public int getWorkProgress() {
         return this.data.get(0);
     }
@@ -126,5 +142,17 @@ public class ExtremelyFastAlloyerMenu extends AbstractContainerMenu {
 
     public boolean isProcessing() {
         return this.data.get(2) != 0;
+    }
+
+    public int getBurnTimeRemaining() {
+        return this.data.get(3);
+    }
+
+    public int getTotalBurnTime() {
+        return this.data.get(4);
+    }
+
+    public int getLavaSides() {
+        return this.data.get(5);
     }
 }

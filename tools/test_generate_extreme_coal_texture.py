@@ -33,9 +33,17 @@ class ExtremeCoalTextureGeneratorTests(unittest.TestCase):
                 if source_pixel[3] > 0:
                     self.assertIn(result_pixel[:3], lava_colors)
 
-    def test_alloyer_body_and_ingot_are_animated_all_lava(self) -> None:
+    def test_alloyer_ingot_and_extremely_fast_tools_are_animated_all_lava(self) -> None:
         lava_colors = {pixel[:3] for pixel in LAVA_PALETTE}
-        for filename, seed in (("smooth_stone.png", 440), ("iron_ingot.png", 441)):
+        sources = (
+            ("smooth_stone.png", 440),
+            ("iron_ingot.png", 441),
+            ("diamond_pickaxe.png", 442),
+            ("diamond_shovel.png", 442),
+            ("diamond_axe.png", 442),
+            ("diamond_sword.png", 442),
+        )
+        for filename, seed in sources:
             with self.subTest(source=filename):
                 source_path = Path(__file__).parent / "texture_sources" / filename
                 with Image.open(source_path) as image:

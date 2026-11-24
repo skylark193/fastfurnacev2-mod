@@ -22,6 +22,13 @@ final class FastTools {
             ToolMaterial.GOLD, BlockTags.INCORRECT_FOR_GOLD_TOOL, "fast_gold_tool_materials", 1.30F);
     static final ToolMaterial FAST_DIAMOND = withMiningSpeed(
             ToolMaterial.DIAMOND, BlockTags.INCORRECT_FOR_DIAMOND_TOOL, "fast_diamond_tool_materials", 1.20F);
+    static final ToolMaterial EXTREMELY_FAST = new ToolMaterial(
+            BlockTags.INCORRECT_FOR_DIAMOND_TOOL,
+            ToolMaterial.DIAMOND.durability() * 2,
+            ToolMaterial.DIAMOND.speed() * 1.50F,
+            ToolMaterial.DIAMOND.attackDamageBonus(),
+            ToolMaterial.DIAMOND.enchantmentValue(),
+            ItemTags.create(Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extremely_fast_tool_materials")));
 
     private FastTools() {
     }

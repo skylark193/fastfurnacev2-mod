@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Recipes and fuels](recipes.md)
 
-Fast Furnace V2 supplies **45 fixed items**: 24 block items plus Fast Coal, Extreme Coal, three raw Fast materials, three finished Fast materials, the Extremely Fast Ingot, and twelve Fast tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
+Fast Furnace V2 supplies **49 fixed items**: 24 block items plus Fast Coal, Extreme Coal, three raw Fast materials, three finished Fast materials, the Extremely Fast Ingot, twelve Fast tools or swords, and four Extremely Fast tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
 
 ## Standalone item index
 
@@ -17,6 +17,10 @@ Fast Furnace V2 supplies **45 fixed items**: 24 block items plus Fast Coal, Extr
 | Fast Gold Ingot | `fastfurnacev2:fast_gold_ingot` | Smelt raw/crushed Fast Gold or convert a Gold Ingot | Ingredients |
 | Fast Diamond | `fastfurnacev2:fast_diamond` | Smelt raw/crushed Fast Diamond or convert a Diamond | Ingredients |
 | Extremely Fast Ingot | `fastfurnacev2:extremely_fast_ingot` | Alloy Fast Iron Ingot, Fast Gold Ingot, and Fast Diamond | Ingredients |
+| Extremely Fast Pickaxe | `fastfurnacev2:extremely_fast_pickaxe` | Craft Extremely Fast Ingots and sticks | Tools & Utilities |
+| Extremely Fast Shovel | `fastfurnacev2:extremely_fast_shovel` | Craft an Extremely Fast Ingot and sticks | Tools & Utilities |
+| Extremely Fast Axe | `fastfurnacev2:extremely_fast_axe` | Craft Extremely Fast Ingots and sticks | Tools & Utilities; Combat |
+| Extremely Fast Sword | `fastfurnacev2:extremely_fast_sword` | Craft Extremely Fast Ingots and a stick | Combat |
 | Crushed Iron | `fastfurnacev2:crushed_iron` | Crush raw iron when no external result is selected | Ingredients |
 | Crushed Copper | `fastfurnacev2:crushed_copper` | Crush raw copper when no external result is selected | Ingredients |
 | Crushed Gold | `fastfurnacev2:crushed_gold` | Crush raw gold when no external result is selected | Ingredients |
@@ -63,6 +67,7 @@ Extreme Coal preserves coal's item silhouette while replacing every visible pixe
 - Adds **100 percentage points** to active Fast Furnace or Fast Crusher processing speed.
 - Receives twice Fast Coal's added tier-duration bonus.
 - Supplies **7,200 Accelerator work units** at up to **5 work per tick**.
+- Is the Extremely Fast Alloyer's only accepted fuel, supplying **1,600 valid processing ticks** per item.
 
 Extreme Coal doubles Fast Coal's added bonuses, not every total value. For example, Fast Coal's +50 percentage points become Extreme Coal's +100, and its Accelerator speed increases from 3× to 5× rather than 6×. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation) and the [fuel reference](recipes.md#fuel-reference).
 
@@ -81,7 +86,7 @@ See [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), [Raw Fast m
 
 **ID:** `fastfurnacev2:extremely_fast_ingot`
 
-The Extremely Fast Ingot preserves the ingot silhouette while replacing every visible pixel with animated lava. Alloy one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any order across the Extremely Fast Alloyer's three input slots. The operation produces one ingot in **200 ticks (10 seconds)** and uses no fuel or surrounding lava.
+The Extremely Fast Ingot preserves the ingot silhouette while replacing every visible pixel with animated lava. Alloy one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any order across the Extremely Fast Alloyer's three input slots using Extreme Coal fuel. The base operation takes **800 ticks (40 seconds)**, reduced by 100 ticks per horizontal lava side to a minimum of 400 ticks.
 
 It appears in Ingredients and the Fast Furnace V2 creative tab. This is a dedicated Alloyer operation, not a crafting, smelting, crushing, or Accelerator recipe. See [Extremely Fast Alloying](recipes.md#extremely-fast-alloying).
 
@@ -100,6 +105,17 @@ Fast Diamond's durability roll applies whenever the tool would take durability d
 Registry IDs follow `fastfurnacev2:fast_<material>_<tool>`, where material is `iron`, `gold`, or `diamond`, and tool is `pickaxe`, `shovel`, `axe`, or `sword`. Every texture preserves its vanilla silhouette with animated lava veins. JEI provides a short description of each item's bonuses.
 
 See [Tool crafting](recipes.md#fast-tools-and-swords) for the patterns.
+
+## Extremely Fast tools and swords
+
+The Extremely Fast Pickaxe, Shovel, Axe, and Sword use vanilla stick-and-Extremely-Fast-Ingot crafting patterns. Their textures preserve the diamond-tool silhouettes while replacing every visible pixel with animated lava. All four have **double the corresponding diamond tool's durability**, retain diamond harvest and enchantability behavior, and repair with Extremely Fast Ingots.
+
+| Item | Built-in bonuses |
+|---|---|
+| Extremely Fast Pickaxe, Shovel, and Axe | 50% faster block breaking than diamond; built-in Fortune II; independent 5% chance to double all block drops after normal Fortune calculations |
+| Extremely Fast Sword | 50% faster attacks than diamond with unchanged base attack damage; built-in Looting II; independent 5% chance to double kill drops after normal Looting calculations; independent 10% chance to deal double damage |
+
+The drop rolls duplicate complete dropped stacks, including components, rather than rerolling loot. The sword's damage roll occurs before ordinary damage mitigation and does not permanently change its attributes. Fortune II and Looting II are actual default enchantment components and appear in item tooltips. Pickaxes, shovels, and axes appear in Tools & Utilities; the sword and axe appear in Combat; all four appear in the mod creative tab.
 
 ## Block items
 

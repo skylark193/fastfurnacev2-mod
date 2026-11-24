@@ -5,12 +5,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -20,13 +22,20 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
 public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer {
-    public static final int RECIPE_TICKS = 200;
+    public static final int RECIPE_TICKS = 800;
+    public static final int MIN_RECIPE_TICKS = 400;
+    public static final int LAVA_TICK_REDUCTION = 100;
+    public static final int EXTREME_COAL_BURN_TIME = 1600;
     private static final int[] INPUT_SLOTS = {0, 1, 2};
+    private static final int[] FUEL_SLOT = {ExtremelyFastAlloyerMenu.FUEL_SLOT};
     private static final int[] RESULT_SLOT = {ExtremelyFastAlloyerMenu.RESULT_SLOT};
 
     private NonNullList<ItemStack> items = NonNullList.withSize(ExtremelyFastAlloyerMenu.SLOT_COUNT, ItemStack.EMPTY);
     private int workProgress;
     private int recipeTicks;
+    private int burnTimeRemaining;
+    private int totalBurnTime;
+    private int lavaSides;
     private boolean processing;
     private boolean needsProgressReset;
     private final SnapshotJournal<Boolean> progressResetJournal = new SnapshotJournal<>() {
@@ -56,6 +65,9 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
                 case 0 -> ExtremelyFastAlloyerBlockEntity.this.workProgress;
                 case 1 -> ExtremelyFastAlloyerBlockEntity.this.recipeTicks;
                 case 2 -> ExtremelyFastAlloyerBlockEntity.this.processing ? 1 : 0;
+                case 3 -> ExtremelyFastAlloyerBlockEntity.this.burnTimeRemaining;
+                case 4 -> ExtremelyFastAlloyerBlockEntity.this.totalBurnTime;
+                case 5 -> ExtremelyFastAlloyerBlockEntity.this.lavaSides;
                 default -> 0;
             };
         }
@@ -66,6 +78,9 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
                 case 0 -> ExtremelyFastAlloyerBlockEntity.this.workProgress = value;
                 case 1 -> ExtremelyFastAlloyerBlockEntity.this.recipeTicks = value;
                 case 2 -> ExtremelyFastAlloyerBlockEntity.this.processing = value != 0;
+                case 3 -> ExtremelyFastAlloyerBlockEntity.this.burnTimeRemaining = value;
+                case 4 -> ExtremelyFastAlloyerBlockEntity.this.totalBurnTime = value;
+                case 5 -> ExtremelyFastAlloyerBlockEntity.this.lavaSides = value;
                 default -> { }
             }
         }
@@ -83,18 +98,24 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
     public static void serverTick(
             ServerLevel level, BlockPos pos, BlockState state, ExtremelyFastAlloyerBlockEntity entity) {
         entity.processing = false;
+        entity.lavaSides = countHorizontalLava(level, pos);
         ExtremelyFastAlloyerRecipes.findMatch(entity.items).ifPresentOrElse(match -> {
-            if (entity.recipeTicks != match.recipe().processingTicks()) {
-                entity.workProgress = 0;
-                entity.recipeTicks = match.recipe().processingTicks();
-            }
+            entity.recipeTicks = getProcessingTicks(match.recipe().processingTicks(), entity.lavaSides);
             if (!entity.canFit(match.recipe().output())) {
                 updateBlockState(level, pos, state, entity);
                 return;
             }
+            if (entity.burnTimeRemaining <= 0) {
+                entity.consumeFuel();
+            }
+            if (entity.burnTimeRemaining <= 0) {
+                updateBlockState(level, pos, state, entity);
+                return;
+            }
             entity.processing = true;
+            entity.burnTimeRemaining--;
             entity.workProgress++;
-            if (entity.workProgress >= match.recipe().processingTicks()) {
+            if (entity.workProgress >= entity.recipeTicks) {
                 entity.addResult(match.recipe().output());
                 match.consumeIngredients(entity.items);
                 entity.workProgress = 0;
@@ -113,6 +134,35 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
                 updateBlockState(level, pos, state, entity);
             }
         });
+    }
+
+    public static int getProcessingTicks(int baseTicks, int horizontalLavaSides) {
+        return Math.max(MIN_RECIPE_TICKS, baseTicks - Math.max(0, horizontalLavaSides) * LAVA_TICK_REDUCTION);
+    }
+
+    private static int countHorizontalLava(Level level, BlockPos pos) {
+        int count = 0;
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (level.getFluidState(pos.relative(direction)).is(FluidTags.LAVA)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void consumeFuel() {
+        ItemStack fuel = this.items.get(ExtremelyFastAlloyerMenu.FUEL_SLOT);
+        if (!isExtremeCoal(fuel)) {
+            return;
+        }
+        fuel.shrink(1);
+        this.burnTimeRemaining = EXTREME_COAL_BURN_TIME;
+        this.totalBurnTime = EXTREME_COAL_BURN_TIME;
+        this.setChanged();
+    }
+
+    static boolean isExtremeCoal(ItemStack stack) {
+        return stack.is(FastFurnaceV2.EXTREME_COAL.get());
     }
 
     private static void updateBlockState(
@@ -188,7 +238,7 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
     private void resetProgressForInput() {
         this.workProgress = 0;
         this.recipeTicks = ExtremelyFastAlloyerRecipes.findMatch(this.items)
-                .map(match -> match.recipe().processingTicks())
+                .map(match -> getProcessingTicks(match.recipe().processingTicks(), this.lavaSides))
                 .orElse(0);
         this.setChanged();
     }
@@ -199,7 +249,10 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
         ContainerHelper.loadAllItems(input, this.items);
         this.workProgress = input.getIntOr("alloyer_progress", 0);
         this.recipeTicks = input.getIntOr("alloyer_recipe_ticks", 0);
+        this.burnTimeRemaining = input.getIntOr("alloyer_burn_time", 0);
+        this.totalBurnTime = input.getIntOr("alloyer_total_burn_time", 0);
         this.processing = false;
+        this.lavaSides = 0;
     }
 
     @Override
@@ -208,11 +261,16 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
         ContainerHelper.saveAllItems(output, this.items);
         output.putInt("alloyer_progress", this.workProgress);
         output.putInt("alloyer_recipe_ticks", this.recipeTicks);
+        output.putInt("alloyer_burn_time", this.burnTimeRemaining);
+        output.putInt("alloyer_total_burn_time", this.totalBurnTime);
     }
 
     @Override
     public int[] getSlotsForFace(Direction direction) {
-        return direction == Direction.DOWN ? RESULT_SLOT.clone() : INPUT_SLOTS.clone();
+        if (direction == Direction.DOWN) {
+            return RESULT_SLOT.clone();
+        }
+        return direction == Direction.UP ? INPUT_SLOTS.clone() : FUEL_SLOT.clone();
     }
 
     @Override
@@ -227,8 +285,10 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot >= 0 && slot < ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT
-                && ExtremelyFastAlloyerRecipes.isInput(stack);
+        if (slot >= 0 && slot < ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT) {
+            return ExtremelyFastAlloyerRecipes.isInput(stack);
+        }
+        return slot == ExtremelyFastAlloyerMenu.FUEL_SLOT && isExtremeCoal(stack);
     }
 
     @Override

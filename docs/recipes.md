@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **32 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md). The Alloyer currently uses its own built-in recipe registry rather than the public extension API.
+This page collects the **36 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md). The Alloyer currently uses its own built-in recipe registry rather than the public extension API.
 
 ## Crafting conventions
 
@@ -135,6 +135,8 @@ M  M  M       M             M  M          M
 
 Each recipe produces one `fastfurnacev2:fast_<material>_<tool>` item. Axe recipes use the left-handed vanilla orientation shown above. The finished Fast material also repairs its corresponding tool set. See [Fast tools and swords](items.md#fast-tools-and-swords) for exact bonuses.
 
+The Extremely Fast Pickaxe, Shovel, Axe, and Sword use the same four patterns with `M` = Extremely Fast Ingot and `#` = Stick. Their output IDs are `fastfurnacev2:extremely_fast_pickaxe`, `extremely_fast_shovel`, `extremely_fast_axe`, and `extremely_fast_sword`. The ingot also repairs all four. See [Extremely Fast tools and swords](items.md#extremely-fast-tools-and-swords).
+
 ## Raw Fast material smelting
 
 Each raw Fast material smelts directly into one finished material:
@@ -177,14 +179,14 @@ Output: **1 × Extremely Fast Alloyer**
 
 ## Extremely Fast Alloying
 
-The Alloyer has three input slots and one output slot. Its built-in recipe is shapeless across those inputs:
+The Alloyer has three input slots, one Extreme Coal fuel slot, and one output slot. Its built-in recipe is shapeless across those inputs:
 
 ```text
 1 × Fast Iron Ingot + 1 × Fast Gold Ingot + 1 × Fast Diamond
     → 1 × Extremely Fast Ingot
 ```
 
-The three ingredients can occupy the input slots in any order, but every ingredient must be present in a distinct slot. Processing takes exactly **200 ticks (10 seconds)** at 100% ordinary furnace speed. The Alloyer uses no fuel or surrounding lava and does not accept ordinary smelting, crushing, Accelerator, or crafting recipes. A blocked result pauses without consuming input or losing progress. See [Extremely Fast Alloyer](alloyer.md) for complete behavior.
+The three ingredients can occupy the input slots in any order, but every ingredient must be present in a distinct slot. Only the **Extreme Coal item** is accepted as fuel; each supplies 1,600 valid processing ticks. The base operation takes **800 ticks (40 seconds)**, reduced by 100 ticks per horizontal lava side to a minimum of 400 ticks. The Alloyer does not accept ordinary smelting, crushing, Accelerator, or crafting recipes. A blocked result or missing fuel pauses without consuming input or losing progress. See [Extremely Fast Alloyer](alloyer.md) for complete behavior.
 
 ## Accelerator conversions
 

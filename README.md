@@ -1,6 +1,6 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal, Fast Iron/Gold/Diamond materials and their regular and deepslate ores, reversible storage blocks, enhanced Fast tools and swords, a lava-powered Accelerator, an Extremely Fast Alloyer and Extremely Fast Ingot, four tiers of accelerated furnaces, four tiers of ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It adds Fast Cobblestone, Fast Coal, Extreme Coal, Fast Iron/Gold/Diamond materials and their regular and deepslate ores, reversible storage blocks, enhanced Fast and Extremely Fast tools and swords, a lava-powered Accelerator, an Extremely Fast Alloyer and Extremely Fast Ingot, four tiers of accelerated furnaces, four tiers of ore crushers, dynamically generated crushed ores, animated lava-vein textures, and optional JEI integration.
 
 ## Documentation
 
@@ -63,6 +63,13 @@ Start at the [documentation home](docs/README.md) for the complete player, modpa
 - Durability, enchantability, harvest tiers, and ordinary attack values otherwise match their vanilla counterparts. Repair each set with its corresponding Fast material.
 - All twelve use vanilla-shaped stick-and-material crafting recipes, vanilla textures with animated lava veins, and simple JEI bonus descriptions. Tools appear in Tools & Utilities, swords and axes in Combat, and everything in the mod's creative tab.
 
+### Extremely Fast tools and swords
+
+- Craft an Extremely Fast Pickaxe, Shovel, Axe, or Sword with Extremely Fast Ingots using the corresponding vanilla stick-and-material pattern. Every visible texture pixel is animated lava within the normal diamond-tool silhouette.
+- Pickaxe, shovel, and axe durability is double diamond, mining is 50% faster, Fortune II is built in, and each break has an independent 5% chance to double all drops after normal Fortune calculations.
+- The sword has double diamond-sword durability, 50% faster attacks, unchanged base attack damage, and built-in Looting II. Each kill independently has a 5% chance to double all drops, and each hit independently has a 10% chance to deal double damage.
+- Repair all four with Extremely Fast Ingots. Pickaxes, shovels, and axes appear in Tools & Utilities; the sword and axe appear in Combat; all four appear in the mod creative tab.
+
 ### Accelerator
 
 - Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It converts coal, iron ingots, gold ingots, and diamonds into Fast variants in 400 ticks (20 seconds), and their storage blocks into Fast storage blocks in 3,600 ticks (180 seconds). Other mods can add conversions through the API.
@@ -77,11 +84,11 @@ Start at the [documentation home](docs/README.md) for the complete player, modpa
 ### Extremely Fast Alloyer and Extremely Fast Ingot
 
 - Craft the Alloyer by surrounding one Accelerator with eight Blocks of Extreme Coal. Its Accelerator-style body is made entirely from animated lava, and its top retains the eleven-stage lightning-bolt progress animation.
-- The Alloyer has three input slots and one output slot. It uses only dedicated Alloyer recipes, never ordinary furnace, crusher, Accelerator, or crafting recipes.
-- Combine one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any input-slot order to produce one Extremely Fast Ingot in exactly 200 ticks (10 seconds), matching 100% ordinary furnace speed.
-- The machine needs no fuel or surrounding lava. Empty, incomplete, duplicated, unsupported, or changed inputs reset progress; a blocked output pauses without consuming ingredients or losing progress. Ingredients are consumed only when the result fits.
+- The Alloyer has three input slots, one Extreme Coal fuel slot, and one output slot. It uses only dedicated Alloyer recipes, never ordinary furnace, crusher, Accelerator, or crafting recipes. No other fuel works.
+- Combine one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any input-slot order to produce one Extremely Fast Ingot. The base operation takes 800 ticks (40 seconds), reduced by 100 ticks per horizontal lava side to a minimum of 400 ticks.
+- Each Extreme Coal supplies 1,600 valid processing ticks. Missing fuel or a blocked output pauses without consuming ingredients or losing progress; empty, incomplete, duplicated, unsupported, or changed inputs reset progress while preserving banked fuel. Changing lava preserves elapsed work and recalculates total duration.
 - The Extremely Fast Ingot preserves an ingot silhouette with every visible pixel colored as animated lava. It appears in Ingredients and the mod's creative tab; the Alloyer appears in Functional Blocks and the mod's creative tab.
-- Top and horizontal-side automation inserts accepted ingredients, while the bottom extracts results. The GUI and dedicated JEI category show all three inputs, output, and exact processing time. See the [Extremely Fast Alloyer guide](docs/alloyer.md).
+- Top automation inserts accepted ingredients, horizontal sides insert only Extreme Coal, and the bottom extracts results. The GUI shows fuel and lava-adjusted timing, while the dedicated JEI category shows all three inputs, output, base time, and lava-reduction rule. See the [Extremely Fast Alloyer guide](docs/alloyer.md).
 
 ### Crushed Ores
 
@@ -147,12 +154,12 @@ With a compatible JEI release installed:
 
 - Each Fast Furnace tier's progress arrow opens smelting recipes, and its fire icon opens that tier's fuel category. Every crusher's progress arrow opens the dedicated crushing category, and each is a catalyst for crushing and its own tier's fuel category, not smelting.
 - The Accelerator's progress arrow opens its built-in and API-registered conversions, while its fire icon opens accepted boosts and explains their processing speed, exact boosted work, and fully boosted conversion capacities. The Accelerator is a catalyst for both categories.
-- The Extremely Fast Alloyer's progress arrow opens its dedicated alloying category, which shows all three shapeless inputs, the output, and exact processing time. The Alloyer is the category catalyst and supports three-input recipe transfer.
+- The Extremely Fast Alloyer's progress arrow opens its dedicated alloying category, which shows all three shapeless inputs, the output, base processing time, and horizontal-lava reduction rule. The Alloyer is the category catalyst and supports three-input recipe transfer.
 - Looking up Fast Coal, a Fast material, or its storage block shows its Accelerator conversion recipe alongside its other crafting sources. The conversion category displays normal and registered boost-speed durations and the four-side lava requirement.
 - The crushing category contains the discovered raw-ore recipes and API-registered custom recipes, including input counts, output counts, and the tier-dependent 10–25% chance to double the complete result. Looking up a crushed item shows how it is made, while looking up a raw ore shows its crushing use.
 - Fuel categories calculate items smelted from each tier's actual cooking speed, including built-in and API-registered fuel speed and duration bonuses.
 - Recipe transfer supports smelting for the four Fast Furnace tiers, crushing for all four crusher tiers, Accelerator conversions, three-input Alloyer recipes, and fuel or boost insertion for the machines that use them. Smelting transfers and click areas remain disabled for crushers.
-- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, Fast ores explain new and retroactive generation and drops, Fast materials explain their processing chains and storage blocks, special fuels explain their bonuses, the Alloyer and Extremely Fast Ingot explain alloying, and every Fast tool and sword includes a simple description of its advantages and repair material.
+- Every furnace includes a short speed and fuel-doubling description; each crusher instead describes its tier's crushing speed and output-doubling chance. Fast Cobblestone and Fast Coal include acquisition information, Fast ores explain new and retroactive generation and drops, Fast materials explain their processing chains and storage blocks, special fuels explain their bonuses, the Alloyer and Extremely Fast Ingot explain alloying, and every Fast or Extremely Fast tool and sword includes a simple description of its advantages and repair material.
 - JEI reserves space around the furnace, Accelerator, and Alloyer information fly-outs.
 
 **Compatibility:** JEI 29.2.0.21 supports Minecraft 26.1 exactly and cannot launch with this mod's Minecraft 26.1.2 environment. The JEI APIs are therefore compile-only by default, and the integration has not been runtime-validated on 26.1.2. A JEI release compatible with both Minecraft 26.1.2 and this integration is required.

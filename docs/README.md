@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This documentation applies to **Fast Furnace V2 1.4.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
+This documentation applies to **Fast Furnace V2 1.5.0** for **Minecraft 26.1.2** and **NeoForge 26.1.2.126 or newer**. It covers the built-in content and the extension points available to other mods.
 
 ## Documentation map
 
@@ -11,7 +11,7 @@ This documentation applies to **Fast Furnace V2 1.4.0** for **Minecraft 26.1.2**
 | [Fast Furnaces](furnaces.md) | Tier speeds, fuel duration bonuses, fuel doubling, smelting behavior, and saved progress |
 | [Fast Crushers](crushers.md) | Raw-item and ore-block crushing, custom recipes, tier timing, output doubling, and pending results |
 | [Accelerator](accelerator.md) | Fast-material conversion, lava placement, exact-work boosts, automation, and visual progress |
-| [Extremely Fast Alloyer](alloyer.md) | Three-input shapeless alloying, exact 200-tick processing, dedicated recipes, automation, and bolt progress |
+| [Extremely Fast Alloyer](alloyer.md) | Three-input shapeless alloying, Extreme Coal fuel, 800–400-tick lava-scaled processing, automation, and bolt progress |
 | [Recipes and fuels](recipes.md) | Crafting patterns, machine conversions, alloying, smelting behavior, and fuel reference tables |
 | [World generation and resources](world-generation.md) | Mining bonuses, Fast and Extreme ore generation, and dynamic crushed-ore discovery |
 | [Automation, GUI, and JEI](automation-and-jei.md) | Slots, hopper directions, information panels, comparators, persistence, and recipe-viewer integration |
@@ -29,7 +29,7 @@ For installation and development commands, see the [project README](../README.md
 6. Upgrade through **Iron**, **Gold**, and **Diamond** tiers by surrounding the previous furnace or crusher with eight matching Fast storage blocks.
 7. Find **Extreme Coal Ore** among regular or deepslate coal ore for a stronger special fuel, and optionally pack nine Extreme Coal into a reversible storage block.
 8. Craft an **Accelerator** by surrounding an Iron Fast Furnace with eight Redstone Blocks, then surround it with lava on four horizontal sides to convert ordinary materials and their blocks into Fast variants.
-9. Surround an Accelerator with eight Blocks of Extreme Coal to craft an **Extremely Fast Alloyer**. Combine one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in its three input slots to produce an **Extremely Fast Ingot** in 200 ticks.
+9. Surround an Accelerator with eight Blocks of Extreme Coal to craft an **Extremely Fast Alloyer**. Fuel it with Extreme Coal and combine one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in its three input slots to produce an **Extremely Fast Ingot** in 800 ticks, or as few as 400 with horizontal lava. Use the ingots to craft four enhanced Extremely Fast tools.
 
 See [Recipes and fuels](recipes.md) for complete patterns and [World generation and resources](world-generation.md) for acquisition chances.
 

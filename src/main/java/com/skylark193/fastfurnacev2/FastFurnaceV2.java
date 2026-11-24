@@ -3,7 +3,9 @@ package com.skylark193.fastfurnacev2;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.skylark193.fastfurnacev2.internal.FastFurnaceApiImpl;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.flag.FeatureFlags;
@@ -16,6 +18,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -198,6 +203,31 @@ public class FastFurnaceV2 {
                     FastTools.FAST_DIAMOND,
                     FastTools.scaleSwordDamage(ToolMaterial.DIAMOND, FastTools.FAST_DIAMOND, 3.0F, 1.20F),
                     FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F)));
+    public static final DeferredItem<Item> EXTREMELY_FAST_PICKAXE = ITEMS.registerSimpleItem(
+            "extremely_fast_pickaxe", properties -> withDefaultEnchantment(
+                    properties.pickaxe(FastTools.EXTREMELY_FAST, 1.0F, -2.8F), Enchantments.FORTUNE));
+    public static final DeferredItem<ShovelItem> EXTREMELY_FAST_SHOVEL = ITEMS.registerItem(
+            "extremely_fast_shovel", properties -> new ShovelItem(
+                    FastTools.EXTREMELY_FAST, 1.5F, -3.0F,
+                    withDefaultEnchantment(properties, Enchantments.FORTUNE)));
+    public static final DeferredItem<AxeItem> EXTREMELY_FAST_AXE = ITEMS.registerItem(
+            "extremely_fast_axe", properties -> new AxeItem(
+                    FastTools.EXTREMELY_FAST, 5.0F, -3.0F,
+                    withDefaultEnchantment(properties, Enchantments.FORTUNE)));
+    public static final DeferredItem<Item> EXTREMELY_FAST_SWORD = ITEMS.registerSimpleItem(
+            "extremely_fast_sword", properties -> withDefaultEnchantment(
+                    properties.sword(
+                            FastTools.EXTREMELY_FAST, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.50F)),
+                    Enchantments.LOOTING));
+
+    private static Item.Properties withDefaultEnchantment(
+            Item.Properties properties, ResourceKey<Enchantment> enchantment) {
+        return properties.delayedComponent(DataComponents.ENCHANTMENTS, context -> {
+            ItemEnchantments.Mutable enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+            enchantments.set(context.getOrThrow(enchantment), 2);
+            return enchantments.toImmutable();
+        });
+    }
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastFurnaceBlockEntity>> FAST_FURNACE_BLOCK_ENTITY = BLOCK_ENTITIES.register(
             "fast_furnace",
@@ -267,6 +297,10 @@ public class FastFurnaceV2 {
                 output.accept(FAST_DIAMOND_SHOVEL.get());
                 output.accept(FAST_DIAMOND_AXE.get());
                 output.accept(FAST_DIAMOND_SWORD.get());
+                output.accept(EXTREMELY_FAST_PICKAXE.get());
+                output.accept(EXTREMELY_FAST_SHOVEL.get());
+                output.accept(EXTREMELY_FAST_AXE.get());
+                output.accept(EXTREMELY_FAST_SWORD.get());
                 output.accept(ACCELERATOR_ITEM.get());
                 output.accept(EXTREMELY_FAST_ALLOYER_ITEM.get());
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -322,6 +356,9 @@ public class FastFurnaceV2 {
             }
         });
         NeoForge.EVENT_BUS.addListener(FastBonusDrops::onBlockDrops);
+        NeoForge.EVENT_BUS.addListener(ExtremelyFastToolEffects::onBlockDrops);
+        NeoForge.EVENT_BUS.addListener(ExtremelyFastToolEffects::onLivingDrops);
+        NeoForge.EVENT_BUS.addListener(ExtremelyFastToolEffects::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(FastFurnaceApiImpl::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(CrushedOres::generateRecipes);
         NeoForge.EVENT_BUS.addListener(FastOreGeneration::onChunkLoad);
@@ -461,6 +498,9 @@ public class FastFurnaceV2 {
             event.accept(FAST_DIAMOND_PICKAXE);
             event.accept(FAST_DIAMOND_SHOVEL);
             event.accept(FAST_DIAMOND_AXE);
+            event.accept(EXTREMELY_FAST_PICKAXE);
+            event.accept(EXTREMELY_FAST_SHOVEL);
+            event.accept(EXTREMELY_FAST_AXE);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             event.accept(FAST_IRON_SWORD);
@@ -469,6 +509,8 @@ public class FastFurnaceV2 {
             event.accept(FAST_GOLD_AXE);
             event.accept(FAST_DIAMOND_SWORD);
             event.accept(FAST_DIAMOND_AXE);
+            event.accept(EXTREMELY_FAST_SWORD);
+            event.accept(EXTREMELY_FAST_AXE);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(ACCELERATOR_ITEM);
