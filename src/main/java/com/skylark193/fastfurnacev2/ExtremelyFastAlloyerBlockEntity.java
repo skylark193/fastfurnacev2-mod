@@ -5,14 +5,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -98,7 +96,11 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
     public static void serverTick(
             ServerLevel level, BlockPos pos, BlockState state, ExtremelyFastAlloyerBlockEntity entity) {
         entity.processing = false;
-        entity.lavaSides = countHorizontalLava(level, pos);
+        entity.lavaSides = MachineLogic.countHorizontalLava(level, pos);
+        int previousProgress = entity.workProgress;
+        int previousRecipeTicks = entity.recipeTicks;
+        int previousBurnTime = entity.burnTimeRemaining;
+        int previousTotalBurnTime = entity.totalBurnTime;
         ExtremelyFastAlloyerRecipes.findMatch(entity.items).ifPresentOrElse(match -> {
             entity.recipeTicks = getProcessingTicks(match.recipe().processingTicks(), entity.lavaSides);
             if (!entity.canFit(match.recipe().output())) {
@@ -134,20 +136,16 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
                 updateBlockState(level, pos, state, entity);
             }
         });
+        if (entity.workProgress != previousProgress
+                || entity.recipeTicks != previousRecipeTicks
+                || entity.burnTimeRemaining != previousBurnTime
+                || entity.totalBurnTime != previousTotalBurnTime) {
+            entity.setChanged();
+        }
     }
 
     public static int getProcessingTicks(int baseTicks, int horizontalLavaSides) {
         return Math.max(MIN_RECIPE_TICKS, baseTicks - Math.max(0, horizontalLavaSides) * LAVA_TICK_REDUCTION);
-    }
-
-    private static int countHorizontalLava(Level level, BlockPos pos) {
-        int count = 0;
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (level.getFluidState(pos.relative(direction)).is(FluidTags.LAVA)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private void consumeFuel() {
@@ -167,18 +165,14 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
 
     private static void updateBlockState(
             ServerLevel level, BlockPos pos, BlockState state, ExtremelyFastAlloyerBlockEntity entity) {
-        int boltLevel = entity.recipeTicks == 0
-                ? 0
-                : Math.min(ExtremelyFastAlloyerBlock.MAX_BOLT_LEVEL,
-                        (entity.workProgress * ExtremelyFastAlloyerBlock.MAX_BOLT_LEVEL
-                                + entity.recipeTicks - 1) / entity.recipeTicks);
+        int boltLevel = MachineLogic.boltLevel(
+                entity.workProgress, entity.recipeTicks, ExtremelyFastAlloyerBlock.MAX_BOLT_LEVEL);
         BlockState newState = state
                 .setValue(ExtremelyFastAlloyerBlock.BOLT_LEVEL, boltLevel)
                 .setValue(ExtremelyFastAlloyerBlock.LIT, entity.processing);
         if (!newState.equals(state)) {
             level.setBlock(pos, newState, 3);
         }
-        entity.setChanged();
     }
 
     private boolean canFit(ItemStack result) {
@@ -268,9 +262,9 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
     @Override
     public int[] getSlotsForFace(Direction direction) {
         if (direction == Direction.DOWN) {
-            return RESULT_SLOT.clone();
+            return RESULT_SLOT;
         }
-        return direction == Direction.UP ? INPUT_SLOTS.clone() : FUEL_SLOT.clone();
+        return direction == Direction.UP ? INPUT_SLOTS : FUEL_SLOT;
     }
 
     @Override

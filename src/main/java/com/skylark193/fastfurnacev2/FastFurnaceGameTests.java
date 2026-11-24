@@ -31,8 +31,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -617,18 +619,19 @@ final class FastFurnaceGameTests {
                 assertBurnState(helper, menu, expectedBurnTime - 2, expectedBurnTime, fuelMode != 0, fuelMode == 2,
                         description + " did not resume its paused fuel countdown");
 
-                while (menu.getCurrentBurnTime() > 20) {
+                for (int tick = 0; tick < expectedBurnTime && menu.getCurrentBurnTime() > 20; tick++) {
                     furnace.setItem(
                             FastFurnaceMenu.INGREDIENT_SLOT,
                             alternateProcessableInput(block, furnace.getItem(FastFurnaceMenu.INGREDIENT_SLOT)));
                     tickFurnace(helper, furnace, relativePos);
                 }
                 furnace.setItem(FastFurnaceMenu.INGREDIENT_SLOT, processableInput(block));
-                while (menu.getCurrentBurnTime() > 0) {
+                for (int tick = 0; tick < 25 && menu.getCurrentBurnTime() > 0; tick++) {
                     tickFurnace(helper, furnace, relativePos);
                 }
                 float savedProgress = menu.getBurnProgress();
-                if (savedProgress <= 0.0F || menu.isLit()
+                if (savedProgress <= 0.0F || menu.isLit() || menu.isFastCoalActive()
+                        || menu.getSpeedPercent() != block.getTier().getSpeedPercent()
                         || !furnace.getItem(FastFurnaceMenu.RESULT_SLOT).isEmpty()) {
                     throw helper.assertionException(description + " lost recipe progress as its fuel expired");
                 }
@@ -692,6 +695,31 @@ final class FastFurnaceGameTests {
                 || doubledMenu.getTotalFuelTime() != fastCoalBurnTime * 2
                 || !doubledMenu.isFastCoalActive()) {
             throw helper.assertionException("Doubled Fast Coal did not synchronize its 4800-tick burn time");
+        }
+
+        BlockPos replacementPos = new BlockPos(4, 0, 0);
+        FastFurnaceBlockEntity replacement = placeFurnace(helper, replacementPos, fastCoal.copy());
+        FastFurnaceMenu replacementMenu = createMenu(helper, replacement);
+        level.getRandom().setSeed(findFuelRollSeed(false));
+        tickFurnace(helper, replacement, replacementPos);
+        for (int tick = 1; tick < fastCoalBurnTime && replacementMenu.getCurrentBurnTime() > 1; tick++) {
+            replacement.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+            replacement.setItem(FastFurnaceMenu.RESULT_SLOT, ItemStack.EMPTY);
+            tickFurnace(helper, replacement, replacementPos);
+        }
+        int previousProgress = replacementMenu.getBurnProgress() == 0.0F
+                ? 0 : Math.round(replacementMenu.getBurnProgress() * 100);
+        replacement.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE));
+        replacement.setItem(FastFurnaceMenu.RESULT_SLOT, ItemStack.EMPTY);
+        replacement.setItem(FastFurnaceMenu.FUEL_SLOT, new ItemStack(Items.COAL));
+        level.getRandom().setSeed(findFuelRollSeed(false));
+        tickFurnace(helper, replacement, replacementPos);
+        int expectedProgress = previousProgress * 133 / 100 + 1;
+        if (replacementMenu.getCurrentBurnTime() != FastFurnaceBlockEntity.VANILLA_COAL_BURN_TIME
+                || replacementMenu.isFastCoalActive()
+                || replacementMenu.getSpeedPercent() != FastFurnaceTier.FAST.getSpeedPercent()
+                || Math.round(replacementMenu.getBurnProgress() * 133) != expectedProgress) {
+            throw helper.assertionException("Same-tick fuel replacement double-rescaled progress or retained stale fuel");
         }
         helper.succeed();
     }
@@ -1679,10 +1707,41 @@ final class FastFurnaceGameTests {
                 || extremeBlocksMenu.getBoostWork() != 0) {
             throw helper.assertionException("Extreme Coal did not boost exactly two coal-block conversions");
         }
+
+        BlockPos extremeBlockPos = new BlockPos(8, 12, 0);
+        AcceleratorBlockEntity extremeBlock = placeAccelerator(
+                helper, extremeBlockPos, new ItemStack(Items.COAL, 21),
+                new ItemStack(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get()));
+        AcceleratorMenu extremeBlockMenu = createAcceleratorMenu(helper, extremeBlock);
+        tickAccelerator(helper, extremeBlock, extremeBlockPos);
+        if (!extremeBlockMenu.isExtremeBoosted()
+                || extremeBlockMenu.getBoostWorkPerTick() != 5
+                || extremeBlockMenu.getBoostWork() != AcceleratorBlockEntity.EXTREME_COAL_BLOCK_BOOST_WORK - 5) {
+            throw helper.assertionException("Extreme Coal Block did not synchronize its 5x Accelerator boost");
+        }
+        tickAccelerator(helper, extremeBlock, extremeBlockPos, 1598);
+        if (extremeBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 19) {
+            throw helper.assertionException("Extreme Coal Block completed its twentieth conversion too early");
+        }
+        tickAccelerator(helper, extremeBlock, extremeBlockPos);
+        if (extremeBlock.getItem(AcceleratorMenu.RESULT_SLOT).getCount() != 20
+                || extremeBlockMenu.getBoostWork() != 0 || extremeBlockMenu.isExtremeBoosted()) {
+            throw helper.assertionException("Extreme Coal Block did not boost exactly twenty conversions");
+        }
     }
 
     private static void apiSupportsCustomFuelsAndRecipes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        FastFuel maximumSpeedFuel = FastFuel.builder(
+                Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/maximum_speed"),
+                Ingredient.of(Items.BLAZE_POWDER), 0)
+                .speedBonusPercent(Integer.MAX_VALUE)
+                .build();
+        if (maximumSpeedFuel.getSpeedPercent(FastFurnaceTier.FAST) != Integer.MAX_VALUE
+                || MachineLogic.boltLevel(Integer.MAX_VALUE, 1, 10) != 10
+                || MachineLogic.boltLevel(0, 0, 10) != 0) {
+            throw helper.assertionException("Large API values overflowed speed or bolt-level arithmetic");
+        }
         FastFuel customFuel = FastFurnaceApi.findFuel(API_FUEL_ID)
                 .orElseThrow(() -> helper.assertionException("API fuel was not registered"));
         ItemStack blazePowder = new ItemStack(Items.BLAZE_POWDER);
@@ -1984,6 +2043,24 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException("Extremely Fast Sword did not apply its independent 10% damage roll");
             }
         }
+
+        Arrow arrow = new Arrow(EntityType.ARROW, helper.getLevel());
+        arrow.setOwner(player);
+        for (var rejectedSource : List.of(
+                player.damageSources().thorns(player), player.damageSources().arrow(arrow, player))) {
+            helper.getLevel().getRandom().setSeed(doubledDropSeed);
+            List<ItemEntity> drops = new ArrayList<>();
+            drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.BONE, 2)));
+            ExtremelyFastToolEffects.onLivingDrops(new LivingDropsEvent(player, rejectedSource, drops, true));
+            helper.getLevel().getRandom().setSeed(findChanceRollSeed(
+                    ExtremelyFastToolEffects.DAMAGE_DOUBLE_CHANCE, true));
+            LivingIncomingDamageEvent damageEvent = new LivingIncomingDamageEvent(
+                    player, new DamageContainer(rejectedSource, 7.0F));
+            ExtremelyFastToolEffects.onIncomingDamage(damageEvent);
+            if (drops.size() != 1 || damageEvent.getAmount() != 7.0F) {
+                throw helper.assertionException("Non-melee damage triggered Extremely Fast Sword bonuses");
+            }
+        }
         helper.succeed();
     }
 
@@ -2067,6 +2144,20 @@ final class FastFurnaceGameTests {
     }
 
     private static void allToolRequiredBlocksArePickaxeMineable(GameTestHelper helper) {
+        Map<Block, Block> vanillaSoundEquivalents = Map.of(
+                FastFurnaceV2.FAST_IRON_BLOCK.get(), Blocks.IRON_BLOCK,
+                FastFurnaceV2.FAST_GOLD_BLOCK.get(), Blocks.GOLD_BLOCK,
+                FastFurnaceV2.FAST_DIAMOND_BLOCK.get(), Blocks.DIAMOND_BLOCK,
+                FastFurnaceV2.DEEPSLATE_FAST_IRON_ORE.get(), Blocks.DEEPSLATE_IRON_ORE,
+                FastFurnaceV2.DEEPSLATE_FAST_GOLD_ORE.get(), Blocks.DEEPSLATE_GOLD_ORE,
+                FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE.get(), Blocks.DEEPSLATE_DIAMOND_ORE,
+                FastFurnaceV2.DEEPSLATE_EXTREME_COAL_ORE.get(), Blocks.DEEPSLATE_COAL_ORE);
+        for (var entry : vanillaSoundEquivalents.entrySet()) {
+            if (entry.getKey().defaultBlockState().getSoundType()
+                    != entry.getValue().defaultBlockState().getSoundType()) {
+                throw helper.assertionException(entry.getKey() + " does not match its vanilla block sounds");
+            }
+        }
         int registeredBlocks = 0;
         for (var entry : BuiltInRegistries.BLOCK.entrySet()) {
             Identifier id = entry.getKey().identifier();

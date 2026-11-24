@@ -22,6 +22,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
@@ -72,6 +73,7 @@ public class FastFurnaceV2 {
             "fast_iron_block", properties -> properties
                     .mapColor(MapColor.METAL)
                     .instrument(NoteBlockInstrument.IRON_XYLOPHONE)
+                    .sound(SoundType.IRON)
                     .requiresCorrectToolForDrops()
                     .strength(5.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_IRON_BLOCK_ITEM =
@@ -88,6 +90,7 @@ public class FastFurnaceV2 {
             "fast_gold_block", properties -> properties
                     .mapColor(MapColor.GOLD)
                     .instrument(NoteBlockInstrument.BELL)
+                    .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .strength(3.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_GOLD_BLOCK_ITEM =
@@ -104,6 +107,7 @@ public class FastFurnaceV2 {
     public static final DeferredBlock<Block> FAST_DIAMOND_BLOCK = BLOCKS.registerSimpleBlock(
             "fast_diamond_block", properties -> properties
                     .mapColor(MapColor.DIAMOND)
+                    .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .strength(5.0F, 6.0F));
     public static final DeferredItem<BlockItem> FAST_DIAMOND_BLOCK_ITEM =
@@ -429,6 +433,7 @@ public class FastFurnaceV2 {
         return BLOCKS.registerSimpleBlock(id, properties -> properties
                 .mapColor(MapColor.DEEPSLATE)
                 .instrument(NoteBlockInstrument.BASEDRUM)
+                .sound(SoundType.DEEPSLATE)
                 .requiresCorrectToolForDrops()
                 .strength(4.5F, 3.0F));
     }

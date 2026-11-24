@@ -30,7 +30,7 @@ public record CrusherRecipe(
         if (output.isEmpty()) {
             throw new IllegalArgumentException("Crusher output cannot be empty");
         }
-        if (output.getCount() * 2 > output.getMaxStackSize()) {
+        if (output.getCount() > output.getMaxStackSize() / 2) {
             throw new IllegalArgumentException("Crusher output must leave room for its doubled result");
         }
         if (processingTime < 0) {

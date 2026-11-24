@@ -4,12 +4,14 @@ import java.util.function.Consumer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.Nullable;
 
 /** Shared Fast tool materials and the durability-saving Fast Diamond item behavior. */
@@ -35,7 +37,7 @@ final class FastTools {
 
     private static ToolMaterial withMiningSpeed(
             ToolMaterial vanilla,
-            net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> incorrectBlocksForDrops,
+            TagKey<Block> incorrectBlocksForDrops,
             String repairTag,
             float speedMultiplier) {
         return new ToolMaterial(

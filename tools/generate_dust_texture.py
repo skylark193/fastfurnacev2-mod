@@ -11,6 +11,8 @@ from PIL import Image
 
 def normalize_dust(source: Image.Image, shadow: int = 80, highlight: int = 255) -> Image.Image:
     image = source.convert("RGBA")
+    if not 0 <= shadow <= highlight <= 255:
+        raise ValueError("Require 0 <= shadow <= highlight <= 255")
     pixels = list(image.get_flattened_data())
     luminances = [
         round(red * 0.2126 + green * 0.7152 + blue * 0.0722)
@@ -19,8 +21,6 @@ def normalize_dust(source: Image.Image, shadow: int = 80, highlight: int = 255) 
     ]
     if not luminances:
         return image
-    if not 0 <= shadow <= highlight <= 255:
-        raise ValueError("Require 0 <= shadow <= highlight <= 255")
 
     darkest = min(luminances)
     brightest = max(luminances)

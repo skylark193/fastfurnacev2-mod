@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -34,8 +36,8 @@ final class ExtremelyFastToolEffects {
 
     static void onLivingDrops(LivingDropsEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)
+                || !isDirectSwordAttack(event.getSource(), player)
                 || !(event.getEntity().level() instanceof ServerLevel level)
-                || !isSword(player.getMainHandItem())
                 || level.getRandom().nextFloat() >= DROP_DOUBLE_CHANCE) {
             return;
         }
@@ -44,12 +46,16 @@ final class ExtremelyFastToolEffects {
 
     static void onIncomingDamage(LivingIncomingDamageEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)
+                || !isDirectSwordAttack(event.getSource(), player)
                 || !(player.level() instanceof ServerLevel level)
-                || !isSword(player.getMainHandItem())
                 || level.getRandom().nextFloat() >= DAMAGE_DOUBLE_CHANCE) {
             return;
         }
         event.setAmount(event.getAmount() * 2.0F);
+    }
+
+    private static boolean isDirectSwordAttack(DamageSource source, Player player) {
+        return source.isDirect() && source.is(DamageTypes.PLAYER_ATTACK) && isSword(player.getMainHandItem());
     }
 
     private static boolean isHarvestingTool(ItemStack stack) {

@@ -85,7 +85,7 @@ final class AcceleratorCategory implements IRecipeCategory<AcceleratorConversion
                 .setColor(0xFF808080);
         for (int index = 0; index < this.boostSpeeds.size(); index++) {
             int workPerTick = this.boostSpeeds.get(index);
-            int boostedTicks = (recipe.workUnits() + workPerTick - 1) / workPerTick;
+            int boostedTicks = (int) ((recipe.workUnits() - 1L) / workPerTick + 1);
             builder.addText(Component.translatable(
                             "jei.fastfurnacev2.accelerator_boosted_duration", workPerTick, boostedTicks), WIDTH, 12)
                     .setPosition(0, 53 + 11 * index)

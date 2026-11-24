@@ -54,9 +54,9 @@ final class CrushedOreColors extends SimplePreparableReloadListener<Map<Identifi
         long green = 0;
         long blue = 0;
         int count = 0;
-        int frameHeight = Math.min(image.getWidth(), image.getHeight());
-        for (int y = 0; y < frameHeight; y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
+        int frameSize = Math.min(image.getWidth(), image.getHeight());
+        for (int y = 0; y < frameSize; y++) {
+            for (int x = 0; x < frameSize; x++) {
                 int pixel = image.getPixel(x, y);
                 if (ARGB.alpha(pixel) < 128) {
                     continue;

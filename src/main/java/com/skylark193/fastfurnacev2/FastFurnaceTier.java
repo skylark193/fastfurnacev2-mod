@@ -35,7 +35,7 @@ public enum FastFurnaceTier {
     }
 
     public int getSpeedPercent(int fuelSpeedBonusPercent) {
-        return this.speedPercent + fuelSpeedBonusPercent;
+        return (int) Math.min(Integer.MAX_VALUE, this.speedPercent + (long) fuelSpeedBonusPercent);
     }
 
     public int getSpeedPercent(boolean fastCoalActive) {

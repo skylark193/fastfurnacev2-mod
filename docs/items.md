@@ -115,7 +115,7 @@ The Extremely Fast Pickaxe, Shovel, Axe, and Sword use vanilla stick-and-Extreme
 | Extremely Fast Pickaxe, Shovel, and Axe | 50% faster block breaking than diamond; built-in Fortune II; independent 5% chance to double all block drops after normal Fortune calculations |
 | Extremely Fast Sword | 50% faster attacks than diamond with unchanged base attack damage; built-in Looting II; independent 5% chance to double kill drops after normal Looting calculations; independent 10% chance to deal double damage |
 
-The drop rolls duplicate complete dropped stacks, including components, rather than rerolling loot. The sword's damage roll occurs before ordinary damage mitigation and does not permanently change its attributes. Fortune II and Looting II are actual default enchantment components and appear in item tooltips. Pickaxes, shovels, and axes appear in Tools & Utilities; the sword and axe appear in Combat; all four appear in the mod creative tab.
+The drop rolls duplicate complete dropped stacks, including components, rather than rerolling loot. Both sword rolls require a direct player melee attack; arrows, Thorns, and other indirect damage cannot trigger them. The damage roll occurs before ordinary damage mitigation and does not permanently change the sword's attributes. Fortune II and Looting II are actual default enchantment components and appear in item tooltips. Pickaxes, shovels, and axes appear in Tools & Utilities; the sword and axe appear in Combat; all four appear in the mod creative tab.
 
 ## Block items
 

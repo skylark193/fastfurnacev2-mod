@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
  * collections are immutable; returned item stacks are fresh copies.</p>
  */
 public final class FastFurnaceApi {
-    public static final String API_VERSION = "1.1";
+    public static final String API_VERSION = "1.1.0";
     public static final Identifier FAST_COAL_FUEL_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_coal");
     public static final Identifier FAST_COAL_BLOCK_FUEL_ID =

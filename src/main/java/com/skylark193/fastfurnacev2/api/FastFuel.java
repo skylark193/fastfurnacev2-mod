@@ -62,7 +62,7 @@ public record FastFuel(
 
     /** Returns the total processing speed supplied by this fuel in the given tier. */
     public int getSpeedPercent(FastFurnaceTier tier) {
-        return tier.getSpeedPercent() + this.speedBonusPercent;
+        return tier.getSpeedPercent(this.speedBonusPercent);
     }
 
     public boolean isAcceleratorFuel() {

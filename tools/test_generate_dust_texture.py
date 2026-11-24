@@ -35,6 +35,12 @@ class DustTextureGeneratorTests(unittest.TestCase):
         self.assertEqual(min(grays), 80)
         self.assertEqual(max(grays), 255)
 
+    def test_invalid_range_is_rejected_for_transparent_images(self) -> None:
+        transparent = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+
+        with self.assertRaisesRegex(ValueError, "0 <= shadow <= highlight <= 255"):
+            normalize_dust(transparent, shadow=-1)
+
     def test_cli_removes_stale_animation_metadata(self) -> None:
         script = Path(__file__).with_name("generate_dust_texture.py")
         with tempfile.TemporaryDirectory() as directory:

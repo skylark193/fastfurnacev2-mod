@@ -16,8 +16,9 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
     private static final int DATA_BURN_TIME_HIGH = 5;
     private static final int DATA_FUEL_TIME_LOW = 6;
     private static final int DATA_FUEL_TIME_HIGH = 7;
-    private static final int DATA_FAST_COAL_ACTIVE = 8;
+    private static final int DATA_FUEL_TYPE = 8;
     private static final int DATA_FAST_CRUSHER = 9;
+    private static final int DATA_SPEED_PERCENT = 10;
 
     private final ContainerData data;
     private final FastFurnaceTier tier;
@@ -57,11 +58,11 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
     }
 
     public boolean isFastCoalActive() {
-        return this.data.get(DATA_FAST_COAL_ACTIVE) != 0;
+        return this.data.get(DATA_FUEL_TYPE) != 0;
     }
 
     public boolean isExtremeCoalActive() {
-        return this.data.get(DATA_FAST_COAL_ACTIVE) == 2;
+        return this.data.get(DATA_FUEL_TYPE) == 2;
     }
 
     public boolean isFastCrusher() {
@@ -70,7 +71,7 @@ public class FastFurnaceMenu extends AbstractFurnaceMenu {
 
     /** Returns the tier speed including any synchronized custom or built-in fuel bonus. */
     public int getSpeedPercent() {
-        return this.data.get(10);
+        return this.data.get(DATA_SPEED_PERCENT);
     }
 
     private static int joinInt(int low, int high) {

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.5.0 exposes API version 1.1 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.5.1 exposes API version 1.1.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.5.0"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.5.1"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.5.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.5.1.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.5.0,)"
+versionRange="[1.5.1,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -103,7 +103,7 @@ The parameters are:
 
 - `baseBurnTime`: the ordinary furnace burn time in ticks. Positive values are supplied through NeoForge's fuel burn-time event. Zero preserves the item's existing vanilla or modded burn time, allowing bonuses on an existing fuel or an Accelerator-only definition.
 - `burnTimePercent`: a fixed integer percentage or `ToIntFunction<FastFurnaceTier>`. It scales the effective ordinary burn time before a Fast Furnace's independent fuel-doubling roll. Fast Crushers never roll for doubled fuel duration. Use 100 for no scaling. Long arithmetic and clamping prevent overflow.
-- `speedBonusPercent`: percentage points added to the machine tier's normal speed. For example, Fast Furnace is normally 150%; a bonus of 25 produces 175%, and its standard 200-tick recipe takes 114 ticks. Zero leaves speed unchanged.
+- `speedBonusPercent`: percentage points added to the machine tier's normal speed. For example, Fast Furnace is normally 150%; a bonus of 25 produces 175%, and its standard 200-tick recipe takes 114 ticks. Zero leaves speed unchanged. The combined speed saturates at `Integer.MAX_VALUE` rather than overflowing.
 - `acceleratorBoost(work, workPerTick)`: optional exact boosted work and its maximum work advance per tick. Both values must be positive together or both zero. The Accelerator still runs without boost fuel.
 - `priority`: ingredient-match precedence; later registration breaks equal-priority ties.
 

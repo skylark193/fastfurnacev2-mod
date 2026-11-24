@@ -65,7 +65,7 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         }
     };
 
-    // Split integers preserve exact fuel times; the last two values identify active fuel and crusher behavior.
+    // Split integers preserve exact fuel times; the final values expose fuel type, crusher identity, and speed.
     private final ContainerData menuDataAccess = new ContainerData() {
         @Override
         public int get(int index) {
@@ -227,24 +227,21 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
                         }
                         entity.syncBurnData();
                     }
+                    if (canProcess && !isLit) {
+                        int newBurnTime = entity.getBurnDuration(level.fuelValues(), fuel);
+                        entity.currentBurnTime = newBurnTime;
+                        entity.totalFuelTime = newBurnTime;
+                        entity.syncBurnData();
+                        if (newBurnTime > 0) {
+                            entity.setActiveFuel(FastFurnaceApi.findFuel(fuel).orElse(null));
+                            consumeFuel(entity.items, fuel);
+                            isLit = true;
+                            changed = true;
+                        }
+                    }
                     int expectedCookTime = entity.scaleCookTime(processing.cookingTime());
                     entity.updateCookingTotal(expectedCookTime);
                     if (canProcess) {
-                        if (!isLit) {
-                            int newBurnTime = entity.getBurnDuration(level.fuelValues(), fuel);
-                            entity.currentBurnTime = newBurnTime;
-                            entity.totalFuelTime = newBurnTime;
-                            entity.syncBurnData();
-                            if (newBurnTime > 0) {
-                                entity.setActiveFuel(FastFurnaceApi.findFuel(fuel).orElse(null));
-                                expectedCookTime = entity.scaleCookTime(processing.cookingTime());
-                                entity.updateCookingTotal(expectedCookTime);
-                                consumeFuel(entity.items, fuel);
-                                isLit = true;
-                                changed = true;
-                            }
-                        }
-
                         if (isLit) {
                             int cookingTimer = entity.dataAccess.get(DATA_COOKING_PROGRESS) + 1;
                             if (cookingTimer >= entity.dataAccess.get(DATA_COOKING_TOTAL_TIME)) {

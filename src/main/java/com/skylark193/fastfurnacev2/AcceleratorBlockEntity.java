@@ -9,7 +9,6 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -247,7 +246,7 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
     public static void serverTick(
             ServerLevel level, BlockPos pos, BlockState state, AcceleratorBlockEntity entity) {
         boolean changed = false;
-        entity.lavaSideCount = countLavaSides(level, pos);
+        entity.lavaSideCount = MachineLogic.countHorizontalLava(level, pos);
         entity.processing = false;
 
         ItemStack input = entity.getItem(AcceleratorMenu.INPUT_SLOT);
@@ -304,11 +303,8 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
             }
         }
 
-        int boltLevel = entity.recipeTicks == 0
-                ? 0
-                : Math.min(AcceleratorBlock.MAX_BOLT_LEVEL,
-                        (entity.workProgress * AcceleratorBlock.MAX_BOLT_LEVEL
-                                + entity.recipeTicks - 1) / entity.recipeTicks);
+        int boltLevel = MachineLogic.boltLevel(
+                entity.workProgress, entity.recipeTicks, AcceleratorBlock.MAX_BOLT_LEVEL);
         BlockState newState = state
                 .setValue(AcceleratorBlock.BOLT_LEVEL, boltLevel)
                 .setValue(AcceleratorBlock.LIT, entity.processing);
@@ -319,16 +315,6 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         if (changed) {
             setChanged(level, pos, state);
         }
-    }
-
-    private static int countLavaSides(ServerLevel level, BlockPos pos) {
-        int count = 0;
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (level.getFluidState(pos.relative(direction)).is(FluidTags.LAVA)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private boolean resetProgress() {
@@ -362,7 +348,8 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
 
     private void setActiveBoost(FastFuel fuel) {
         this.activeBoostFuel = fuel;
-        this.extremeBoost = fuel != null && fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID);
+        this.extremeBoost = fuel != null && (fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID)
+                || fuel.id().equals(FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID));
         this.boostWorkPerTick = fuel == null ? 1 : fuel.acceleratorWorkPerTick();
     }
 }
