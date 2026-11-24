@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This guide covers **Fast Furnace V2 1.5.1** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.1.0**.
+This guide covers **Fast Furnace V2 1.5.2** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.1.0**.
 
 ## Start playing
 
