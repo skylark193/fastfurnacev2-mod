@@ -1,5 +1,6 @@
 package com.skylark193.fastfurnacev2;
 
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -8,64 +9,65 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 
-/** Independent Extremely Fast tool proc rolls, applied after normal loot and base damage. */
+/** Independent registered tool proc rolls, applied after normal loot and base damage. */
 final class ExtremelyFastToolEffects {
-    static final float DROP_DOUBLE_CHANCE = 0.05F;
-    static final float DAMAGE_DOUBLE_CHANCE = 0.10F;
-
     private ExtremelyFastToolEffects() {
     }
 
     static void onBlockDrops(BlockDropsEvent event) {
         if (!(event.getBreaker() instanceof Player player)
                 || player.isCreative()
-                || !isHarvestingTool(event.getTool())
                 || !event.getLevel().getGameRules().get(GameRules.BLOCK_DROPS)
-                || !player.hasCorrectToolForDrops(event.getState(), event.getLevel(), event.getPos())
-                || event.getLevel().getRandom().nextFloat() >= DROP_DOUBLE_CHANCE) {
+                || !player.hasCorrectToolForDrops(event.getState(), event.getLevel(), event.getPos())) {
             return;
         }
-        event.getDrops().addAll(duplicateDrops(event.getLevel(), event.getDrops()));
+        float chance = FastFurnaceApi.findToolModifiers(event.getTool())
+                .map(modifiers -> modifiers.blockDropDoubleChance())
+                .orElse(0.0F);
+        if (roll(event.getLevel(), chance)) {
+            event.getDrops().addAll(duplicateDrops(event.getLevel(), event.getDrops()));
+        }
     }
 
     static void onLivingDrops(LivingDropsEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)
-                || !isDirectSwordAttack(event.getSource(), player)
-                || !(event.getEntity().level() instanceof ServerLevel level)
-                || level.getRandom().nextFloat() >= DROP_DOUBLE_CHANCE) {
+                || !isDirectMeleeAttack(event.getSource())
+                || !(event.getEntity().level() instanceof ServerLevel level)) {
             return;
         }
-        event.getDrops().addAll(duplicateDrops(level, event.getDrops()));
+        float chance = FastFurnaceApi.findToolModifiers(player.getMainHandItem())
+                .map(modifiers -> modifiers.killDropDoubleChance())
+                .orElse(0.0F);
+        if (roll(level, chance)) {
+            event.getDrops().addAll(duplicateDrops(level, event.getDrops()));
+        }
     }
 
     static void onIncomingDamage(LivingIncomingDamageEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)
-                || !isDirectSwordAttack(event.getSource(), player)
-                || !(player.level() instanceof ServerLevel level)
-                || level.getRandom().nextFloat() >= DAMAGE_DOUBLE_CHANCE) {
+                || !isDirectMeleeAttack(event.getSource())
+                || !(player.level() instanceof ServerLevel level)) {
             return;
         }
-        event.setAmount(event.getAmount() * 2.0F);
+        float chance = FastFurnaceApi.findToolModifiers(player.getMainHandItem())
+                .map(modifiers -> modifiers.damageDoubleChance())
+                .orElse(0.0F);
+        if (roll(level, chance)) {
+            event.setAmount(event.getAmount() * 2.0F);
+        }
     }
 
-    private static boolean isDirectSwordAttack(DamageSource source, Player player) {
-        return source.isDirect() && source.is(DamageTypes.PLAYER_ATTACK) && isSword(player.getMainHandItem());
+    private static boolean isDirectMeleeAttack(DamageSource source) {
+        return source.isDirect() && source.is(DamageTypes.PLAYER_ATTACK);
     }
 
-    private static boolean isHarvestingTool(ItemStack stack) {
-        return stack.is(FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get())
-                || stack.is(FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get())
-                || stack.is(FastFurnaceV2.EXTREMELY_FAST_AXE.get());
-    }
-
-    private static boolean isSword(ItemStack stack) {
-        return stack.is(FastFurnaceV2.EXTREMELY_FAST_SWORD.get());
+    private static boolean roll(ServerLevel level, float chance) {
+        return chance >= 1.0F || chance > 0.0F && level.getRandom().nextFloat() < chance;
     }
 
     private static List<ItemEntity> duplicateDrops(ServerLevel level, Collection<ItemEntity> drops) {

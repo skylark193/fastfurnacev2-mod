@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.5.2 exposes API version 1.1.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, and Accelerator boost fuels. Registered content runs in the actual machines, participates in automation and persistence, appears in the optional JEI integration, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.6.0 exposes API version 1.2.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, and custom tool modifiers. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.5.2"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.6.0"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.5.2.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.6.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.5.2,)"
+versionRange="[1.6.0,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -41,7 +41,7 @@ Replace `examplemod` with your mod ID. Use `type="optional"` instead if your mod
 
 ## Registration lifecycle
 
-Registration events are fired once on the **mod event bus** after NeoForge binds default item components, when constructing recipe `ItemStack`s is valid. Fast Furnace V2 listens for `DefaultDataComponentsBoundEvent` and initializes only when `shouldUpdateStaticData()` is true, avoiding duplicate registration on an integrated client. Subscribe from your mod constructor, not from the NeoForge game-event bus:
+Definition-registration events are fired once on the **mod event bus** after NeoForge binds default item components, when constructing recipe `ItemStack`s is valid. Fast Furnace V2 listens for `DefaultDataComponentsBoundEvent` and initializes only when `shouldUpdateStaticData()` is true, avoiding duplicate registration on an integrated client. `ModifyFastToolStatsEvent` instead fires earlier from `ModifyDefaultComponentsEvent`, while default components are still mutable. Subscribe from your mod constructor, not from the NeoForge game-event bus:
 
 ```java
 @Mod("examplemod")
@@ -50,6 +50,9 @@ public final class ExampleMod {
         modEventBus.addListener(this::registerFuels);
         modEventBus.addListener(this::registerCrusherRecipes);
         modEventBus.addListener(this::registerAcceleratorRecipes);
+        modEventBus.addListener(this::registerAlloyerRecipes);
+        modEventBus.addListener(this::modifyToolStats);
+        modEventBus.addListener(this::registerToolModifiers);
     }
 
     private void registerFuels(RegisterFastFuelsEvent event) {
@@ -63,10 +66,22 @@ public final class ExampleMod {
     private void registerAcceleratorRecipes(RegisterAcceleratorRecipesEvent event) {
         // Register Accelerator conversions here.
     }
+
+    private void registerAlloyerRecipes(RegisterExtremelyFastAlloyerRecipesEvent event) {
+        // Register three-input Alloyer recipes here.
+    }
+
+    private void modifyToolStats(ModifyFastToolStatsEvent event) {
+        // Patch built-in or other mods' tool defaults here.
+    }
+
+    private void registerToolModifiers(RegisterFastToolModifiersEvent event) {
+        // Register runtime tool proc chances here.
+    }
 }
 ```
 
-Registration occurs once per game process, not on every datapack reload. In Minecraft 26.1.2, common setup is too early to construct `ItemStack`s because their default components are not bound yet. Every definition needs a unique namespaced `Identifier` within its content type. Duplicate IDs fail registration rather than silently replacing another definition.
+Registration occurs once per game process, not on every datapack reload. In Minecraft 26.1.2, common setup is too early to construct `ItemStack`s because their default components are not bound yet. Tool-stat patches must use the earlier component-modification event rather than the definition-registration events. Every definition needs a unique namespaced `Identifier` within its content type. Duplicate IDs fail registration rather than silently replacing another definition.
 
 Ingredients can match items, tags, or other ingredient types supported by `Ingredient.test(ItemStack)`. When multiple definitions of the same type match, higher `priority` wins. Later registrations win equal-priority ties. Built-in definitions use priority zero, so a positive priority can override one without reusing its ID.
 
@@ -162,6 +177,99 @@ The existing four-horizontal-lava requirement, blocked-output pause/resume, inpu
 
 Built-in conversion IDs are `fastfurnacev2:accelerator/coal`, `coal_block`, `iron`, `iron_block`, `gold`, `gold_block`, `diamond`, and `diamond_block` (each suffix after `fastfurnacev2:accelerator/`). Item conversions require 400 work units and block conversions require 3,600.
 
+## Extremely Fast Alloyer recipes
+
+Register an `ExtremelyFastAlloyerRecipe` with exactly three ingredients, a nonempty output, and a positive base processing time:
+
+```java
+private void registerAlloyerRecipes(RegisterExtremelyFastAlloyerRecipesEvent event) {
+    event.register(new ExtremelyFastAlloyerRecipe(
+            Identifier.fromNamespaceAndPath("examplemod", "custom_alloy"),
+            List.of(
+                    Ingredient.of(Items.IRON_INGOT),
+                    Ingredient.of(Items.GOLD_INGOT),
+                    Ingredient.of(Items.DIAMOND)),
+            new ItemStack(Items.NETHERITE_SCRAP),
+            800,  // base ticks before horizontal-lava reductions
+            10)); // priority
+}
+```
+
+The full constructor is `(id, ingredients, output, processingTicks, priority)`. The four-argument constructor uses priority zero. Ingredients are shapeless but must match three distinct nonempty input slots; processing consumes one item from each matched slot. Priority applies to the complete recipe match, with later registration breaking equal-priority ties.
+
+Custom recipes use only the Extremely Fast Alloyer and require Extreme Coal. Each horizontal lava side subtracts 100 ticks, with the usual 400-tick floor; lava never increases the duration of a recipe whose base time is already shorter. Existing input reset, output blocking, fuel preservation, transaction, persistence, and automation rules apply. Registered recipes automatically appear in the Alloyer's JEI category.
+
+The built-in Extremely Fast Ingot recipe ID is `FastFurnaceApi.EXTREMELY_FAST_INGOT_RECIPE_ID`.
+
+## Tool statistics and custom tools
+
+### Modify default tool statistics
+
+`ModifyFastToolStatsEvent` patches an item's current defaults. Pass either its registered `Item` or its `Identifier`; patches compose in listener order, so each callback receives earlier changes:
+
+```java
+private void modifyToolStats(ModifyFastToolStatsEvent event) {
+    event.modify(
+            Identifier.fromNamespaceAndPath("fastfurnacev2", "fast_diamond_pickaxe"),
+            stats -> stats
+                    .withDurability(stats.durability() + 500)
+                    .withMiningSpeedMultiplier(1.25F)
+                    .withAttackDamage(stats.attackDamage() + 1.0)
+                    .withAttackSpeed(stats.attackSpeed() + 0.25)
+                    .withEnchantmentValue(15));
+}
+```
+
+- Durability and enchantment value must be positive.
+- The mining-speed multiplier scales every finite speed rule while preserving their relative speeds. It composes with earlier patches and leaves drop-correctness rules unchanged.
+- Attack damage includes the player's base damage of one; attack speed includes the player's base four attacks per second. Their defaults are read from the standard main-hand attribute modifiers.
+- Built-in Fortune II and Looting II defaults are separate enchantment components and are not changed by `withEnchantmentValue`.
+
+Use this event only for default components. Register runtime proc chances separately through `RegisterFastToolModifiersEvent`.
+
+### Create a custom tool
+
+Create items with `FastFurnaceApi.createTool` during normal item registration. It supports pickaxes, shovels, axes, and swords with the same vanilla-style `ToolMaterial` and property baselines used by Fast Furnace V2:
+
+```java
+public static final DeferredItem<Item> CUSTOM_PICKAXE = ITEMS.registerItem(
+        "custom_pickaxe",
+        properties -> FastFurnaceApi.createTool(
+                FastToolType.PICKAXE,
+                ToolMaterial.IRON,
+                1.0F,   // vanilla-style attack-damage baseline
+                -2.8F,  // vanilla-style attack-speed baseline
+                properties));
+```
+
+The factory preserves axe stripping and shovel flattening. Its item classes route durability damage through registered Fast Furnace modifiers. Block-drop, kill-drop, and melee-damage modifiers also work on ordinary items from other mods; only durability-save rolls require this factory or equivalent `damageItem` integration.
+
+### Register runtime modifiers
+
+Register one immutable `FastToolModifiers` definition after default components bind:
+
+```java
+private void registerToolModifiers(RegisterFastToolModifiersEvent event) {
+    event.register(FastToolModifiers.builder(
+                    Identifier.fromNamespaceAndPath("examplemod", "custom_pickaxe_modifiers"),
+                    Ingredient.of(CUSTOM_PICKAXE.get()))
+            .durabilitySaveChance(0.05F)
+            .blockDropDoubleChance(0.05F)
+            .killDropDoubleChance(0.05F)
+            .damageDoubleChance(0.10F)
+            .priority(10)
+            .build());
+}
+```
+
+Each chance is an independent probability from zero through one; omitted chances default to zero. One highest-priority matching definition supplies all four chances, with later registration breaking equal-priority ties. Chances are not merged across definitions.
+
+- Durability saving rolls on the server for positive damage amounts.
+- Block-drop doubling requires a noncreative player, enabled block drops, and a correct tool. Complete drops are copied after normal loot and enchantments.
+- Kill-drop doubling and damage doubling require a direct `PLAYER_ATTACK`; arrows, Thorns, and other indirect sources cannot proc them. Damage doubles before mitigation.
+
+Built-in definitions use `FastFurnaceApi.FAST_DIAMOND_TOOL_MODIFIERS_ID`, `EXTREMELY_FAST_HARVESTING_TOOL_MODIFIERS_ID`, and `EXTREMELY_FAST_SWORD_MODIFIERS_ID`. Their priority is zero, so a higher-priority ingredient definition can override their proc chances without reusing an ID.
+
 ## Queries and built-in content access
 
 After the registration events have fired, use `FastFurnaceApi` to access content:
@@ -188,14 +296,23 @@ Optional<CrusherRecipe> crusherRecipe = FastFurnaceApi.findCrusherRecipe(input);
 List<AcceleratorConversion> conversions = FastFurnaceApi.acceleratorRecipes();
 boolean canEnterInputSlot = FastFurnaceApi.isAcceleratorInput(input);
 Optional<AcceleratorConversion> conversion = FastFurnaceApi.findAcceleratorRecipe(input);
+
+List<ExtremelyFastAlloyerRecipe> alloyerRecipes = FastFurnaceApi.alloyerRecipes();
+Optional<ExtremelyFastAlloyerRecipe> alloyerById = FastFurnaceApi.findAlloyerRecipe(alloyerRecipeId);
+boolean canEnterAlloyer = FastFurnaceApi.isAlloyerInput(input);
+Optional<ExtremelyFastAlloyerRecipe> alloyerMatch = FastFurnaceApi.findAlloyerRecipe(threeInputStacks);
+
+List<FastToolModifiers> toolModifiers = FastFurnaceApi.toolModifiers();
+Optional<FastToolModifiers> toolModifiersById = FastFurnaceApi.findToolModifiers(toolModifierId);
+Optional<FastToolModifiers> toolModifiersByStack = FastFurnaceApi.findToolModifiers(toolStack);
 ```
 
-`findCrusherRecipe` and `findAcceleratorRecipe` require enough input items to process. `isAcceleratorInput` checks only ingredient acceptance, making it suitable for slot and automation logic. Query collections are immutable, and returned output/display stacks are fresh copies. Do not retain and mutate a definition's internal state; definitions themselves are immutable.
+`findCrusherRecipe` and `findAcceleratorRecipe` require enough input items to process. `isAcceleratorInput` and `isAlloyerInput` check only ingredient acceptance, making them suitable for slot and automation logic. The list-based Alloyer query examines the first three stacks and applies distinct-slot shapeless matching. Query collections are immutable, and returned output/display stacks are fresh copies. Do not retain and mutate a definition's internal state; definitions themselves are immutable.
 
 The current API version is available as `FastFurnaceApi.API_VERSION`.
 
 ## Recipe viewers and validation
 
-When a compatible JEI is installed, Fast Furnace V2 automatically displays registered crusher recipes, Accelerator conversions, Accelerator boosts, and per-tier custom fuel durations and smelt counts. No separate JEI registration is required for this content.
+When a compatible JEI is installed, Fast Furnace V2 automatically displays registered crusher recipes, Accelerator conversions, Alloyer recipes, Accelerator boosts, and per-tier custom fuel durations and smelt counts. No separate JEI registration is required for this content.
 
 The mod's GameTest server enables opt-in example definitions with the `fastfurnacev2.apiTestContent=true` system property and tests their actual machine behavior. These examples are not registered in ordinary client or server runs.

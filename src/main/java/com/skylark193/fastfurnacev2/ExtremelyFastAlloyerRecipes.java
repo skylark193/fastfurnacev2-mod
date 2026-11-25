@@ -1,42 +1,62 @@
 package com.skylark193.fastfurnacev2;
 
+import com.skylark193.fastfurnacev2.api.ExtremelyFastAlloyerRecipe;
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
-/** Built-in recipe storage and shapeless matching for the Extremely Fast Alloyer. */
+/** Internal recipe storage and distinct-slot shapeless matching for the Extremely Fast Alloyer. */
 public final class ExtremelyFastAlloyerRecipes {
-    public static final Identifier EXTREMELY_FAST_INGOT_RECIPE_ID = Identifier.fromNamespaceAndPath(
-            FastFurnaceV2.MODID, "alloyer/extremely_fast_ingot");
     private static final List<ExtremelyFastAlloyerRecipe> RECIPES = new ArrayList<>();
     private static final List<ExtremelyFastAlloyerRecipe> RECIPE_VIEW = Collections.unmodifiableList(RECIPES);
-    private static boolean initialized;
+    private static final List<Entry> ENTRIES = new ArrayList<>();
+    private static final Map<Identifier, ExtremelyFastAlloyerRecipe> RECIPES_BY_ID = new HashMap<>();
+    private static List<ExtremelyFastAlloyerRecipe> matchOrder = List.of();
+    private static int nextSequence;
 
     private ExtremelyFastAlloyerRecipes() {
     }
 
     /** Creates recipe stacks only after default item components have been bound. */
-    public static void initialize() {
-        if (initialized) {
-            return;
-        }
-        RECIPES.add(new ExtremelyFastAlloyerRecipe(
-                EXTREMELY_FAST_INGOT_RECIPE_ID,
+    public static void registerBuiltIn() {
+        register(new ExtremelyFastAlloyerRecipe(
+                FastFurnaceApi.EXTREMELY_FAST_INGOT_RECIPE_ID,
                 List.of(
                         Ingredient.of(FastFurnaceV2.FAST_IRON_INGOT.get()),
                         Ingredient.of(FastFurnaceV2.FAST_GOLD_INGOT.get()),
                         Ingredient.of(FastFurnaceV2.FAST_DIAMOND.get())),
                 new ItemStack(FastFurnaceV2.EXTREMELY_FAST_INGOT.get()),
                 ExtremelyFastAlloyerBlockEntity.RECIPE_TICKS));
-        initialized = true;
+    }
+
+    public static void register(ExtremelyFastAlloyerRecipe recipe) {
+        if (RECIPES_BY_ID.putIfAbsent(recipe.id(), recipe) != null) {
+            throw new IllegalArgumentException("Duplicate Extremely Fast Alloyer recipe ID: " + recipe.id());
+        }
+        ENTRIES.add(new Entry(recipe, nextSequence++));
+        RECIPES.add(recipe);
+        matchOrder = ENTRIES.stream()
+                .sorted(Comparator.comparingInt((Entry entry) -> entry.recipe().priority())
+                        .thenComparingInt(entry -> entry.sequence())
+                        .reversed())
+                .map(entry -> entry.recipe())
+                .toList();
     }
 
     public static List<ExtremelyFastAlloyerRecipe> recipes() {
         return RECIPE_VIEW;
+    }
+
+    public static Optional<ExtremelyFastAlloyerRecipe> findRecipe(Identifier id) {
+        return Optional.ofNullable(RECIPES_BY_ID.get(id));
     }
 
     public static boolean isInput(ItemStack stack) {
@@ -48,13 +68,18 @@ public final class ExtremelyFastAlloyerRecipes {
                 .anyMatch(ingredient -> ingredient.test(stack));
     }
 
+    /** Finds a match using only the first three items, which correspond to the Alloyer input slots. */
+    public static Optional<ExtremelyFastAlloyerRecipe> findRecipe(List<ItemStack> items) {
+        return findMatch(items).map(match -> match.recipe());
+    }
+
     static Optional<Match> findMatch(List<ItemStack> items) {
-        if (items.size() < ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT) {
+        if (items.size() < ExtremelyFastAlloyerRecipe.INGREDIENT_COUNT) {
             return Optional.empty();
         }
-        for (ExtremelyFastAlloyerRecipe recipe : RECIPES) {
-            int[] slotsByIngredient = new int[ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT];
-            if (matches(recipe, items, 0, new boolean[ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT], slotsByIngredient)) {
+        for (ExtremelyFastAlloyerRecipe recipe : matchOrder) {
+            int[] slotsByIngredient = new int[ExtremelyFastAlloyerRecipe.INGREDIENT_COUNT];
+            if (matches(recipe, items, 0, new boolean[ExtremelyFastAlloyerRecipe.INGREDIENT_COUNT], slotsByIngredient)) {
                 return Optional.of(new Match(recipe, slotsByIngredient));
             }
         }
@@ -67,10 +92,10 @@ public final class ExtremelyFastAlloyerRecipes {
             int ingredientIndex,
             boolean[] usedSlots,
             int[] slotsByIngredient) {
-        if (ingredientIndex == ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT) {
+        if (ingredientIndex == ExtremelyFastAlloyerRecipe.INGREDIENT_COUNT) {
             return true;
         }
-        for (int slot = 0; slot < ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT; slot++) {
+        for (int slot = 0; slot < ExtremelyFastAlloyerRecipe.INGREDIENT_COUNT; slot++) {
             ItemStack stack = items.get(slot);
             if (!usedSlots[slot] && !stack.isEmpty()
                     && recipe.ingredients().get(ingredientIndex).test(stack)) {
@@ -83,6 +108,9 @@ public final class ExtremelyFastAlloyerRecipes {
             }
         }
         return false;
+    }
+
+    private record Entry(ExtremelyFastAlloyerRecipe recipe, int sequence) {
     }
 
     record Match(ExtremelyFastAlloyerRecipe recipe, int[] slotsByIngredient) {

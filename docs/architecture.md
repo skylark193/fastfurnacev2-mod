@@ -13,8 +13,8 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `FastFurnaceBlock` / `FastFurnaceBlockEntity` / `FastFurnaceMenu` | Shared furnace/crusher block identity, processing, persistence, automation, and synchronization |
 | `AcceleratorBlock` / `AcceleratorBlockEntity` / `AcceleratorMenu` | Exact-work conversions, lava requirement, boosts, automation, and synchronization |
 | `ExtremelyFastAlloyerBlock` / `ExtremelyFastAlloyerBlockEntity` / `ExtremelyFastAlloyerMenu` | Dedicated three-input recipes, Extreme Coal fuel, lava-adjusted timing, and automation |
-| `ExtremelyFastAlloyerRecipe` / `ExtremelyFastAlloyerRecipes` | Internal shapeless recipe definition and built-in registration |
-| `FastTools` / `ExtremelyFastToolEffects` | Tool materials, durability rolls, built-in enchantments, and post-loot/damage effects |
+| `ExtremelyFastAlloyerRecipe` / `ExtremelyFastAlloyerRecipes` | Public recipe definition and internal shapeless storage/matching |
+| `FastTools` / `ExtremelyFastToolEffects` | Tool materials, modifier-driven durability rolls, and post-loot/damage effects |
 | `FastBonusDrops` / `FastOreGeneration` | Mining bonuses and deterministic once-only ore replacement |
 | `CrushedOres` / `CrushedOreItem` / `CrushedOreResources` | Raw-ore discovery, result selection, dynamic registration, naming, and item definitions |
 | `api/` | Public immutable definitions, registration events, built-in accessors, and queries |
@@ -61,7 +61,7 @@ The four furnace and four crusher tiers share one block-entity type and four tie
 
 ### Extremely Fast Alloyer
 
-- `ExtremelyFastAlloyerRecipes.initialize()` runs after default item components bind. Its registry is internal and separate from smelting, crushing, Accelerator, crafting, and the public API.
+- `FastFurnaceApiImpl` registers the built-in recipe and posts `RegisterExtremelyFastAlloyerRecipesEvent` after default item components bind. `ExtremelyFastAlloyerRecipes` stores public definitions and keeps them separate from smelting, crushing, Accelerator, and crafting recipes.
 - Shapeless matching assigns each recipe ingredient to a distinct nonempty input slot through backtracking. Missing, duplicate, partial, and unsupported inputs do not match.
 - Only the Extreme Coal item is fuel. Each supplies exactly 1,600 valid processing ticks. Work and burn countdown advance only while a valid result fits.
 - Horizontal lava reduces the current duration dynamically to its configured minimum without resetting elapsed work. Missing fuel or blocked output preserves progress and inputs; invalid or changed input resets progress while preserving banked fuel.
@@ -78,9 +78,10 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 
 ## Public API lifecycle
 
-- Post fuel, crusher, and Accelerator registration events once on the **mod bus** from `DefaultDataComponentsBoundEvent` when `shouldUpdateStaticData()` is true. Common setup is too early to construct recipe `ItemStack`s because default components are unbound.
+- Post fuel, crusher, Accelerator, Alloyer, and tool-modifier registration events once on the **mod bus** from `DefaultDataComponentsBoundEvent` when `shouldUpdateStaticData()` is true. Common setup is too early to construct recipe `ItemStack`s because default components are unbound.
+- Post `ModifyFastToolStatsEvent` earlier on the **mod bus** from `ModifyDefaultComponentsEvent`. Each patch reads the current component builder, so multiple listeners compose instead of replacing the item's original defaults.
 - Registration is startup-only, not datapack-reloadable. Built-ins register through the same storage before each corresponding third-party event.
-- Definition IDs are unique within each content type. Ingredient matching uses the complete `ItemStack`; highest priority wins, then greatest registration sequence.
+- Definition IDs are unique within each content type. Ingredient matching uses the complete `ItemStack`; highest priority wins, then greatest registration sequence. One matching `FastToolModifiers` definition supplies all four proc chances rather than merging definitions.
 - `FastFuel.baseBurnTime == 0` preserves ordinary burn behavior. Positive ordinary values integrate through `FurnaceFuelBurnTimeEvent`. Duration scaling uses effective ordinary burn time; speed bonuses add percentage points.
 - Accelerator work and work-per-tick must both be zero or both positive. Crusher and Accelerator definitions support arbitrary input/output counts. Return defensive output/display stack copies.
 - GameTest-only API examples require `fastfurnacev2.apiTestContent=true` in the GameTest run and must not register in normal gameplay.
@@ -109,11 +110,12 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 
 ## Tools and world events
 
-- Minecraft 26.1.2 uses `ToolMaterial` and `Item.Properties`; `Tier`, `Tiers`, and `DiggerItem` are unavailable in the mapped version. Swords and pickaxes are ordinary `Item`s configured through `properties.sword(...)` and `properties.pickaxe(...)`; axes and shovels use `AxeItem` and `ShovelItem`.
+- Minecraft 26.1.2 uses `ToolMaterial` and `Item.Properties`; `Tier`, `Tiers`, and `DiggerItem` are unavailable in the mapped version. `FastFurnaceApi.createTool` configures vanilla-style components and retains `AxeItem` stripping and `ShovelItem` flattening while adding modifier-driven durability rolls.
+- `ModifyDefaultComponentsEvent` runs after item registration and before default components finalize. Its initializer exposes the current `DataComponentMap.Builder`; `FastToolStats` patches durability, finite mining-speed rules, enchantability, and the vanilla base attack attribute IDs. There is no global `ItemDamageEvent` in this NeoForge version.
 - Scale sword speed as actual attacks per second: `newBaseline = (4 + vanillaBaseline) * multiplier - 4`. Fast Diamond Sword's damage scales total vanilla damage, not only the material bonus.
-- Fast Diamond tools override NeoForge's `IItemExtension.damageItem` route for deterministic 5% durability-save rolls on the server. This covers attacks, mining, stripping, and flattening without a separate event handler.
+- Factory-created tools override NeoForge's `IItemExtension.damageItem` route and query the highest-priority registered modifier on the server. This covers attacks, mining, stripping, and flattening without a separate event handler. Ordinary custom items can use the other modifiers without this item class.
 - Extremely Fast built-in Fortune II/Looting II uses `Item.Properties.delayedComponent(DataComponents.ENCHANTMENTS, ...)` so registry lookup occurs after default components bind.
-- Extremely Fast harvesting requires a noncreative player, block drops enabled, and a correct tool. Copy complete drops after normal loot and Fortune/Looting, preserving components, positions, and motion. Sword drop and damage rolls require a direct `PLAYER_ATTACK`; arrows, Thorns, and other indirect sources cannot proc them. Damage doubles during `LivingIncomingDamageEvent` before mitigation.
+- Registered block-drop modifiers require a noncreative player, block drops enabled, and a correct tool. Copy complete drops after normal loot and Fortune/Looting, preserving components, positions, and motion. Kill-drop and damage rolls require a direct `PLAYER_ATTACK`; arrows, Thorns, and other indirect sources cannot proc them. Damage doubles during `LivingIncomingDamageEvent` before mitigation.
 - `FastBonusDrops` appends during server-side `BlockDropsEvent`; never clear vanilla drops. Require a noncreative breaker, enabled drops, a correct tool, and no Silk Touch.
 - `FastOreGeneration` uses server-side `ChunkEvent.Load`, source-specific salts, world seed, and position-derived randomness. Skip palettes that cannot contain eligible ore and mutate only the supplied chunk with update flags 0.
 - Store Boolean `fast_ore_chunk_processed` and `deepslate_fast_ore_chunk_processed` attachments after independent passes and call `markUnsaved()`. Retain the legacy `extreme_coal_chunk_processed` registration for old saves, but do not let it suppress current passes.
@@ -125,7 +127,7 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 - Information fly-outs prefer right, then left, then an on-screen fallback. Drawing and `getJeiExtraAreas` must use the same current position calculation and return exclusions only while visible.
 - JEI keys transfer handlers by exact container class and recipe type. Register shared smelting transfer once with `menu -> !menu.isFastCrusher()` and crushing transfer once with `FastFurnaceMenu::isFastCrusher`; duplicate registrations overwrite one another.
 - Use one shared furnace/crusher screen GUI handler. Its arrow chooses crushing or smelting from the current menu; its flame chooses the current tier's fuel category.
-- Register API crusher and Accelerator definitions directly with their dedicated categories. Accelerator transfers target input slot 0 or boost slot 1, with player inventory starting at slot 3. Alloyer transfers target slots 0–2, with player inventory starting at slot 5.
+- Register API crusher, Accelerator, and Alloyer definitions directly with their dedicated categories. Accelerator transfers target input slot 0 or boost slot 1, with player inventory starting at slot 3. Alloyer transfers target slots 0–2, with player inventory starting at slot 5.
 - Register the Accelerator as catalyst for both dedicated types and the Alloyer only for its dedicated type. Do not route these recipes into ordinary smelting, crushing, or tiered fuel categories.
 - Enumerate custom fuel displays from the current level's `FuelValues`, match each stack through `FastFurnaceApi.findFuel`, and calculate smelt counts as `burnTime / tier.scaleCookTime(200, speedBonusPercent)`.
 - Do not modify `RecipeTypes.SMELTING_FUEL` to implement Fast Furnace durations; that would alter ordinary furnace displays.

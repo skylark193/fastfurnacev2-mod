@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **36 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, and fuel definitions through the [API](api.md). The Alloyer currently uses its own built-in recipe registry rather than the public extension API.
+This page collects the **36 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Other mods can add crusher recipes, Accelerator conversions, Alloyer recipes, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 

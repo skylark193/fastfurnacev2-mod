@@ -145,7 +145,8 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
     }
 
     public static int getProcessingTicks(int baseTicks, int horizontalLavaSides) {
-        return Math.max(MIN_RECIPE_TICKS, baseTicks - Math.max(0, horizontalLavaSides) * LAVA_TICK_REDUCTION);
+        return Math.min(baseTicks, Math.max(
+                MIN_RECIPE_TICKS, baseTicks - Math.max(0, horizontalLavaSides) * LAVA_TICK_REDUCTION));
     }
 
     private void consumeFuel() {

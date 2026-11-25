@@ -2,7 +2,6 @@ package com.skylark193.fastfurnacev2.compat.jei;
 
 import com.skylark193.fastfurnacev2.AcceleratorMenu;
 import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerMenu;
-import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerRecipes;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
@@ -172,7 +171,7 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
         registration.addRecipes(AcceleratorCategory.getAcceleratorRecipeType(), createAcceleratorRecipes());
         registration.addRecipes(AcceleratorFuelCategory.getAcceleratorFuelRecipeType(), createAcceleratorFuels());
-        registration.addRecipes(ExtremelyFastAlloyerCategory.getAlloyerRecipeType(), ExtremelyFastAlloyerRecipes.recipes());
+        registration.addRecipes(ExtremelyFastAlloyerCategory.getAlloyerRecipeType(), FastFurnaceApi.alloyerRecipes());
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {

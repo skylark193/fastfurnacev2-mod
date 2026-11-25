@@ -30,7 +30,7 @@ Place one of each ingredient into the three input slots, in any order:
 |---|---|---|---|---:|
 | 1 × Fast Iron Ingot | 1 × Fast Gold Ingot | 1 × Fast Diamond | 1 × Extremely Fast Ingot | 800 ticks (40 seconds) |
 
-All three input slots must contain their matched ingredient. Duplicate copies of one ingredient cannot substitute for another ingredient, and a partial recipe does not process.
+All three input slots must contain their matched ingredient. Duplicate copies of one ingredient cannot substitute for another ingredient, and a partial recipe does not process. Other mods can add recipes through the [public API](api.md#extremely-fast-alloyer-recipes); custom recipes use the same fuel, lava, automation, persistence, and JEI behavior.
 
 Each horizontally adjacent source or flowing lava block reduces the operation by **100 ticks**, to a minimum of **400 ticks**:
 

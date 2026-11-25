@@ -1,4 +1,4 @@
-package com.skylark193.fastfurnacev2;
+package com.skylark193.fastfurnacev2.api;
 
 import java.util.List;
 import java.util.Objects;
@@ -11,15 +11,17 @@ public record ExtremelyFastAlloyerRecipe(
         Identifier id,
         List<Ingredient> ingredients,
         ItemStack output,
-        int processingTicks) {
+        int processingTicks,
+        int priority) {
+    public static final int INGREDIENT_COUNT = 3;
 
     public ExtremelyFastAlloyerRecipe {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(ingredients, "ingredients");
         Objects.requireNonNull(output, "output");
         ingredients = List.copyOf(ingredients);
-        if (ingredients.size() != ExtremelyFastAlloyerMenu.INPUT_SLOT_COUNT) {
-            throw new IllegalArgumentException("Extremely Fast Alloyer recipes require exactly three ingredients");
+        if (ingredients.size() != INGREDIENT_COUNT || ingredients.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Extremely Fast Alloyer recipes require exactly three nonnull ingredients");
         }
         if (output.isEmpty()) {
             throw new IllegalArgumentException("Extremely Fast Alloyer output cannot be empty");
@@ -28,6 +30,11 @@ public record ExtremelyFastAlloyerRecipe(
             throw new IllegalArgumentException("Extremely Fast Alloyer processing time must be positive");
         }
         output = output.copy();
+    }
+
+    public ExtremelyFastAlloyerRecipe(
+            Identifier id, List<Ingredient> ingredients, ItemStack output, int processingTicks) {
+        this(id, ingredients, output, processingTicks, 0);
     }
 
     @Override
