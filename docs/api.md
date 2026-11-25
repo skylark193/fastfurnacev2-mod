@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.6.1 exposes API version 1.2.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, and custom tool modifiers. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.7.0 exposes API version 1.3.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, and reusable energy storage. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.6.1"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.7.0"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.6.1.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.7.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.6.1,)"
+versionRange="[1.7.0,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -269,6 +269,62 @@ Each chance is an independent probability from zero through one; omitted chances
 - Kill-drop doubling and damage doubling require a direct `PLAYER_ATTACK`; arrows, Thorns, and other indirect sources cannot proc them. Damage doubles before mitigation.
 
 Built-in definitions use `FastFurnaceApi.FAST_DIAMOND_TOOL_MODIFIERS_ID`, `EXTREMELY_FAST_HARVESTING_TOOL_MODIFIERS_ID`, and `EXTREMELY_FAST_SWORD_MODIFIERS_ID`. Their priority is zero, so a higher-priority ingredient definition can override their proc chances without reusing an ID.
+
+## Energy storage
+
+`FastEnergyStorage` implements NeoForge's current transactional `EnergyHandler` API by extending `SimpleEnergyHandler`. It adds a change callback suitable for marking a block entity dirty and scheduling client synchronization. The older `IEnergyStorage` API is deprecated; new integrations should use `EnergyHandler` directly.
+
+Create storage with a capacity and either one shared transfer limit or separate insertion/extraction limits:
+
+```java
+private final FastEnergyStorage energy =
+        new FastEnergyStorage(10_000, 1_000, 500, this::setChanged);
+
+public EnergyHandler energy() {
+    return energy;
+}
+```
+
+All configuration values must be nonnegative. The example accepts at most 1,000 energy and extracts at most 500 energy per operation. A zero insertion or extraction limit disables that direction. Operations clamp to the applicable limit, stored amount, and remaining capacity. Zero-amount operations return zero; negative amounts throw `IllegalArgumentException`.
+
+Persist the storage in its containing block entity using a named child:
+
+```java
+@Override
+protected void loadAdditional(ValueInput input) {
+    super.loadAdditional(input);
+    energy.deserialize(input.childOrEmpty("energy"));
+}
+
+@Override
+protected void saveAdditional(ValueOutput output) {
+    super.saveAdditional(output);
+    energy.serialize(output.child("energy"));
+}
+```
+
+Expose that same instance through NeoForge's standard block capability during mod-bus capability registration:
+
+```java
+private void registerCapabilities(RegisterCapabilitiesEvent event) {
+    event.registerBlockEntity(
+            Capabilities.Energy.BLOCK,
+            EXAMPLE_BLOCK_ENTITY.get(),
+            (blockEntity, side) -> blockEntity.energy());
+}
+```
+
+Consumers perform insertion and extraction in transactions. Aborting rolls back the amount without firing the callback; a changed root commit fires it once even if several operations occurred:
+
+```java
+try (Transaction transaction = Transaction.openRoot()) {
+    int extracted = energy.extract(500, transaction);
+    // Use the extracted energy, then commit only if the whole operation succeeds.
+    transaction.commit();
+}
+```
+
+To simulate, let the transaction close without committing. Direct `set(int)` changes notify immediately; loading saved energy does not notify. `FastEnergyStorage` is a reusable foundation only: existing Fast Furnace V2 machines do not expose energy capabilities or consume energy, and their fuels and processing behavior are unchanged.
 
 ## Queries and built-in content access
 
