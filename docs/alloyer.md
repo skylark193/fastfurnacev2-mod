@@ -75,6 +75,6 @@ Hoppers and other automation can insert accepted ingredients through the **top**
 
 The furnace-style GUI contains three input slots, one Extreme Coal fuel slot and flame, one output slot, and a progress arrow. It has no ordinary smelting recipe book. Its information fly-out reports the 40-second base time, current lava-adjusted time, horizontal lava count, Extreme Coal-only fuel rule, and dedicated-recipe restriction.
 
-With a compatible JEI release, the **Extremely Fast Alloying** category displays all three inputs, the output, the base processing time, and the horizontal-lava reduction rule. The Alloyer is the category catalyst, its progress arrow opens alloying recipes, and recipe transfer targets the three input slots. JEI also reserves space around the visible information fly-out and provides descriptions for the Alloyer, Extremely Fast Ingot, and Extremely Fast tools.
+With a compatible JEI release, the **Extremely Fast Alloying** category displays all three inputs, the output, the base processing time, and the horizontal-lava reduction rule. The Alloyer is the category catalyst, its progress arrow opens alloying recipes, and recipe transfer targets the three input slots. JEI also reserves space around the visible information fly-out and provides descriptions for the Alloyer and Extremely Fast tools.
 
 The current JEI compatibility boundary is described in [Automation, GUI, and JEI](automation-and-jei.md#current-compatibility-boundary); compilation does not constitute JEI runtime validation.

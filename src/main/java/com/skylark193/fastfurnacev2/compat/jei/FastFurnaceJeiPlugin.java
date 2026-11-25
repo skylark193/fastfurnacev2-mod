@@ -96,24 +96,6 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 FastFurnaceV2.DEEPSLATE_FAST_DIAMOND_ORE.get())) {
             registration.addIngredientInfo(ore, Component.translatable("jei.fastfurnacev2.fast_ore"));
         }
-        for (var rawMaterial : List.of(
-                FastFurnaceV2.RAW_FAST_IRON.get(),
-                FastFurnaceV2.RAW_FAST_GOLD.get(),
-                FastFurnaceV2.RAW_FAST_DIAMOND.get())) {
-            registration.addIngredientInfo(rawMaterial, Component.translatable("jei.fastfurnacev2.fast_raw_material"));
-        }
-        for (var material : List.of(
-                FastFurnaceV2.FAST_IRON_INGOT.get(),
-                FastFurnaceV2.FAST_GOLD_INGOT.get(),
-                FastFurnaceV2.FAST_DIAMOND.get())) {
-            registration.addIngredientInfo(material, Component.translatable("jei.fastfurnacev2.fast_material"));
-        }
-        for (var block : List.of(
-                FastFurnaceV2.FAST_IRON_BLOCK.get(),
-                FastFurnaceV2.FAST_GOLD_BLOCK.get(),
-                FastFurnaceV2.FAST_DIAMOND_BLOCK.get())) {
-            registration.addIngredientInfo(block, Component.translatable("jei.fastfurnacev2.fast_material_block"));
-        }
         for (var tool : List.of(
                 FastFurnaceV2.FAST_IRON_PICKAXE.get(),
                 FastFurnaceV2.FAST_IRON_SHOVEL.get(),
@@ -156,9 +138,6 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(
                 FastFurnaceV2.EXTREMELY_FAST_ALLOYER.get(),
                 Component.translatable("jei.fastfurnacev2.alloyer_info"));
-        registration.addIngredientInfo(
-                FastFurnaceV2.EXTREMELY_FAST_INGOT.get(),
-                Component.translatable("jei.fastfurnacev2.extremely_fast_ingot_info"));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addIngredientInfo(
                     FastFurnaceV2.getFurnaceBlock(tier).get(),
