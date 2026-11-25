@@ -29,6 +29,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
@@ -156,6 +158,22 @@ public class FastFurnaceV2 {
                     .strength(3.5F));
     public static final DeferredItem<BlockItem> EXTREMELY_FAST_ALLOYER_ITEM =
             ITEMS.registerSimpleBlockItem("extremely_fast_alloyer", EXTREMELY_FAST_ALLOYER);
+    public static final DeferredBlock<FastGeneratorBlock> FAST_GENERATOR = registerGenerator(FastFurnaceTier.FAST);
+    public static final DeferredBlock<FastGeneratorBlock> IRON_FAST_GENERATOR = registerGenerator(FastFurnaceTier.IRON);
+    public static final DeferredBlock<FastGeneratorBlock> GOLD_FAST_GENERATOR = registerGenerator(FastFurnaceTier.GOLD);
+    public static final DeferredBlock<FastGeneratorBlock> DIAMOND_FAST_GENERATOR = registerGenerator(FastFurnaceTier.DIAMOND);
+    public static final DeferredBlock<FastBatteryBlock> FAST_BATTERY = registerBattery(FastFurnaceTier.FAST);
+    public static final DeferredBlock<FastBatteryBlock> IRON_FAST_BATTERY = registerBattery(FastFurnaceTier.IRON);
+    public static final DeferredBlock<FastBatteryBlock> GOLD_FAST_BATTERY = registerBattery(FastFurnaceTier.GOLD);
+    public static final DeferredBlock<FastBatteryBlock> DIAMOND_FAST_BATTERY = registerBattery(FastFurnaceTier.DIAMOND);
+    public static final DeferredItem<BlockItem> FAST_GENERATOR_ITEM = ITEMS.registerSimpleBlockItem("fast_generator", FAST_GENERATOR);
+    public static final DeferredItem<BlockItem> IRON_FAST_GENERATOR_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_generator", IRON_FAST_GENERATOR);
+    public static final DeferredItem<BlockItem> GOLD_FAST_GENERATOR_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_generator", GOLD_FAST_GENERATOR);
+    public static final DeferredItem<BlockItem> DIAMOND_FAST_GENERATOR_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_generator", DIAMOND_FAST_GENERATOR);
+    public static final DeferredItem<BlockItem> FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("fast_battery", FAST_BATTERY);
+    public static final DeferredItem<BlockItem> IRON_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_battery", IRON_FAST_BATTERY);
+    public static final DeferredItem<BlockItem> GOLD_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_battery", GOLD_FAST_BATTERY);
+    public static final DeferredItem<BlockItem> DIAMOND_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_battery", DIAMOND_FAST_BATTERY);
 
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = registerFurnace(FastFurnaceTier.FAST);
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
@@ -259,6 +277,14 @@ public class FastFurnaceV2 {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExtremelyFastAlloyerBlockEntity>>
             EXTREMELY_FAST_ALLOYER_BLOCK_ENTITY = BLOCK_ENTITIES.register("extremely_fast_alloyer",
                     () -> new BlockEntityType<>(ExtremelyFastAlloyerBlockEntity::new, EXTREMELY_FAST_ALLOYER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastGeneratorBlockEntity>>
+            FAST_GENERATOR_BLOCK_ENTITY = BLOCK_ENTITIES.register("fast_generator", () -> new BlockEntityType<>(
+                    FastGeneratorBlockEntity::new,
+                    FAST_GENERATOR.get(), IRON_FAST_GENERATOR.get(), GOLD_FAST_GENERATOR.get(), DIAMOND_FAST_GENERATOR.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastBatteryBlockEntity>>
+            FAST_BATTERY_BLOCK_ENTITY = BLOCK_ENTITIES.register("fast_battery", () -> new BlockEntityType<>(
+                    FastBatteryBlockEntity::new,
+                    FAST_BATTERY.get(), IRON_FAST_BATTERY.get(), GOLD_FAST_BATTERY.get(), DIAMOND_FAST_BATTERY.get()));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.FAST);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> IRON_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.IRON);
@@ -269,6 +295,10 @@ public class FastFurnaceV2 {
     public static final DeferredHolder<MenuType<?>, MenuType<ExtremelyFastAlloyerMenu>> EXTREMELY_FAST_ALLOYER_MENU =
             MENUS.register("extremely_fast_alloyer",
                     () -> new MenuType<>(ExtremelyFastAlloyerMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>, MenuType<FastGeneratorMenu>> FAST_GENERATOR_MENU =
+            MENUS.register("fast_generator", () -> new MenuType<>(FastGeneratorMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>, MenuType<FastBatteryMenu>> FAST_BATTERY_MENU =
+            MENUS.register("fast_battery", () -> new MenuType<>(FastBatteryMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FAST_FURNACE_V2_TAB = CREATIVE_MODE_TABS.register("fast_furnace_v2_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.fastfurnacev2"))
@@ -320,6 +350,8 @@ public class FastFurnaceV2 {
                 }
                 for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                     output.accept(getCrusherItem(tier).get());
+                    output.accept(getGeneratorItem(tier).get());
+                    output.accept(getBatteryItem(tier).get());
                 }
                 CrushedOres.addCreative(output);
             })
@@ -352,6 +384,7 @@ public class FastFurnaceV2 {
         ATTACHMENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(this::registerCapabilities);
         modEventBus.addListener((ModifyDefaultComponentsEvent event) ->
                 FastFurnaceApiImpl.modifyToolStats(modEventBus, event));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
@@ -424,6 +457,42 @@ public class FastFurnaceV2 {
         };
     }
 
+    public static DeferredBlock<FastGeneratorBlock> getGeneratorBlock(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_GENERATOR;
+            case IRON -> IRON_FAST_GENERATOR;
+            case GOLD -> GOLD_FAST_GENERATOR;
+            case DIAMOND -> DIAMOND_FAST_GENERATOR;
+        };
+    }
+
+    public static DeferredItem<BlockItem> getGeneratorItem(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_GENERATOR_ITEM;
+            case IRON -> IRON_FAST_GENERATOR_ITEM;
+            case GOLD -> GOLD_FAST_GENERATOR_ITEM;
+            case DIAMOND -> DIAMOND_FAST_GENERATOR_ITEM;
+        };
+    }
+
+    public static DeferredBlock<FastBatteryBlock> getBatteryBlock(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_BATTERY;
+            case IRON -> IRON_FAST_BATTERY;
+            case GOLD -> GOLD_FAST_BATTERY;
+            case DIAMOND -> DIAMOND_FAST_BATTERY;
+        };
+    }
+
+    public static DeferredItem<BlockItem> getBatteryItem(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_BATTERY_ITEM;
+            case IRON -> IRON_FAST_BATTERY_ITEM;
+            case GOLD -> GOLD_FAST_BATTERY_ITEM;
+            case DIAMOND -> DIAMOND_FAST_BATTERY_ITEM;
+        };
+    }
+
     public static DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> getFurnaceMenu(FastFurnaceTier tier) {
         return switch (tier) {
             case FAST -> FAST_FURNACE_MENU;
@@ -448,6 +517,27 @@ public class FastFurnaceV2 {
                 .sound(SoundType.DEEPSLATE)
                 .requiresCorrectToolForDrops()
                 .strength(4.5F, 3.0F));
+    }
+
+    private static DeferredBlock<FastGeneratorBlock> registerGenerator(FastFurnaceTier tier) {
+        return BLOCKS.registerBlock(tier.getGeneratorId(),
+                properties -> new FastGeneratorBlock(properties, tier),
+                properties -> properties
+                        .mapColor(MapColor.STONE)
+                        .instrument(NoteBlockInstrument.BASEDRUM)
+                        .requiresCorrectToolForDrops()
+                        .strength(3.5F)
+                        .lightLevel(state -> state.getValue(FastGeneratorBlock.LIT) ? 13 : 0));
+    }
+
+    private static DeferredBlock<FastBatteryBlock> registerBattery(FastFurnaceTier tier) {
+        return BLOCKS.registerBlock(tier.getBatteryId(),
+                properties -> new FastBatteryBlock(properties, tier),
+                properties -> properties
+                        .mapColor(MapColor.STONE)
+                        .instrument(NoteBlockInstrument.BASEDRUM)
+                        .requiresCorrectToolForDrops()
+                        .strength(3.5F));
     }
 
     private static DeferredBlock<FastFurnaceBlock> registerFurnace(FastFurnaceTier tier) {
@@ -537,7 +627,16 @@ public class FastFurnaceV2 {
             }
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 event.accept(getCrusherItem(tier));
+                event.accept(getGeneratorItem(tier));
+                event.accept(getBatteryItem(tier));
             }
         }
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_GENERATOR_BLOCK_ENTITY.get(),
+                (generator, side) -> generator.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_BATTERY_BLOCK_ENTITY.get(),
+                (battery, side) -> battery.energy());
     }
 }

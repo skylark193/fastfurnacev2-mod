@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "front": "fastfurnacev2:block/fast_generator_front",
+    "side": "fastfurnacev2:block/fast_generator_side",
+    "top": "fastfurnacev2:block/fast_generator_top",
+    "bottom": "fastfurnacev2:block/fast_generator_top"
+  }
+}

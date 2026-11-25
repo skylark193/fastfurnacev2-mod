@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Items](items.md) · [Recipes](recipes.md)
 
-Fast Furnace V2 registers **24 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
+Fast Furnace V2 registers **32 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
 
 ## Complete block index
 
@@ -32,6 +32,14 @@ Fast Furnace V2 registers **24 blocks**, each with a corresponding block item. A
 | Iron Fast Crusher | `fastfurnacev2:iron_fast_crusher` | Functional Blocks | Upgrade Fast Crusher with 8 Blocks of Fast Iron |
 | Gold Fast Crusher | `fastfurnacev2:gold_fast_crusher` | Functional Blocks | Upgrade Iron Fast Crusher with 8 Blocks of Fast Gold |
 | Diamond Fast Crusher | `fastfurnacev2:diamond_fast_crusher` | Functional Blocks | Upgrade Gold Fast Crusher with 8 Blocks of Fast Diamond |
+| Fast Generator | `fastfurnacev2:fast_generator` | Functional Blocks | No crafting recipe yet |
+| Iron Fast Generator | `fastfurnacev2:iron_fast_generator` | Functional Blocks | No crafting recipe yet |
+| Gold Fast Generator | `fastfurnacev2:gold_fast_generator` | Functional Blocks | No crafting recipe yet |
+| Diamond Fast Generator | `fastfurnacev2:diamond_fast_generator` | Functional Blocks | No crafting recipe yet |
+| Fast Battery | `fastfurnacev2:fast_battery` | Functional Blocks | No crafting recipe yet |
+| Iron Fast Battery | `fastfurnacev2:iron_fast_battery` | Functional Blocks | No crafting recipe yet |
+| Gold Fast Battery | `fastfurnacev2:gold_fast_battery` | Functional Blocks | No crafting recipe yet |
+| Diamond Fast Battery | `fastfurnacev2:diamond_fast_battery` | Functional Blocks | No crafting recipe yet |
 
 ## Fast Cobblestone
 
@@ -154,6 +162,14 @@ Common behavior:
 - Add the upgrade tier's metal-block texture to the stationary housing around Iron, Gold, and Diamond blenders.
 
 See [Fast Crushers](crushers.md) for processing, fuel, and pending-output rules.
+
+## Fast Generator and Fast Battery blocks
+
+The four generators and four batteries use stone map color, base-drum instrument, hardness **3.5**, and blast resistance **3.5**. All require a pickaxe and drop themselves. They currently have no crafting recipes.
+
+Generators have directional placement, animated lava-vein housing, a separate active front, and light level 13 while producing energy. Their fuel and active burn determine FE output. Batteries expose bidirectional energy storage and use paired side overlays with eleven charge steps; their animated top contains a lightning bolt. Neither dropped block item preserves its placed block's energy or other machine state.
+
+See [Generators and batteries](energy.md) for exact rates, capacities, fuel behavior, transfer, automation, and persistence.
 
 ## Accelerator
 

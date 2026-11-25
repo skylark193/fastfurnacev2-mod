@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This guide covers **Fast Furnace V2 1.7.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.3.0**.
+This guide covers **Fast Furnace V2 1.8.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.3.0**.
 
 ## Start playing
 
@@ -10,7 +10,7 @@ This guide covers **Fast Furnace V2 1.7.0** for **Minecraft 26.1.2**. Public API
 4. **Upgrade your machines.** Use Blocks of Fast Iron, Fast Gold, and Fast Diamond to progress through furnace and crusher tiers.
 5. **Expand production.** Add a Fast Crusher for additional ore yield, an Accelerator for Fast material conversion, and an Extremely Fast Alloyer for endgame tools.
 
-Each machine GUI includes an **`i`** button with current timing, speed, fuel, and other useful information.
+Furnace, crusher, Accelerator, and Alloyer GUIs include an **`i`** button with current timing, speed, fuel, and other useful information. Generator and battery GUIs display their energy values directly.
 
 ## Player and modpack guides
 
@@ -23,6 +23,7 @@ Each machine GUI includes an **`i`** button with current timing, speed, fuel, an
 | [Fast Crushers](crushers.md) | Ore processing, output doubling, fuel use, and pending output |
 | [Accelerator](accelerator.md) | Lava setup, conversions, boosts, and exact work accounting |
 | [Extremely Fast Alloyer](alloyer.md) | Three-input alloying, Extreme Coal fuel, and lava-adjusted timing |
+| [Generators and batteries](energy.md) | FE generation, special-fuel output, energy transfer, and tiered storage |
 | [World generation and dynamic resources](world-generation.md) | Mining bonuses, ore replacement, and modded crushed-ore discovery |
 | [Automation, GUI, and JEI](automation-and-jei.md) | Slots, hopper directions, information panels, and recipe viewing |
 

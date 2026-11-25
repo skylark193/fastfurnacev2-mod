@@ -30,6 +30,22 @@ public enum FastFurnaceTier {
         return this.id.replace("_furnace", "_crusher");
     }
 
+    public String getGeneratorId() {
+        return this.id.replace("_furnace", "_generator");
+    }
+
+    public String getBatteryId() {
+        return this.id.replace("_furnace", "_battery");
+    }
+
+    public int getGeneratorOutput() {
+        return 80 << this.ordinal();
+    }
+
+    public int getBatteryCapacity() {
+        return 80_000 << this.ordinal();
+    }
+
     public int getSpeedPercent() {
         return this.speedPercent;
     }

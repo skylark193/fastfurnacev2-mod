@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "front": "fastfurnacev2:block/diamond_fast_generator_front_on",
+    "side": "fastfurnacev2:block/diamond_fast_generator_side",
+    "top": "fastfurnacev2:block/diamond_fast_generator_top",
+    "bottom": "fastfurnacev2:block/diamond_fast_generator_top"
+  }
+}
