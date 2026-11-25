@@ -16,6 +16,8 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `ExtremelyFastAlloyerRecipe` / `ExtremelyFastAlloyerRecipes` | Public recipe definition and internal shapeless storage/matching |
 | `FastTools` / `ExtremelyFastToolEffects` | Tool materials, modifier-driven durability rolls, and post-loot/damage effects |
 | `FastEnergyStorage` | Public transaction-aware energy storage, transfer limits, value-IO persistence, and change notification |
+| `FastGeneratorBlock` / `FastGeneratorBlockEntity` / `FastGeneratorMenu` | Tiered fuel generation, active-fuel bonuses, energy buffering, adjacent transfer, and synchronization |
+| `FastBatteryBlock` / `FastBatteryBlockEntity` / `FastBatteryMenu` | Tiered bidirectional FE storage, saved charge levels, and synchronization |
 | `FastBonusDrops` / `FastOreGeneration` | Mining bonuses and deterministic once-only ore replacement |
 | `CrushedOres` / `CrushedOreItem` / `CrushedOreResources` | Raw-ore discovery, result selection, dynamic registration, naming, and item definitions |
 | `api/` | Public immutable definitions, registration events, built-in accessors, and queries |
@@ -83,7 +85,16 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 - Capacity and insertion/extraction limits must be nonnegative. A zero limit disables that transfer direction. Each operation clamps to its rate, stored amount, and remaining capacity; negative requested amounts throw `IllegalArgumentException`.
 - Insert and extract changes become visible inside their transaction, roll back on abort, and notify the callback once after a changed root commit. `set` notifies immediately only when the amount changes. Deserialization restores energy without invoking the callback, since loading must not dirty the containing block entity again.
 - Persist through `serialize`/`deserialize` with `ValueOutput`/`ValueInput`, normally beneath a named child. Expose the same storage instance through `RegisterCapabilitiesEvent.registerBlockEntity`; apply side restrictions with NeoForge wrappers rather than duplicating the stored amount.
-- Existing furnaces, crushers, Accelerator, and Alloyer do not expose or consume energy. Adding this storage foundation does not alter their fuel, timing, automation, or saved data. See the [energy API guide](api.md#energy-storage) for integration examples.
+- Existing furnaces, crushers, Accelerator, and Alloyer do not expose or consume energy. Their fuel, timing, automation, and saved data are unchanged. See the [energy API guide](api.md#energy-storage) for integration examples.
+
+### Generators and batteries
+
+- Generator output is `80 << tier.ordinal()` FE/t; Fast and Extreme fuel definitions add their registered 50 or 100 percentage points. Generator buffers hold 40 ticks of ordinary tier output. External insertion is disabled and extraction is capped at twice ordinary tier output per operation.
+- Ordinary and custom fuels use their effective ordinary burn time. Built-in Fast Coal IDs use 125% duration and Extreme Coal IDs 150%; do not apply furnace tier duration scaling or random doubling. Persist remaining/total burn, active-fuel ID, and output percentage from the consumed stack.
+- A full buffer pauses both burn time and generation. A partially filled last tick does not consume a burn tick until the complete output can be produced. `LIT` tracks actual production. Push to each adjacent `Capabilities.Energy.BLOCK` target through a root transaction and `EnergyHandlerUtil.move`.
+- Battery capacity is `80_000 << tier.ordinal()` FE. Insertion and extraction each allow capacity/20 per operation. Use the same storage instance on every side.
+- Battery `charge` uses ceiling division into 0–10 steps so any nonempty storage shows at least one step. Update the blockstate only after committed storage changes; deserialization restores energy without a callback, while the blockstate itself is saved normally.
+- Generator and battery menu integers use low/high 16-bit components because `ContainerData` synchronization is not a full arbitrary-int channel. Recombine with an unsigned low component. Neither family has built-in crafting recipes or energy-preserving dropped items.
 
 ## Public API lifecycle
 

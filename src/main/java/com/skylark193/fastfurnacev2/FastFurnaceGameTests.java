@@ -63,6 +63,7 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
@@ -106,6 +107,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_tools");
     private static final Identifier ENERGY_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "energy_storage");
+    private static final Identifier ENERGY_MACHINE_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "energy_machines");
     private static final Identifier API_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "api_extensions");
     private static final Identifier API_FUEL_ID =
@@ -154,6 +157,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_TOOL_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> ENERGY_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, ENERGY_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> ENERGY_MACHINE_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, ENERGY_MACHINE_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, API_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
@@ -173,6 +178,7 @@ final class FastFurnaceGameTests {
             Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
             Map.entry(FAST_TOOL_FUNCTION, FastFurnaceGameTests::fastToolsApplyVanillaBonuses),
             Map.entry(ENERGY_FUNCTION, FastFurnaceGameTests::energyStorageTransfersAndPersists),
+            Map.entry(ENERGY_MACHINE_FUNCTION, FastFurnaceGameTests::generatorsAndBatteriesTransferAndPersist),
             Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
     private FastFurnaceGameTests() {
@@ -205,6 +211,7 @@ final class FastFurnaceGameTests {
         event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
         event.registerTest(FAST_TOOL_TEST_ID, new DirectGameTestInstance(FAST_TOOL_FUNCTION, testData));
         event.registerTest(ENERGY_TEST_ID, new DirectGameTestInstance(ENERGY_FUNCTION, testData));
+        event.registerTest(ENERGY_MACHINE_TEST_ID, new DirectGameTestInstance(ENERGY_MACHINE_FUNCTION, testData));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
             event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
         }
@@ -2293,6 +2300,170 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void generatorsAndBatteriesTransferAndPersist(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ItemStack[] fuels = {
+                new ItemStack(Items.COAL),
+                new ItemStack(FastFurnaceV2.FAST_COAL.get()),
+                new ItemStack(FastFurnaceV2.EXTREME_COAL.get()),
+                new ItemStack(FastFurnaceV2.FAST_COAL_BLOCK_ITEM.get()),
+                new ItemStack(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get()),
+                new ItemStack(Blocks.COAL_BLOCK),
+        };
+        int[] durations = {1600, 2000, 2400, 20000, 24000, 16000};
+        int[] outputPercents = {100, 150, 200, 150, 200, 100};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            for (int fuelIndex = 0; fuelIndex < fuels.length; fuelIndex++) {
+                BlockPos generatorPos = new BlockPos(fuelIndex * 2, tier.ordinal() * 2, 0);
+                helper.setBlock(generatorPos, FastFurnaceV2.getGeneratorBlock(tier).get());
+                FastGeneratorBlockEntity generator = helper.getBlockEntity(generatorPos, FastGeneratorBlockEntity.class);
+                generator.setItem(0, fuels[fuelIndex].copy());
+                FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(generatorPos),
+                        generator.getBlockState(), generator);
+                int expectedOutput = tier.getGeneratorOutput() * outputPercents[fuelIndex] / 100;
+                assertEnergy(helper, generator.energy(), expectedOutput,
+                        tier + " generator produced the wrong energy for fuel " + fuelIndex);
+                if (generator.getOutput() != expectedOutput
+                        || generator.getBurnTime() != durations[fuelIndex] - 1
+                        || generator.getTotalBurnTime() != durations[fuelIndex]) {
+                    throw helper.assertionException(tier + " generator used the wrong output or burn duration for fuel "
+                            + fuelIndex);
+                }
+                FastGeneratorMenu menu = (FastGeneratorMenu) generator.createMenu(
+                        0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
+                if (menu.getEnergy() != expectedOutput || menu.getCapacity() != tier.getGeneratorOutput() * 40
+                        || menu.getOutput() != expectedOutput) {
+                    throw helper.assertionException("Generator menu did not expose exact energy, capacity, and output");
+                }
+                if (!menu.getSlot(0).mayPlace(fuels[fuelIndex])
+                        || menu.getSlot(0).mayPlace(new ItemStack(Items.STONE))) {
+                    throw helper.assertionException("Generator fuel slot accepted non-fuel or rejected valid fuel");
+                }
+                generator.setItem(0, new ItemStack(Items.COAL));
+                FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(generatorPos),
+                        generator.getBlockState(), generator);
+                if (generator.getOutput() != expectedOutput) {
+                    throw helper.assertionException("Generator bonuses changed with the current fuel slot");
+                }
+
+                if (tier == FastFurnaceTier.FAST && fuelIndex == 1) {
+                    TagValueOutput output = TagValueOutput.createWithContext(
+                            ProblemReporter.DISCARDING, level.registryAccess());
+                    generator.saveAdditional(output);
+                    FastGeneratorBlockEntity restored = new FastGeneratorBlockEntity(
+                            helper.absolutePos(generatorPos), generator.getBlockState());
+                    restored.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING,
+                            level.registryAccess(), output.buildResult()));
+                    assertEnergy(helper, restored.energy(), generator.energy().getAmountAsInt(),
+                            "Generator energy did not persist");
+                    if (restored.getBurnTime() != generator.getBurnTime()
+                            || restored.getTotalBurnTime() != generator.getTotalBurnTime()
+                            || restored.getOutput() != generator.getOutput()
+                            || !FastFurnaceApi.FAST_COAL_FUEL_ID.equals(restored.getActiveFuelId())) {
+                        throw helper.assertionException("Generator active fuel did not persist");
+                    }
+                }
+            }
+        }
+
+        BlockPos fullPos = new BlockPos(0, 3, 0);
+        helper.setBlock(fullPos, FastFurnaceV2.FAST_GENERATOR.get());
+        FastGeneratorBlockEntity full = helper.getBlockEntity(fullPos, FastGeneratorBlockEntity.class);
+        full.setItem(0, new ItemStack(Items.COAL));
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(fullPos), full.getBlockState(), full);
+        full.energy().set(full.energy().getCapacityAsInt());
+        int pausedBurn = full.getBurnTime();
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(fullPos), full.getBlockState(), full);
+        if (full.getBurnTime() != pausedBurn) {
+            throw helper.assertionException("A full generator consumed burn time without producing energy");
+        }
+        full.energy().set(full.energy().getCapacityAsInt() - 1);
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(fullPos), full.getBlockState(), full);
+        assertEnergy(helper, full.energy(), full.energy().getCapacityAsInt() - 1,
+                "A generator produced a partial tick without enough buffer space");
+        if (full.getBurnTime() != pausedBurn) {
+            throw helper.assertionException("A generator consumed burn time without producing its complete output");
+        }
+
+        BlockPos exhaustionPos = new BlockPos(3, 3, 0);
+        helper.setBlock(exhaustionPos, FastFurnaceV2.FAST_GENERATOR.get());
+        FastGeneratorBlockEntity exhausted = helper.getBlockEntity(exhaustionPos, FastGeneratorBlockEntity.class);
+        exhausted.setItem(0, new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+        for (int tick = 1; tick <= 2000; tick++) {
+            FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(exhaustionPos),
+                    exhausted.getBlockState(), exhausted);
+            if (tick < 2000) {
+                exhausted.energy().set(0);
+            }
+        }
+        assertEnergy(helper, exhausted.energy(), 120, "Generator did not produce its final fueled tick");
+        if (exhausted.getBurnTime() != 0 || exhausted.getOutput() != 80 || exhausted.getActiveFuelId() != null) {
+            throw helper.assertionException("Fuel exhaustion did not clear the generator's active bonuses");
+        }
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(exhaustionPos),
+                exhausted.getBlockState(), exhausted);
+        assertEnergy(helper, exhausted.energy(), 120, "An exhausted generator continued producing without fuel");
+
+        BlockPos transferGeneratorPos = new BlockPos(0, 6, 0);
+        BlockPos transferBatteryPos = transferGeneratorPos.east();
+        helper.setBlock(transferGeneratorPos, FastFurnaceV2.FAST_GENERATOR.get());
+        helper.setBlock(transferBatteryPos, FastFurnaceV2.FAST_BATTERY.get());
+        FastGeneratorBlockEntity transferGenerator =
+                helper.getBlockEntity(transferGeneratorPos, FastGeneratorBlockEntity.class);
+        FastBatteryBlockEntity transferBattery = helper.getBlockEntity(transferBatteryPos, FastBatteryBlockEntity.class);
+        transferGenerator.setItem(0, new ItemStack(Items.COAL));
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(transferGeneratorPos),
+                transferGenerator.getBlockState(), transferGenerator);
+        assertEnergy(helper, transferGenerator.energy(), 0, "Generator did not push its available energy");
+        assertEnergy(helper, transferBattery.energy(), 80, "Adjacent battery did not receive generated energy");
+        if (level.getCapability(Capabilities.Energy.BLOCK, helper.absolutePos(transferBatteryPos), Direction.UP) == null) {
+            throw helper.assertionException("Battery energy capability was not registered");
+        }
+
+        BlockPos batteryPos = new BlockPos(6, 0, 0);
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            helper.setBlock(batteryPos, FastFurnaceV2.getBatteryBlock(tier).get());
+            FastBatteryBlockEntity battery = helper.getBlockEntity(batteryPos, FastBatteryBlockEntity.class);
+            int capacity = tier.getBatteryCapacity();
+            if (battery.energy().getCapacityAsInt() != capacity) {
+                throw helper.assertionException(tier + " battery had the wrong capacity");
+            }
+            try (Transaction transaction = Transaction.openRoot()) {
+                if (battery.energy().insert(capacity, transaction) != capacity / 20) {
+                    throw helper.assertionException("Battery insertion did not obey its transfer limit");
+                }
+                transaction.commit();
+            }
+            int inserted = battery.energy().getAmountAsInt();
+            try (Transaction transaction = Transaction.openRoot()) {
+                battery.energy().insert(1000, transaction);
+            }
+            assertEnergy(helper, battery.energy(), inserted, "Aborted battery insertion changed stored energy");
+            battery.energy().set(capacity);
+            if (helper.getBlockState(batteryPos).getValue(FastBatteryBlock.CHARGE_LEVEL) != 10) {
+                throw helper.assertionException("Full battery did not fill its charge bars");
+            }
+            FastBatteryMenu menu = (FastBatteryMenu) battery.createMenu(
+                    0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
+            if (menu.getEnergy() != capacity || menu.getCapacity() != capacity) {
+                throw helper.assertionException("Battery menu did not synchronize large energy values exactly");
+            }
+            TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
+            battery.saveAdditional(output);
+            FastBatteryBlockEntity restored = new FastBatteryBlockEntity(
+                    helper.absolutePos(batteryPos), battery.getBlockState());
+            restored.loadAdditional(TagValueInput.create(
+                    ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
+            assertEnergy(helper, restored.energy(), capacity, "Battery charge did not persist");
+        }
+        if (FastBatteryBlock.chargeLevel(0, 80_000) != 0
+                || FastBatteryBlock.chargeLevel(1, 80_000) != 1
+                || FastBatteryBlock.chargeLevel(40_000, 80_000) != 5) {
+            throw helper.assertionException("Battery charge-level boundaries were incorrect");
+        }
+        helper.succeed();
+    }
+
     private static void assertEnergy(
             GameTestHelper helper, FastEnergyStorage storage, int expected, String message) {
         if (storage.getAmountAsInt() != expected) {
@@ -2441,8 +2612,8 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
             }
         }
-        if (registeredBlocks != 24) {
-            throw helper.assertionException("Expected to audit all 24 registered mod blocks, found " + registeredBlocks);
+        if (registeredBlocks != 32) {
+            throw helper.assertionException("Expected to audit all 32 registered mod blocks, found " + registeredBlocks);
         }
         helper.succeed();
     }

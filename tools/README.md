@@ -291,6 +291,24 @@ macOS/Linux:
 
 The generator preserves the source silhouette and transparency while remapping visible pixels to an 80–255 grayscale range. It removes any stale `.png.mcmeta` beside the static output so an earlier animated result cannot leave the dust animated.
 
+## Regenerate Generator and Battery Textures
+
+The energy generator creates the preserved square source artwork from the vanilla-style smooth-stone and tier-metal sources, then applies animated lava veins without moving the generator housing, fuel grille, battery terminals, lightning bolt, or charge-bar borders. Fast, Iron Fast, Gold Fast, and Diamond Fast tiers use seeds **443**, **444**, **445**, and **446** respectively. It writes seven eight-frame base textures per tier, each at two ticks per frame with no interpolation, plus eleven static transparent battery charge overlays with paired bars that fill from bottom to top.
+
+Windows, from the project root:
+
+```bash
+.venv\Scripts\python -I tools\generate_energy_textures.py
+```
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -I tools/generate_energy_textures.py
+```
+
+The default square sources are under `tools/texture_sources/energy/`; generated textures go to `src/main/resources/assets/fastfurnacev2/textures/block/`. Use `--source-dir` and `--output-dir` only with distinct directories. The generator rejects collisions between source and generated paths before writing. `tools/test_energy_texture_generator.py` covers source/output dimensions and metadata, deterministic distinct animation, stationary functional details, brighter active fronts, paired bottom-up charge bars, and source-collision rejection.
+
 ## Generate Another Lava-Vein Texture
 
 Place a new square source PNG in `tools/texture_sources/`, then change `--input`, `--output`, and `--seed`. Different seeds produce different vein layouts. Optional controls:
@@ -317,4 +335,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, all-lava visible pixels and preserved silhouettes for Extreme Coal, its block, the Alloyer body, and Extremely Fast Ingot, per-pixel all-lava animation, the Accelerator and Alloyer bolts' monotonic bottom-up fill and stationary outlines, the crusher top's stationary housing, and visible, distinct, stationary iron/gold/diamond trim. CLI subprocess tests also reject Accelerator/Alloyer top input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, all-lava visible pixels and preserved silhouettes for Extreme Coal, its block, the Alloyer body, and Extremely Fast Ingot, per-pixel all-lava animation, the Accelerator and Alloyer bolts' monotonic bottom-up fill and stationary outlines, the crusher top's stationary housing, visible, distinct, stationary iron/gold/diamond trim, and the energy machines' stationary details, animated lava, and paired charge bars. CLI subprocess tests also reject Accelerator/Alloyer top input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
