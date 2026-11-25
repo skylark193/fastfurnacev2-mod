@@ -15,6 +15,7 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `ExtremelyFastAlloyerBlock` / `ExtremelyFastAlloyerBlockEntity` / `ExtremelyFastAlloyerMenu` | Dedicated three-input recipes, Extreme Coal fuel, lava-adjusted timing, and automation |
 | `ExtremelyFastAlloyerRecipe` / `ExtremelyFastAlloyerRecipes` | Public recipe definition and internal shapeless storage/matching |
 | `FastTools` / `ExtremelyFastToolEffects` | Tool materials, modifier-driven durability rolls, and post-loot/damage effects |
+| `FastEnergyStorage` | Public transaction-aware energy storage, transfer limits, value-IO persistence, and change notification |
 | `FastBonusDrops` / `FastOreGeneration` | Mining bonuses and deterministic once-only ore replacement |
 | `CrushedOres` / `CrushedOreItem` / `CrushedOreResources` | Raw-ore discovery, result selection, dynamic registration, naming, and item definitions |
 | `api/` | Public immutable definitions, registration events, built-in accessors, and queries |
@@ -75,6 +76,14 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 - Journal deferred resets with `SnapshotJournal` and apply them only in `onRootCommit`.
 - Do not reset progress from `setItem` while `insideTransaction` is true; an aborted extraction must restore both items and machine state.
 - Direct non-transactional changes still reset immediately. Retain the furnace superclass's journaled cooking reset.
+
+## Energy storage
+
+- Use NeoForge's `EnergyHandler` and `Capabilities.Energy.BLOCK`; the older `IEnergyStorage` API is deprecated. `FastEnergyStorage` extends `SimpleEnergyHandler` with a required change callback and does not replace NeoForge's transfer or transaction logic.
+- Capacity and insertion/extraction limits must be nonnegative. A zero limit disables that transfer direction. Each operation clamps to its rate, stored amount, and remaining capacity; negative requested amounts throw `IllegalArgumentException`.
+- Insert and extract changes become visible inside their transaction, roll back on abort, and notify the callback once after a changed root commit. `set` notifies immediately only when the amount changes. Deserialization restores energy without invoking the callback, since loading must not dirty the containing block entity again.
+- Persist through `serialize`/`deserialize` with `ValueOutput`/`ValueInput`, normally beneath a named child. Expose the same storage instance through `RegisterCapabilitiesEvent.registerBlockEntity`; apply side restrictions with NeoForge wrappers rather than duplicating the stored amount.
+- Existing furnaces, crushers, Accelerator, and Alloyer do not expose or consume energy. Adding this storage foundation does not alter their fuel, timing, automation, or saved data. See the [energy API guide](api.md#energy-storage) for integration examples.
 
 ## Public API lifecycle
 

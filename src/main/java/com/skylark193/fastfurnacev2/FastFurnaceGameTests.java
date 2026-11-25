@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
 import com.skylark193.fastfurnacev2.api.CrusherRecipe;
 import com.skylark193.fastfurnacev2.api.ExtremelyFastAlloyerRecipe;
+import com.skylark193.fastfurnacev2.api.FastEnergyStorage;
 import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.api.FastToolModifiers;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -30,6 +32,7 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -57,6 +60,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -99,6 +104,8 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "mining_tags");
     private static final Identifier FAST_TOOL_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "fast_tools");
+    private static final Identifier ENERGY_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "energy_storage");
     private static final Identifier API_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "api_extensions");
     private static final Identifier API_FUEL_ID =
@@ -145,6 +152,8 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, MINING_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FAST_TOOL_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, FAST_TOOL_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> ENERGY_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, ENERGY_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, API_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
@@ -163,6 +172,7 @@ final class FastFurnaceGameTests {
             Map.entry(FAST_ORE_GENERATION_FUNCTION, FastFurnaceGameTests::fastOresReplaceRegularOresOnce),
             Map.entry(MINING_FUNCTION, FastFurnaceGameTests::allToolRequiredBlocksArePickaxeMineable),
             Map.entry(FAST_TOOL_FUNCTION, FastFurnaceGameTests::fastToolsApplyVanillaBonuses),
+            Map.entry(ENERGY_FUNCTION, FastFurnaceGameTests::energyStorageTransfersAndPersists),
             Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
     private FastFurnaceGameTests() {
@@ -194,6 +204,7 @@ final class FastFurnaceGameTests {
                 new DirectGameTestInstance(FAST_ORE_GENERATION_FUNCTION, testData));
         event.registerTest(MINING_TEST_ID, new DirectGameTestInstance(MINING_FUNCTION, testData));
         event.registerTest(FAST_TOOL_TEST_ID, new DirectGameTestInstance(FAST_TOOL_FUNCTION, testData));
+        event.registerTest(ENERGY_TEST_ID, new DirectGameTestInstance(ENERGY_FUNCTION, testData));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
             event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
         }
@@ -2192,6 +2203,110 @@ final class FastFurnaceGameTests {
             }
         }
         helper.succeed();
+    }
+
+    private static void energyStorageTransfersAndPersists(GameTestHelper helper) {
+        AtomicInteger changes = new AtomicInteger();
+        FastEnergyStorage storage = new FastEnergyStorage(100, 40, 30, changes::incrementAndGet);
+        try (Transaction transaction = Transaction.openRoot()) {
+            if (storage.insert(150, transaction) != 40
+                    || storage.insert(150, transaction) != 40
+                    || storage.insert(150, transaction) != 20
+                    || storage.insert(0, transaction) != 0
+                    || storage.extract(70, transaction) != 30
+                    || storage.extract(0, transaction) != 0) {
+                throw helper.assertionException("Energy transfers did not clamp to capacity and per-operation limits");
+            }
+            expectEnergyArgumentRejection(helper, () -> storage.insert(-1, transaction));
+            expectEnergyArgumentRejection(helper, () -> storage.extract(-1, transaction));
+            assertEnergy(helper, storage, 70, "Uncommitted energy was not visible inside its transaction");
+            if (changes.get() != 0) {
+                throw helper.assertionException("Energy change callback ran before the root commit");
+            }
+            transaction.commit();
+        }
+        assertEnergy(helper, storage, 70, "Committed energy transfers produced the wrong amount");
+        if (changes.get() != 1) {
+            throw helper.assertionException("A root commit did not coalesce energy change notification");
+        }
+
+        try (Transaction transaction = Transaction.openRoot()) {
+            storage.insert(40, transaction);
+            try (Transaction nested = Transaction.open(transaction)) {
+                storage.extract(40, nested);
+                nested.commit();
+            }
+        }
+        assertEnergy(helper, storage, 70, "Aborting a root transaction did not restore energy");
+        if (changes.get() != 1) {
+            throw helper.assertionException("An aborted transaction notified an energy change");
+        }
+
+        storage.set(90);
+        storage.set(90);
+        if (changes.get() != 2) {
+            throw helper.assertionException("Direct energy changes did not notify exactly once");
+        }
+        try (Transaction transaction = Transaction.openRoot()) {
+            storage.extract(95, transaction);
+            transaction.commit();
+        }
+        assertEnergy(helper, storage, 60, "Committed extraction produced the wrong amount");
+        if (changes.get() != 3) {
+            throw helper.assertionException("Committed extraction did not notify an energy change");
+        }
+
+        FastEnergyStorage inputOnly = new FastEnergyStorage(50, 20, 0, () -> { });
+        inputOnly.set(40);
+        FastEnergyStorage outputOnly = new FastEnergyStorage(50, 0, 20, () -> { });
+        outputOnly.set(40);
+        try (Transaction transaction = Transaction.openRoot()) {
+            if (inputOnly.extract(10, transaction) != 0
+                    || inputOnly.insert(30, transaction) != 10
+                    || outputOnly.insert(10, transaction) != 0
+                    || outputOnly.extract(30, transaction) != 20) {
+                throw helper.assertionException("Zero transfer limits did not disable the corresponding direction");
+            }
+            transaction.commit();
+        }
+
+        TagValueOutput output = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING, helper.getLevel().registryAccess());
+        storage.serialize(output.child("energy_storage"));
+        AtomicInteger loadChanges = new AtomicInteger();
+        FastEnergyStorage restored = new FastEnergyStorage(100, 10, loadChanges::incrementAndGet);
+        restored.deserialize(TagValueInput.create(
+                ProblemReporter.DISCARDING,
+                helper.getLevel().registryAccess(),
+                output.buildResult()).childOrEmpty("energy_storage"));
+        assertEnergy(helper, restored, 60, "Energy did not survive a value-IO round trip");
+        if (loadChanges.get() != 0) {
+            throw helper.assertionException("Loading saved energy incorrectly marked the storage changed");
+        }
+
+        output.buildResult().putInt("energy", -10);
+        restored.deserialize(TagValueInput.create(
+                ProblemReporter.DISCARDING, helper.getLevel().registryAccess(), output.buildResult()));
+        assertEnergy(helper, restored, 0, "Negative saved energy was not rejected");
+        expectEnergyArgumentRejection(helper, () -> new FastEnergyStorage(-1, 1, () -> { }));
+        expectEnergyArgumentRejection(helper, () -> new FastEnergyStorage(1, -1, () -> { }));
+        helper.succeed();
+    }
+
+    private static void assertEnergy(
+            GameTestHelper helper, FastEnergyStorage storage, int expected, String message) {
+        if (storage.getAmountAsInt() != expected) {
+            throw helper.assertionException(message + ": expected " + expected + ", got " + storage.getAmountAsInt());
+        }
+    }
+
+    private static void expectEnergyArgumentRejection(GameTestHelper helper, Runnable operation) {
+        try {
+            operation.run();
+            throw helper.assertionException("Invalid energy operation or configuration was accepted");
+        } catch (IllegalArgumentException expected) {
+            // NeoForge's transfer preconditions reject negative amounts and configuration values.
+        }
     }
 
     private static void assertDurabilityRolls(

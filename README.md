@@ -27,7 +27,7 @@ JEI is optional, but requires a release compatible with Minecraft 26.1.2 and thi
 
 1. Install Java 25 and a NeoForge profile for Minecraft 26.1.2.
 2. Build the mod or obtain its JAR from a release.
-3. Place `fastfurnacev2-1.6.1.jar` in the Minecraft `mods` directory.
+3. Place `fastfurnacev2-1.7.0.jar` in the Minecraft `mods` directory.
 
 To build the JAR yourself, run the included Gradle wrapper from the project root:
 
