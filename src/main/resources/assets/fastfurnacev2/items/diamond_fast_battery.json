@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "fastfurnacev2:block/diamond_fast_battery_0"
+    "model": "fastfurnacev2:block/diamond_fast_battery_item"
   }
 }

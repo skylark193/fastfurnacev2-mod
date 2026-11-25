@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "fastfurnacev2:block/fast_battery_side",
+    "top": "fastfurnacev2:block/fast_battery_top",
+    "bottom": "fastfurnacev2:block/fast_battery_bottom"
+  }
+}
