@@ -1,6 +1,6 @@
 package com.skylark193.fastfurnacev2.compat.jei;
 
-import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerRecipe;
+import com.skylark193.fastfurnacev2.api.ExtremelyFastAlloyerRecipe;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
 import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;

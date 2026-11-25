@@ -2,6 +2,7 @@ package com.skylark193.fastfurnacev2;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import com.skylark193.fastfurnacev2.api.FastToolType;
 import com.skylark193.fastfurnacev2.internal.FastFurnaceApiImpl;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -10,13 +11,11 @@ import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -32,6 +31,7 @@ import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
+import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -174,55 +174,63 @@ public class FastFurnaceV2 {
     public static final DeferredItem<BlockItem> GOLD_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_crusher", GOLD_FAST_CRUSHER);
     public static final DeferredItem<BlockItem> DIAMOND_FAST_CRUSHER_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_crusher", DIAMOND_FAST_CRUSHER);
 
-    public static final DeferredItem<Item> FAST_IRON_PICKAXE = ITEMS.registerSimpleItem(
-            "fast_iron_pickaxe", properties -> properties.pickaxe(FastTools.FAST_IRON, 1.0F, -2.8F));
-    public static final DeferredItem<ShovelItem> FAST_IRON_SHOVEL = ITEMS.registerItem(
-            "fast_iron_shovel", properties -> new ShovelItem(FastTools.FAST_IRON, 1.5F, -3.0F, properties));
-    public static final DeferredItem<AxeItem> FAST_IRON_AXE = ITEMS.registerItem(
-            "fast_iron_axe", properties -> new AxeItem(FastTools.FAST_IRON, 6.0F, -3.1F, properties));
-    public static final DeferredItem<Item> FAST_IRON_SWORD = ITEMS.registerSimpleItem(
-            "fast_iron_sword", properties -> properties.sword(
-                    FastTools.FAST_IRON, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F)));
-    public static final DeferredItem<Item> FAST_GOLD_PICKAXE = ITEMS.registerSimpleItem(
-            "fast_gold_pickaxe", properties -> properties.pickaxe(FastTools.FAST_GOLD, 1.0F, -2.8F));
-    public static final DeferredItem<ShovelItem> FAST_GOLD_SHOVEL = ITEMS.registerItem(
-            "fast_gold_shovel", properties -> new ShovelItem(FastTools.FAST_GOLD, 1.5F, -3.0F, properties));
-    public static final DeferredItem<AxeItem> FAST_GOLD_AXE = ITEMS.registerItem(
-            "fast_gold_axe", properties -> new AxeItem(FastTools.FAST_GOLD, 6.0F, -3.0F, properties));
-    public static final DeferredItem<Item> FAST_GOLD_SWORD = ITEMS.registerSimpleItem(
-            "fast_gold_sword", properties -> properties.sword(
-                    FastTools.FAST_GOLD, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.30F)));
-    public static final DeferredItem<FastTools.Standard> FAST_DIAMOND_PICKAXE = ITEMS.registerItem(
-            "fast_diamond_pickaxe", FastTools.Standard::new,
-            properties -> properties.pickaxe(FastTools.FAST_DIAMOND, 1.0F, -2.8F));
-    public static final DeferredItem<FastTools.Shovel> FAST_DIAMOND_SHOVEL = ITEMS.registerItem(
-            "fast_diamond_shovel",
-            properties -> new FastTools.Shovel(FastTools.FAST_DIAMOND, 1.5F, -3.0F, properties));
-    public static final DeferredItem<FastTools.Axe> FAST_DIAMOND_AXE = ITEMS.registerItem(
-            "fast_diamond_axe",
-            properties -> new FastTools.Axe(FastTools.FAST_DIAMOND, 5.0F, -3.0F, properties));
-    public static final DeferredItem<FastTools.Standard> FAST_DIAMOND_SWORD = ITEMS.registerItem(
-            "fast_diamond_sword", FastTools.Standard::new,
-            properties -> properties.sword(
-                    FastTools.FAST_DIAMOND,
+    public static final DeferredItem<Item> FAST_IRON_PICKAXE = ITEMS.registerItem(
+            "fast_iron_pickaxe", properties -> FastTools.create(
+                    FastToolType.PICKAXE, FastTools.FAST_IRON, 1.0F, -2.8F, properties));
+    public static final DeferredItem<Item> FAST_IRON_SHOVEL = ITEMS.registerItem(
+            "fast_iron_shovel", properties -> FastTools.create(
+                    FastToolType.SHOVEL, FastTools.FAST_IRON, 1.5F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_IRON_AXE = ITEMS.registerItem(
+            "fast_iron_axe", properties -> FastTools.create(
+                    FastToolType.AXE, FastTools.FAST_IRON, 6.0F, -3.1F, properties));
+    public static final DeferredItem<Item> FAST_IRON_SWORD = ITEMS.registerItem(
+            "fast_iron_sword", properties -> FastTools.create(
+                    FastToolType.SWORD, FastTools.FAST_IRON, 3.0F,
+                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F), properties));
+    public static final DeferredItem<Item> FAST_GOLD_PICKAXE = ITEMS.registerItem(
+            "fast_gold_pickaxe", properties -> FastTools.create(
+                    FastToolType.PICKAXE, FastTools.FAST_GOLD, 1.0F, -2.8F, properties));
+    public static final DeferredItem<Item> FAST_GOLD_SHOVEL = ITEMS.registerItem(
+            "fast_gold_shovel", properties -> FastTools.create(
+                    FastToolType.SHOVEL, FastTools.FAST_GOLD, 1.5F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_GOLD_AXE = ITEMS.registerItem(
+            "fast_gold_axe", properties -> FastTools.create(
+                    FastToolType.AXE, FastTools.FAST_GOLD, 6.0F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_GOLD_SWORD = ITEMS.registerItem(
+            "fast_gold_sword", properties -> FastTools.create(
+                    FastToolType.SWORD, FastTools.FAST_GOLD, 3.0F,
+                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.30F), properties));
+    public static final DeferredItem<Item> FAST_DIAMOND_PICKAXE = ITEMS.registerItem(
+            "fast_diamond_pickaxe", properties -> FastTools.create(
+                    FastToolType.PICKAXE, FastTools.FAST_DIAMOND, 1.0F, -2.8F, properties));
+    public static final DeferredItem<Item> FAST_DIAMOND_SHOVEL = ITEMS.registerItem(
+            "fast_diamond_shovel", properties -> FastTools.create(
+                    FastToolType.SHOVEL, FastTools.FAST_DIAMOND, 1.5F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_DIAMOND_AXE = ITEMS.registerItem(
+            "fast_diamond_axe", properties -> FastTools.create(
+                    FastToolType.AXE, FastTools.FAST_DIAMOND, 5.0F, -3.0F, properties));
+    public static final DeferredItem<Item> FAST_DIAMOND_SWORD = ITEMS.registerItem(
+            "fast_diamond_sword", properties -> FastTools.create(
+                    FastToolType.SWORD, FastTools.FAST_DIAMOND,
                     FastTools.scaleSwordDamage(ToolMaterial.DIAMOND, FastTools.FAST_DIAMOND, 3.0F, 1.20F),
-                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F)));
-    public static final DeferredItem<Item> EXTREMELY_FAST_PICKAXE = ITEMS.registerSimpleItem(
-            "extremely_fast_pickaxe", properties -> withDefaultEnchantment(
-                    properties.pickaxe(FastTools.EXTREMELY_FAST, 1.0F, -2.8F), Enchantments.FORTUNE));
-    public static final DeferredItem<ShovelItem> EXTREMELY_FAST_SHOVEL = ITEMS.registerItem(
-            "extremely_fast_shovel", properties -> new ShovelItem(
-                    FastTools.EXTREMELY_FAST, 1.5F, -3.0F,
+                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.20F), properties));
+    public static final DeferredItem<Item> EXTREMELY_FAST_PICKAXE = ITEMS.registerItem(
+            "extremely_fast_pickaxe", properties -> FastTools.create(
+                    FastToolType.PICKAXE, FastTools.EXTREMELY_FAST, 1.0F, -2.8F,
                     withDefaultEnchantment(properties, Enchantments.FORTUNE)));
-    public static final DeferredItem<AxeItem> EXTREMELY_FAST_AXE = ITEMS.registerItem(
-            "extremely_fast_axe", properties -> new AxeItem(
-                    FastTools.EXTREMELY_FAST, 5.0F, -3.0F,
+    public static final DeferredItem<Item> EXTREMELY_FAST_SHOVEL = ITEMS.registerItem(
+            "extremely_fast_shovel", properties -> FastTools.create(
+                    FastToolType.SHOVEL, FastTools.EXTREMELY_FAST, 1.5F, -3.0F,
                     withDefaultEnchantment(properties, Enchantments.FORTUNE)));
-    public static final DeferredItem<Item> EXTREMELY_FAST_SWORD = ITEMS.registerSimpleItem(
-            "extremely_fast_sword", properties -> withDefaultEnchantment(
-                    properties.sword(
-                            FastTools.EXTREMELY_FAST, 3.0F, FastTools.scaleSwordAttackSpeed(-2.4F, 1.50F)),
-                    Enchantments.LOOTING));
+    public static final DeferredItem<Item> EXTREMELY_FAST_AXE = ITEMS.registerItem(
+            "extremely_fast_axe", properties -> FastTools.create(
+                    FastToolType.AXE, FastTools.EXTREMELY_FAST, 5.0F, -3.0F,
+                    withDefaultEnchantment(properties, Enchantments.FORTUNE)));
+    public static final DeferredItem<Item> EXTREMELY_FAST_SWORD = ITEMS.registerItem(
+            "extremely_fast_sword", properties -> FastTools.create(
+                    FastToolType.SWORD, FastTools.EXTREMELY_FAST, 3.0F,
+                    FastTools.scaleSwordAttackSpeed(-2.4F, 1.50F),
+                    withDefaultEnchantment(properties, Enchantments.LOOTING)));
 
     private static Item.Properties withDefaultEnchantment(
             Item.Properties properties, ResourceKey<Enchantment> enchantment) {
@@ -344,10 +352,15 @@ public class FastFurnaceV2 {
         ATTACHMENT_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener((ModifyDefaultComponentsEvent event) ->
+                FastFurnaceApiImpl.modifyToolStats(modEventBus, event));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
+            modEventBus.addListener(FastFurnaceGameTests::modifyApiToolStats);
             modEventBus.addListener(FastFurnaceGameTests::registerApiFuels);
             modEventBus.addListener(FastFurnaceGameTests::registerApiCrusherRecipes);
             modEventBus.addListener(FastFurnaceGameTests::registerApiAcceleratorRecipes);
+            modEventBus.addListener(FastFurnaceGameTests::registerApiAlloyerRecipes);
+            modEventBus.addListener(FastFurnaceGameTests::registerApiToolModifiers);
         }
         modEventBus.addListener(CrushedOres::registerDiscovery);
         modEventBus.addListener(CrushedOres::registerItems);
@@ -355,7 +368,6 @@ public class FastFurnaceV2 {
         modEventBus.addListener(FastFurnaceGameTests::registerTests);
         NeoForge.EVENT_BUS.addListener(DefaultDataComponentsBoundEvent.class, event -> {
             if (event.shouldUpdateStaticData()) {
-                ExtremelyFastAlloyerRecipes.initialize();
                 FastFurnaceApiImpl.initialize(modEventBus);
             }
         });

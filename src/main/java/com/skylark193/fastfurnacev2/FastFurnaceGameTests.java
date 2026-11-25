@@ -4,11 +4,16 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
 import com.skylark193.fastfurnacev2.api.CrusherRecipe;
+import com.skylark193.fastfurnacev2.api.ExtremelyFastAlloyerRecipe;
 import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
+import com.skylark193.fastfurnacev2.api.FastToolModifiers;
+import com.skylark193.fastfurnacev2.api.event.ModifyFastToolStatsEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterAcceleratorRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastCrusherRecipesEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterExtremelyFastAlloyerRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastFuelsEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterFastToolModifiersEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +39,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
@@ -101,6 +107,14 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/cobblestone_to_gravel");
     private static final Identifier API_ACCELERATOR_RECIPE_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/charcoal_to_coal");
+    private static final Identifier API_ALLOYER_RECIPE_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/stone_dirt_gravel_to_clay");
+    private static final Identifier API_ALLOYER_LOW_PRIORITY_RECIPE_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/stone_dirt_gravel_low_priority");
+    private static final Identifier API_TOOL_MODIFIERS_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/fast_gold_pickaxe_modifiers");
+    private static final Identifier API_LOW_PRIORITY_TOOL_MODIFIERS_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "test/fast_gold_pickaxe_low_priority");
     private static final ResourceKey<Consumer<GameTestHelper>> SPEED_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, SPEED_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> FUEL_FUNCTION =
@@ -211,6 +225,36 @@ final class FastFurnaceGameTests {
                 new ItemStack(Items.COAL, 2),
                 200,
                 0));
+    }
+
+    static void registerApiAlloyerRecipes(RegisterExtremelyFastAlloyerRecipesEvent event) {
+        List<Ingredient> ingredients = List.of(
+                Ingredient.of(Items.COBBLESTONE), Ingredient.of(Items.DIRT), Ingredient.of(Items.GRAVEL));
+        event.register(new ExtremelyFastAlloyerRecipe(
+                API_ALLOYER_LOW_PRIORITY_RECIPE_ID, ingredients, new ItemStack(Items.DIRT), 40, 0));
+        event.register(new ExtremelyFastAlloyerRecipe(
+                API_ALLOYER_RECIPE_ID, ingredients, new ItemStack(Items.CLAY_BALL, 2), 40, 10));
+    }
+
+    static void modifyApiToolStats(ModifyFastToolStatsEvent event) {
+        event.modify(FastFurnaceV2.FAST_IRON_PICKAXE.get(), stats -> stats
+                .withDurability(stats.durability() + 10)
+                .withMiningSpeedMultiplier(1.5F)
+                .withAttackDamage(stats.attackDamage() + 2.0)
+                .withAttackSpeed(stats.attackSpeed() + 0.5)
+                .withEnchantmentValue(20));
+    }
+
+    static void registerApiToolModifiers(RegisterFastToolModifiersEvent event) {
+        Ingredient tool = Ingredient.of(FastFurnaceV2.FAST_GOLD_PICKAXE.get());
+        event.register(FastToolModifiers.builder(API_LOW_PRIORITY_TOOL_MODIFIERS_ID, tool).build());
+        event.register(FastToolModifiers.builder(API_TOOL_MODIFIERS_ID, tool)
+                .durabilitySaveChance(FastTools.DURABILITY_SAVE_CHANCE)
+                .blockDropDoubleChance(FastTools.DROP_DOUBLE_CHANCE)
+                .killDropDoubleChance(FastTools.DROP_DOUBLE_CHANCE)
+                .damageDoubleChance(FastTools.DAMAGE_DOUBLE_CHANCE)
+                .priority(10)
+                .build());
     }
 
     private static void smeltsAt150Percent(GameTestHelper helper) {
@@ -1357,9 +1401,10 @@ final class FastFurnaceGameTests {
     }
 
     private static void extremelyFastAlloyerUsesOnlyShapelessAlloyingRecipes(GameTestHelper helper) {
-        if (ExtremelyFastAlloyerRecipes.recipes().size() != 1
-                || ExtremelyFastAlloyerRecipes.recipes().get(0).processingTicks() != 800) {
-            throw helper.assertionException("Expected only the built-in 800-tick Extremely Fast Ingot recipe");
+        ExtremelyFastAlloyerRecipe builtIn = FastFurnaceApi.findAlloyerRecipe(FastFurnaceApi.EXTREMELY_FAST_INGOT_RECIPE_ID)
+                .orElseThrow(() -> helper.assertionException("Built-in Alloyer recipe was not registered"));
+        if (builtIn.processingTicks() != 800) {
+            throw helper.assertionException("Expected the built-in 800-tick Extremely Fast Ingot recipe");
         }
         ExtremelyFastAlloyerBlockEntity alloyer = placeAlloyer(
                 helper, BlockPos.ZERO,
@@ -1764,6 +1809,41 @@ final class FastFurnaceGameTests {
             throw helper.assertionException("API recipe lookup did not enforce input counts or registered IDs");
         }
 
+        List<ItemStack> alloyInputs = List.of(
+                new ItemStack(Items.GRAVEL), new ItemStack(Items.COBBLESTONE), new ItemStack(Items.DIRT));
+        if (!FastFurnaceApi.isAlloyerInput(new ItemStack(Items.GRAVEL))
+                || FastFurnaceApi.isAlloyerInput(new ItemStack(Items.COAL))
+                || FastFurnaceApi.findAlloyerRecipe(API_ALLOYER_LOW_PRIORITY_RECIPE_ID).isEmpty()
+                || FastFurnaceApi.findAlloyerRecipe(alloyInputs)
+                        .filter(recipe -> recipe.id().equals(API_ALLOYER_RECIPE_ID)).isEmpty()
+                || ExtremelyFastAlloyerBlockEntity.getProcessingTicks(40, 4) != 40) {
+            throw helper.assertionException("API Alloyer lookup did not use distinct slots, IDs, or priority");
+        }
+
+        FastToolModifiers toolModifiers = FastFurnaceApi.findToolModifiers(
+                        FastFurnaceV2.FAST_GOLD_PICKAXE.get().getDefaultInstance())
+                .orElseThrow(() -> helper.assertionException("Custom tool modifiers were not registered"));
+        ItemStack modifiedTool = FastFurnaceV2.FAST_IRON_PICKAXE.get().getDefaultInstance();
+        ItemStack vanillaTool = Items.IRON_PICKAXE.getDefaultInstance();
+        var modifiedAttributes = modifiedTool.get(DataComponents.ATTRIBUTE_MODIFIERS);
+        var vanillaAttributes = vanillaTool.get(DataComponents.ATTRIBUTE_MODIFIERS);
+        var enchantable = modifiedTool.get(DataComponents.ENCHANTABLE);
+        if (!toolModifiers.id().equals(API_TOOL_MODIFIERS_ID)
+                || toolModifiers.durabilitySaveChance() != FastTools.DURABILITY_SAVE_CHANCE
+                || toolModifiers.blockDropDoubleChance() != FastTools.DROP_DOUBLE_CHANCE
+                || toolModifiers.killDropDoubleChance() != FastTools.DROP_DOUBLE_CHANCE
+                || toolModifiers.damageDoubleChance() != FastTools.DAMAGE_DOUBLE_CHANCE
+                || FastFurnaceApi.findToolModifiers(API_LOW_PRIORITY_TOOL_MODIFIERS_ID).isEmpty()
+                || FastFurnaceApi.findToolModifiers(FastFurnaceApi.FAST_DIAMOND_TOOL_MODIFIERS_ID).isEmpty()
+                || modifiedAttributes == null || vanillaAttributes == null || enchantable == null
+                || Math.abs(modifiedAttributes.compute(Attributes.ATTACK_DAMAGE, 1.0, EquipmentSlot.MAINHAND)
+                        - vanillaAttributes.compute(Attributes.ATTACK_DAMAGE, 1.0, EquipmentSlot.MAINHAND) - 2.0) > 0.0001
+                || Math.abs(modifiedAttributes.compute(Attributes.ATTACK_SPEED, 4.0, EquipmentSlot.MAINHAND)
+                        - vanillaAttributes.compute(Attributes.ATTACK_SPEED, 4.0, EquipmentSlot.MAINHAND) - 0.5) > 0.0001
+                || enchantable.value() != 20) {
+            throw helper.assertionException("API tool-stat patches or modifier priority queries were incorrect");
+        }
+
         helper.setBlock(BlockPos.ZERO, FastFurnaceV2.FAST_CRUSHER.get());
         FastFurnaceBlockEntity crusher = helper.getBlockEntity(BlockPos.ZERO, FastFurnaceBlockEntity.class);
         crusher.setItem(FastFurnaceMenu.INGREDIENT_SLOT, new ItemStack(Items.COBBLESTONE, 3));
@@ -1829,6 +1909,23 @@ final class FastFurnaceGameTests {
                 || acceleratorMenu.getBoostWork() != 600
                 || acceleratorMenu.getBoostWorkPerTick() != 4) {
             throw helper.assertionException("Custom Accelerator conversion or exact-work boost was incorrect");
+        }
+        BlockPos alloyerPos = new BlockPos(0, 8, 0);
+        ExtremelyFastAlloyerBlockEntity alloyer = placeAlloyer(
+                helper, alloyerPos, new ItemStack(Items.GRAVEL), new ItemStack(Items.COBBLESTONE),
+                new ItemStack(Items.DIRT));
+        if (!alloyer.canPlaceItem(0, new ItemStack(Items.GRAVEL))) {
+            throw helper.assertionException("API Alloyer ingredient was rejected by automation");
+        }
+        tickAlloyer(helper, alloyer, alloyerPos, 39);
+        if (!alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT).isEmpty()) {
+            throw helper.assertionException("Custom Alloyer recipe completed before 40 ticks");
+        }
+        tickAlloyer(helper, alloyer, alloyerPos);
+        ItemStack alloyed = alloyer.getItem(ExtremelyFastAlloyerMenu.RESULT_SLOT);
+        if (!alloyed.is(Items.CLAY_BALL) || alloyed.getCount() != 2
+                || !alloyer.getItem(0).isEmpty() || !alloyer.getItem(1).isEmpty() || !alloyer.getItem(2).isEmpty()) {
+            throw helper.assertionException("Custom Alloyer recipe did not consume three distinct inputs and produce two clay balls");
         }
         helper.succeed();
     }
@@ -1918,9 +2015,10 @@ final class FastFurnaceGameTests {
     }
 
     private static void fastToolsApplyVanillaBonuses(GameTestHelper helper) {
+        boolean modifiedApiStats = Boolean.getBoolean("fastfurnacev2.apiTestContent");
         assertMiningTool(helper, Items.IRON_PICKAXE, FastFurnaceV2.FAST_IRON_PICKAXE.get(),
-                Blocks.STONE, 1.20F, ItemTags.PICKAXES, FastTools.FAST_IRON.repairItems(),
-                FastFurnaceV2.FAST_IRON_INGOT.get());
+                Blocks.STONE, modifiedApiStats ? 1.80F : 1.20F, ItemTags.PICKAXES, FastTools.FAST_IRON.repairItems(),
+                FastFurnaceV2.FAST_IRON_INGOT.get(), 1.0F, modifiedApiStats ? 10 : 0);
         assertMiningTool(helper, Items.IRON_SHOVEL, FastFurnaceV2.FAST_IRON_SHOVEL.get(),
                 Blocks.DIRT, 1.20F, ItemTags.SHOVELS, FastTools.FAST_IRON.repairItems(),
                 FastFurnaceV2.FAST_IRON_INGOT.get());
@@ -1988,17 +2086,15 @@ final class FastFurnaceGameTests {
         long savedSeed = findChanceRollSeed(FastTools.DURABILITY_SAVE_CHANCE, true);
         long damagedSeed = findChanceRollSeed(FastTools.DURABILITY_SAVE_CHANCE, false);
         for (Item tool : diamondTools) {
-            helper.getLevel().getRandom().setSeed(savedSeed);
-            int savedDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
-            helper.getLevel().getRandom().setSeed(damagedSeed);
-            int ordinaryDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
-            if (savedDamage != 0 || ordinaryDamage != 1) {
-                throw helper.assertionException(tool + " did not apply its deterministic 5% durability-saving roll");
-            }
+            assertDurabilityRolls(helper, player, tool, savedSeed, damagedSeed);
+        }
+        if (modifiedApiStats) {
+            assertDurabilityRolls(
+                    helper, player, FastFurnaceV2.FAST_GOLD_PICKAXE.get(), savedSeed, damagedSeed);
         }
 
-        long doubledDropSeed = findChanceRollSeed(ExtremelyFastToolEffects.DROP_DOUBLE_CHANCE, true);
-        long ordinaryDropSeed = findChanceRollSeed(ExtremelyFastToolEffects.DROP_DOUBLE_CHANCE, false);
+        long doubledDropSeed = findChanceRollSeed(FastTools.DROP_DOUBLE_CHANCE, true);
+        long ordinaryDropSeed = findChanceRollSeed(FastTools.DROP_DOUBLE_CHANCE, false);
         Item[] extremelyFastTools = {
             FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
             FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
@@ -2022,6 +2118,22 @@ final class FastFurnaceGameTests {
             }
         }
 
+        if (modifiedApiStats) {
+            Item customTool = FastFurnaceV2.FAST_GOLD_PICKAXE.get();
+            player.setItemSlot(EquipmentSlot.MAINHAND, customTool.getDefaultInstance());
+            for (boolean doubled : new boolean[] {false, true}) {
+                helper.getLevel().getRandom().setSeed(doubled ? doubledDropSeed : ordinaryDropSeed);
+                List<ItemEntity> drops = new ArrayList<>();
+                drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.COBBLESTONE, 3)));
+                ExtremelyFastToolEffects.onBlockDrops(new BlockDropsEvent(
+                        helper.getLevel(), helper.absolutePos(BlockPos.ZERO), Blocks.STONE.defaultBlockState(),
+                        null, drops, player, customTool.getDefaultInstance()));
+                if (drops.size() != (doubled ? 2 : 1)) {
+                    throw helper.assertionException("Custom tool modifiers did not apply their block-drop roll");
+                }
+            }
+        }
+
         player.setItemSlot(EquipmentSlot.MAINHAND, FastFurnaceV2.EXTREMELY_FAST_SWORD.get().getDefaultInstance());
         var damageSource = player.damageSources().playerAttack(player);
         for (boolean doubled : new boolean[] {false, true}) {
@@ -2035,12 +2147,30 @@ final class FastFurnaceGameTests {
             }
 
             helper.getLevel().getRandom().setSeed(findChanceRollSeed(
-                    ExtremelyFastToolEffects.DAMAGE_DOUBLE_CHANCE, doubled));
+                    FastTools.DAMAGE_DOUBLE_CHANCE, doubled));
             LivingIncomingDamageEvent damageEvent = new LivingIncomingDamageEvent(
                     player, new DamageContainer(damageSource, 7.0F));
             ExtremelyFastToolEffects.onIncomingDamage(damageEvent);
             if (damageEvent.getAmount() != (doubled ? 14.0F : 7.0F)) {
                 throw helper.assertionException("Extremely Fast Sword did not apply its independent 10% damage roll");
+            }
+        }
+
+        if (modifiedApiStats) {
+            player.setItemSlot(EquipmentSlot.MAINHAND, FastFurnaceV2.FAST_GOLD_PICKAXE.get().getDefaultInstance());
+            for (boolean doubled : new boolean[] {false, true}) {
+                helper.getLevel().getRandom().setSeed(doubled ? doubledDropSeed : ordinaryDropSeed);
+                List<ItemEntity> drops = new ArrayList<>();
+                drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.BONE, 2)));
+                ExtremelyFastToolEffects.onLivingDrops(new LivingDropsEvent(player, damageSource, drops, true));
+                helper.getLevel().getRandom().setSeed(findChanceRollSeed(
+                        FastTools.DAMAGE_DOUBLE_CHANCE, doubled));
+                LivingIncomingDamageEvent damageEvent = new LivingIncomingDamageEvent(
+                        player, new DamageContainer(damageSource, 7.0F));
+                ExtremelyFastToolEffects.onIncomingDamage(damageEvent);
+                if (drops.size() != (doubled ? 2 : 1) || damageEvent.getAmount() != (doubled ? 14.0F : 7.0F)) {
+                    throw helper.assertionException("Custom tool modifiers did not apply their melee rolls");
+                }
             }
         }
 
@@ -2053,7 +2183,7 @@ final class FastFurnaceGameTests {
             drops.add(new ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(Items.BONE, 2)));
             ExtremelyFastToolEffects.onLivingDrops(new LivingDropsEvent(player, rejectedSource, drops, true));
             helper.getLevel().getRandom().setSeed(findChanceRollSeed(
-                    ExtremelyFastToolEffects.DAMAGE_DOUBLE_CHANCE, true));
+                    FastTools.DAMAGE_DOUBLE_CHANCE, true));
             LivingIncomingDamageEvent damageEvent = new LivingIncomingDamageEvent(
                     player, new DamageContainer(rejectedSource, 7.0F));
             ExtremelyFastToolEffects.onIncomingDamage(damageEvent);
@@ -2062,6 +2192,17 @@ final class FastFurnaceGameTests {
             }
         }
         helper.succeed();
+    }
+
+    private static void assertDurabilityRolls(
+            GameTestHelper helper, Player player, Item tool, long savedSeed, long damagedSeed) {
+        helper.getLevel().getRandom().setSeed(savedSeed);
+        int savedDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
+        helper.getLevel().getRandom().setSeed(damagedSeed);
+        int ordinaryDamage = tool.damageItem(tool.getDefaultInstance(), 1, player, broken -> { });
+        if (savedDamage != 0 || ordinaryDamage != 1) {
+            throw helper.assertionException(tool + " did not apply its deterministic durability-saving roll");
+        }
     }
 
     private static void assertMiningTool(
@@ -2073,7 +2214,7 @@ final class FastFurnaceGameTests {
             TagKey<Item> toolTag,
             TagKey<Item> repairTag,
             Item repairItem) {
-        assertMiningTool(helper, vanilla, fast, efficientBlock, speedMultiplier, toolTag, repairTag, repairItem, 1.0F);
+        assertMiningTool(helper, vanilla, fast, efficientBlock, speedMultiplier, toolTag, repairTag, repairItem, 1.0F, 0);
     }
 
     private static void assertMiningTool(
@@ -2086,6 +2227,21 @@ final class FastFurnaceGameTests {
             TagKey<Item> repairTag,
             Item repairItem,
             float durabilityMultiplier) {
+        assertMiningTool(helper, vanilla, fast, efficientBlock, speedMultiplier, toolTag, repairTag, repairItem,
+                durabilityMultiplier, 0);
+    }
+
+    private static void assertMiningTool(
+            GameTestHelper helper,
+            Item vanilla,
+            Item fast,
+            Block efficientBlock,
+            float speedMultiplier,
+            TagKey<Item> toolTag,
+            TagKey<Item> repairTag,
+            Item repairItem,
+            float durabilityMultiplier,
+            int durabilityAdjustment) {
         ItemStack vanillaStack = vanilla.getDefaultInstance();
         ItemStack fastStack = fast.getDefaultInstance();
         var vanillaTool = vanillaStack.get(DataComponents.TOOL);
@@ -2096,7 +2252,7 @@ final class FastFurnaceGameTests {
         float vanillaSpeed = vanillaTool.getMiningSpeed(efficientBlock.defaultBlockState());
         float fastSpeed = fastTool.getMiningSpeed(efficientBlock.defaultBlockState());
         if (Math.abs(fastSpeed - vanillaSpeed * speedMultiplier) > 0.0001F
-                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage() * durabilityMultiplier
+                || fastStack.getMaxDamage() != vanillaStack.getMaxDamage() * durabilityMultiplier + durabilityAdjustment
                 || !fastStack.is(toolTag)
                 || !repairItem.getDefaultInstance().is(repairTag)) {
             throw helper.assertionException(fast + " has incorrect mining speed, durability, tags, or repair material");

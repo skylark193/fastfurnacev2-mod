@@ -1,5 +1,8 @@
 package com.skylark193.fastfurnacev2;
 
+import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
+import com.skylark193.fastfurnacev2.api.FastToolType;
+import java.util.Objects;
 import java.util.function.Consumer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
@@ -12,11 +15,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
-/** Shared Fast tool materials and the durability-saving Fast Diamond item behavior. */
-final class FastTools {
-    static final float DURABILITY_SAVE_CHANCE = 0.05F;
+/** Shared Fast tool materials and modifier-driven item durability behavior. */
+@ApiStatus.Internal
+public final class FastTools {
+    public static final float DURABILITY_SAVE_CHANCE = 0.05F;
+    public static final float DROP_DOUBLE_CHANCE = 0.05F;
+    public static final float DAMAGE_DOUBLE_CHANCE = 0.10F;
 
     static final ToolMaterial FAST_IRON = withMiningSpeed(
             ToolMaterial.IRON, BlockTags.INCORRECT_FOR_IRON_TOOL, "fast_iron_tool_materials", 1.20F);
@@ -33,6 +40,23 @@ final class FastTools {
             ItemTags.create(Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "extremely_fast_tool_materials")));
 
     private FastTools() {
+    }
+
+    public static Item create(
+            FastToolType type,
+            ToolMaterial material,
+            float attackDamageBaseline,
+            float attackSpeedBaseline,
+            Item.Properties properties) {
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(material, "material");
+        Objects.requireNonNull(properties, "properties");
+        return switch (type) {
+            case PICKAXE -> new Standard(properties.pickaxe(material, attackDamageBaseline, attackSpeedBaseline));
+            case SHOVEL -> new Shovel(material, attackDamageBaseline, attackSpeedBaseline, properties);
+            case AXE -> new Axe(material, attackDamageBaseline, attackSpeedBaseline, properties);
+            case SWORD -> new Standard(properties.sword(material, attackDamageBaseline, attackSpeedBaseline));
+        };
     }
 
     private static ToolMaterial withMiningSpeed(
@@ -64,13 +88,14 @@ final class FastTools {
         return vanillaDamage * damageMultiplier - 1.0F - fastMaterial.attackDamageBonus();
     }
 
-    private static int rollDurabilityDamage(int amount, @Nullable LivingEntity entity) {
-        return amount > 0
-                && entity != null
-                && !entity.level().isClientSide()
-                && entity.level().getRandom().nextFloat() < DURABILITY_SAVE_CHANCE
-                ? 0
-                : amount;
+    private static int rollDurabilityDamage(ItemStack stack, int amount, @Nullable LivingEntity entity) {
+        if (amount <= 0 || entity == null || entity.level().isClientSide()) {
+            return amount;
+        }
+        float chance = FastFurnaceApi.findToolModifiers(stack)
+                .map(modifiers -> modifiers.durabilitySaveChance())
+                .orElse(0.0F);
+        return chance >= 1.0F || chance > 0.0F && entity.level().getRandom().nextFloat() < chance ? 0 : amount;
     }
 
     static final class Standard extends Item {
@@ -81,7 +106,7 @@ final class FastTools {
         @Override
         public <T extends LivingEntity> int damageItem(
                 ItemStack stack, int amount, @Nullable T entity, Consumer<Item> onBroken) {
-            return rollDurabilityDamage(amount, entity);
+            return rollDurabilityDamage(stack, amount, entity);
         }
     }
 
@@ -93,7 +118,7 @@ final class FastTools {
         @Override
         public <T extends LivingEntity> int damageItem(
                 ItemStack stack, int amount, @Nullable T entity, Consumer<Item> onBroken) {
-            return rollDurabilityDamage(amount, entity);
+            return rollDurabilityDamage(stack, amount, entity);
         }
     }
 
@@ -105,7 +130,7 @@ final class FastTools {
         @Override
         public <T extends LivingEntity> int damageItem(
                 ItemStack stack, int amount, @Nullable T entity, Consumer<Item> onBroken) {
-            return rollDurabilityDamage(amount, entity);
+            return rollDurabilityDamage(stack, amount, entity);
         }
     }
 }

@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This guide covers **Fast Furnace V2 1.5.2** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.1.0**.
+This guide covers **Fast Furnace V2 1.6.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.2.0**.
 
 ## Start playing
 
@@ -28,7 +28,7 @@ Each machine GUI includes an **`i`** button with current timing, speed, fuel, an
 
 ## Developer resources
 
-- [Public modding API](api.md): custom fuels, crusher recipes, Accelerator conversions, and boosts.
+- [Public modding API](api.md): custom fuels, crusher and Alloyer recipes, Accelerator conversions, boosts, and tool integration.
 - [Development guide](development.md): environment setup, build commands, validation, and versioning.
 - [Architecture notes](architecture.md): code map and version-specific implementation constraints.
 - [Texture generation](../tools/README.md): source artwork, deterministic generators, regeneration, and tests.

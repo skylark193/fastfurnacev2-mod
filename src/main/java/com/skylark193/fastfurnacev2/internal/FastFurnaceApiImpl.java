@@ -3,16 +3,22 @@ package com.skylark193.fastfurnacev2.internal;
 import com.mojang.logging.LogUtils;
 import com.skylark193.fastfurnacev2.AcceleratorBlockEntity;
 import com.skylark193.fastfurnacev2.CrushedOres;
+import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerRecipes;
 import com.skylark193.fastfurnacev2.FastFurnaceBlockEntity;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
+import com.skylark193.fastfurnacev2.FastTools;
 import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
 import com.skylark193.fastfurnacev2.api.CrusherRecipe;
 import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
+import com.skylark193.fastfurnacev2.api.FastToolModifiers;
+import com.skylark193.fastfurnacev2.api.event.ModifyFastToolStatsEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterAcceleratorRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastCrusherRecipesEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterExtremelyFastAlloyerRecipesEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastFuelsEvent;
+import com.skylark193.fastfurnacev2.api.event.RegisterFastToolModifiersEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.furnace.FurnaceFuelBurnTimeEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
@@ -37,9 +44,11 @@ public final class FastFurnaceApiImpl {
     private static final List<Entry<FastFuel>> FUELS = new ArrayList<>();
     private static final List<Entry<CrusherRecipe>> CRUSHER_RECIPES = new ArrayList<>();
     private static final List<Entry<AcceleratorConversion>> ACCELERATOR_RECIPES = new ArrayList<>();
+    private static final List<Entry<FastToolModifiers>> TOOL_MODIFIERS = new ArrayList<>();
     private static final Map<Identifier, FastFuel> FUELS_BY_ID = new HashMap<>();
     private static final Map<Identifier, CrusherRecipe> CRUSHER_BY_ID = new HashMap<>();
     private static final Map<Identifier, AcceleratorConversion> ACCELERATOR_BY_ID = new HashMap<>();
+    private static final Map<Identifier, FastToolModifiers> TOOL_MODIFIERS_BY_ID = new HashMap<>();
     private static int nextSequence;
     private static boolean initialized;
 
@@ -56,9 +65,18 @@ public final class FastFurnaceApiImpl {
         modEventBus.post(new RegisterFastCrusherRecipesEvent(FastFurnaceApiImpl::registerCrusherRecipe));
         registerDefaultAcceleratorRecipes();
         modEventBus.post(new RegisterAcceleratorRecipesEvent(FastFurnaceApiImpl::registerAcceleratorRecipe));
+        ExtremelyFastAlloyerRecipes.registerBuiltIn();
+        modEventBus.post(new RegisterExtremelyFastAlloyerRecipesEvent(ExtremelyFastAlloyerRecipes::register));
+        registerDefaultToolModifiers();
+        modEventBus.post(new RegisterFastToolModifiersEvent(FastFurnaceApiImpl::registerToolModifiers));
         initialized = true;
-        LOGGER.info("Fast Furnace API {} initialized with {} fuels, {} crusher recipes, and {} Accelerator conversions",
-                FastFurnaceApi.API_VERSION, FUELS.size(), CRUSHER_RECIPES.size(), ACCELERATOR_RECIPES.size());
+        LOGGER.info("Fast Furnace API {} initialized with {} fuels, {} crusher recipes, {} Accelerator conversions, {} Alloyer recipes, and {} tool modifier definitions",
+                FastFurnaceApi.API_VERSION, FUELS.size(), CRUSHER_RECIPES.size(), ACCELERATOR_RECIPES.size(),
+                ExtremelyFastAlloyerRecipes.recipes().size(), TOOL_MODIFIERS.size());
+    }
+
+    public static void modifyToolStats(IEventBus modEventBus, ModifyDefaultComponentsEvent event) {
+        modEventBus.post(new ModifyFastToolStatsEvent(event));
     }
 
     public static void onFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
@@ -114,6 +132,22 @@ public final class FastFurnaceApiImpl {
                 AcceleratorConversion::priority);
     }
 
+    public static List<FastToolModifiers> toolModifiers() {
+        return TOOL_MODIFIERS.stream().map(Entry::value).toList();
+    }
+
+    public static Optional<FastToolModifiers> findToolModifiers(Identifier id) {
+        return Optional.ofNullable(TOOL_MODIFIERS_BY_ID.get(id));
+    }
+
+    public static Optional<FastToolModifiers> findToolModifiers(ItemStack tool) {
+        if (tool.isEmpty()) {
+            return Optional.empty();
+        }
+        return find(TOOL_MODIFIERS,
+                modifiers -> modifiers.ingredient().test(tool), FastToolModifiers::priority);
+    }
+
     private static void registerFuel(FastFuel fuel) {
         if (FUELS_BY_ID.putIfAbsent(fuel.id(), fuel) != null) {
             throw new IllegalArgumentException("Duplicate Fast Furnace fuel ID: " + fuel.id());
@@ -133,6 +167,13 @@ public final class FastFurnaceApiImpl {
             throw new IllegalArgumentException("Duplicate Accelerator conversion ID: " + recipe.id());
         }
         ACCELERATOR_RECIPES.add(new Entry<>(recipe, nextSequence++));
+    }
+
+    private static void registerToolModifiers(FastToolModifiers modifiers) {
+        if (TOOL_MODIFIERS_BY_ID.putIfAbsent(modifiers.id(), modifiers) != null) {
+            throw new IllegalArgumentException("Duplicate Fast tool modifier ID: " + modifiers.id());
+        }
+        TOOL_MODIFIERS.add(new Entry<>(modifiers, nextSequence++));
     }
 
     private static <T> Optional<T> find(
@@ -263,6 +304,32 @@ public final class FastFurnaceApiImpl {
                 Ingredient.of(input),
                 new ItemStack(output),
                 workUnits));
+    }
+
+    private static void registerDefaultToolModifiers() {
+        registerToolModifiers(FastToolModifiers.builder(
+                        FastFurnaceApi.FAST_DIAMOND_TOOL_MODIFIERS_ID,
+                        Ingredient.of(
+                                FastFurnaceV2.FAST_DIAMOND_PICKAXE.get(),
+                                FastFurnaceV2.FAST_DIAMOND_SHOVEL.get(),
+                                FastFurnaceV2.FAST_DIAMOND_AXE.get(),
+                                FastFurnaceV2.FAST_DIAMOND_SWORD.get()))
+                .durabilitySaveChance(FastTools.DURABILITY_SAVE_CHANCE)
+                .build());
+        registerToolModifiers(FastToolModifiers.builder(
+                        FastFurnaceApi.EXTREMELY_FAST_HARVESTING_TOOL_MODIFIERS_ID,
+                        Ingredient.of(
+                                FastFurnaceV2.EXTREMELY_FAST_PICKAXE.get(),
+                                FastFurnaceV2.EXTREMELY_FAST_SHOVEL.get(),
+                                FastFurnaceV2.EXTREMELY_FAST_AXE.get()))
+                .blockDropDoubleChance(FastTools.DROP_DOUBLE_CHANCE)
+                .build());
+        registerToolModifiers(FastToolModifiers.builder(
+                        FastFurnaceApi.EXTREMELY_FAST_SWORD_MODIFIERS_ID,
+                        Ingredient.of(FastFurnaceV2.EXTREMELY_FAST_SWORD.get()))
+                .killDropDoubleChance(FastTools.DROP_DOUBLE_CHANCE)
+                .damageDoubleChance(FastTools.DAMAGE_DOUBLE_CHANCE)
+                .build());
     }
 
     private record Entry<T>(T value, int sequence) {

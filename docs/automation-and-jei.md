@@ -143,4 +143,4 @@ The compile-time integration targets **JEI 29.2.0.21**, which declares support f
 
 ## Extending these behaviors
 
-Other mods do not need separate JEI integrations for content registered through Fast Furnace V2's API. Custom fuels, crusher recipes, Accelerator conversions, and boosts automatically use the real machine logic and corresponding displays. See the [modding API guide](api.md). Alloyer recipes are currently built-in only and are not registered through that public API.
+Other mods do not need separate JEI integrations for content registered through Fast Furnace V2's API. Custom fuels, crusher recipes, Accelerator conversions, boosts, and Alloyer recipes automatically use the real machine logic and corresponding displays. See the [modding API guide](api.md).

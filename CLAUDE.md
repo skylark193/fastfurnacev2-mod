@@ -6,7 +6,7 @@ Project instructions for Claude Code. Keep this file focused on durable workflow
 
 Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces and crushers, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
 
-- Current mod version: `1.5.2`; public API version: `1.1.0`.
+- Current mod version: `1.6.0`; public API version: `1.2.0`.
 - Mod ID and base package: `fastfurnacev2` and `com.skylark193.fastfurnacev2`.
 - Versions and metadata: `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`.
 - Player behavior and numeric tables: [`docs/README.md`](docs/README.md).
@@ -88,7 +88,8 @@ Read the relevant [architecture notes](docs/architecture.md) before changing the
 - **Transactions:** NeoForge item snapshots do not restore custom progress or pending output. Journal deferred resets and apply them only on root commit; aborted transfers must preserve machine state.
 - **Accelerator:** exact-work conversions require four horizontal lava sides. Ingredient acceptance and full-count processing are deliberately separate checks. Boost drain is clamped to remaining recipe and boost work.
 - **Alloyer:** dedicated three-distinct-slot shapeless recipes only. Only the Extreme Coal item fuels it. Lava changes recalculate duration without resetting elapsed work.
-- **API initialization:** register definitions from `DefaultDataComponentsBoundEvent` on the mod bus when static data should update; common setup is too early to construct recipe `ItemStack`s.
+- **API initialization:** register definitions from `DefaultDataComponentsBoundEvent` on the mod bus when static data should update; common setup is too early to construct recipe `ItemStack`s. Patch tool defaults earlier through `ModifyDefaultComponentsEvent`.
+- **Tools:** custom durability saving requires the API factory's `damageItem` route; other proc modifiers are ingredient-driven. Preserve direct-melee checks, correct-tool block drops, and deterministic roll boundaries.
 - **Crushed ores:** during discovery, components and runtime tags are unbound. Reject mod-namespace raw items except the three explicit Fast raw materials to prevent recursive registration. Reuse registered external results and preserve their resources.
 - **Client separation:** keep client classes and `NativeImage` out of common code. Do not rely on `@OnlyIn` runtime stripping in this NeoForge version.
 - **Menus and JEI:** crusher identity arrives through menu synchronization, so select screen text and click behavior at draw time. Register shared transfer handlers once with machine filters; duplicate JEI registrations overwrite one another.
