@@ -1,8 +1,8 @@
-# Generators and batteries
+# Generators, batteries, and power conduits
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Automation and GUI](automation-and-jei.md)
 
-Fast Furnace V2 adds four generator and four battery tiers using NeoForge's standard Forge Energy (FE) capability. **Neither family has crafting recipes yet.** They are available in the Fast Furnace V2 and Functional Blocks creative tabs.
+Fast Furnace V2 adds four generator, battery, and power-conduit tiers using NeoForge's standard Forge Energy (FE) capabilities. **None of these blocks has a crafting recipe yet.** They are available in the Fast Furnace V2 and Functional Blocks creative tabs.
 
 ## Fast Generators
 
@@ -32,6 +32,23 @@ Batteries accept and supply FE through the standard block energy capability on e
 | Gold Fast Battery | 320,000 FE | 16,000 FE |
 | Diamond Fast Battery | 640,000 FE | 32,000 FE |
 
-The paired bars on every vertical face fill from bottom to top in eleven charge steps, including empty and full. The animated lightning bolt remains on top. Charge and block visuals persist in the world; breaking a battery drops an empty, uncharged block item rather than a portable energy-storage item.
+Breaking a battery preserves its exact stored FE in the dropped item. Placing it restores that charge, clamped to the new battery's capacity if its components were modified to contain more. Battery items also expose NeoForge's standard transactional item energy capability, allowing other mods to charge and discharge them safely.
 
-The GUI reports exact stored FE and capacity. Batteries have no item slots.
+The paired bars on every vertical face fill from bottom to top in eleven charge steps, including empty and full. The animated lightning bolt remains on top. Charge persists in the world and across breaking and placement. The GUI reports exact stored FE and capacity. Batteries have no item slots.
+
+## Fast Power Conduits
+
+Conduits connect to adjacent conduits and blocks exposing an energy capability. Their connected models have animated internal lava channels; the channel widens from 2 pixels in the Fast tier to 4, 6, and 8 pixels in the Iron, Gold, and Diamond tiers.
+
+| Tier | Shared network transfer budget |
+|---|---:|
+| Fast Power Conduit | 1,000 FE/t |
+| Iron Fast Power Conduit | 10,000 FE/t |
+| Gold Fast Power Conduit | 100,000 FE/t |
+| Diamond Fast Power Conduit | 1,000,000 FE/t |
+
+Each connected network runs at most once per game tick and moves no more than its shared budget, including energy already stored in conduit buffers. Chains, branches, and loops do not multiply this limit. A mixed-tier network uses the rate of its slowest connected conduit. Actual transfer can be lower when sources, destinations, or their per-operation limits cannot supply or accept the full budget.
+
+Conduits first drain their buffers into adjacent energy consumers, then transfer between adjacent external energy handlers. They avoid directly returning energy to its source or immediately re-supplying energy received during the same network pass. Between bidirectional endpoints, energy preferentially flows from the higher stored amount to the lower; output-only sources can still charge fuller consumers.
+
+Each placed conduit has an internal buffer equal to its tier rate and persists that buffer in the world. Breaking a conduit drops the item without preserving buffered FE. Conduits have no GUI or item slots and do not have crafting recipes yet.

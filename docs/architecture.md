@@ -9,7 +9,7 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | Area | Responsibility |
 |---|---|
 | `FastFurnaceV2` | Common entry point, deferred registries, creative tabs, built-in API initialization, and event listeners |
-| `FastFurnaceTier` | Shared tier speed, duration scaling, doubling chance, and JEI smelt-count math |
+| `FastFurnaceTier` | Shared tier identity, machine speed and duration scaling, energy capacities/rates, and JEI smelt-count math |
 | `FastFurnaceBlock` / `FastFurnaceBlockEntity` / `FastFurnaceMenu` | Shared furnace/crusher block identity, processing, persistence, automation, and synchronization |
 | `AcceleratorBlock` / `AcceleratorBlockEntity` / `AcceleratorMenu` | Exact-work conversions, lava requirement, boosts, automation, and synchronization |
 | `ExtremelyFastAlloyerBlock` / `ExtremelyFastAlloyerBlockEntity` / `ExtremelyFastAlloyerMenu` | Dedicated three-input recipes, Extreme Coal fuel, lava-adjusted timing, and automation |
@@ -17,7 +17,8 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `FastTools` / `ExtremelyFastToolEffects` | Tool materials, modifier-driven durability rolls, and post-loot/damage effects |
 | `FastEnergyStorage` | Public transaction-aware energy storage, transfer limits, value-IO persistence, and change notification |
 | `FastGeneratorBlock` / `FastGeneratorBlockEntity` / `FastGeneratorMenu` | Tiered fuel generation, active-fuel bonuses, energy buffering, adjacent transfer, and synchronization |
-| `FastBatteryBlock` / `FastBatteryBlockEntity` / `FastBatteryMenu` | Tiered bidirectional FE storage, saved charge levels, and synchronization |
+| `FastBatteryBlock` / `FastBatteryBlockEntity` / `FastBatteryMenu` | Tiered bidirectional FE storage, charge-preserving item components, item capabilities, and synchronization |
+| `FastPowerConduitBlock` / `FastPowerConduitBlockEntity` | Connected pipe models, capability discovery, tiered buffers, and shared per-tick network transfer |
 | `FastBonusDrops` / `FastOreGeneration` | Mining bonuses and deterministic once-only ore replacement |
 | `CrushedOres` / `CrushedOreItem` / `CrushedOreResources` | Raw-ore discovery, result selection, dynamic registration, naming, and item definitions |
 | `api/` | Public immutable definitions, registration events, built-in accessors, and queries |
@@ -87,14 +88,20 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 - Persist through `serialize`/`deserialize` with `ValueOutput`/`ValueInput`, normally beneath a named child. Expose the same storage instance through `RegisterCapabilitiesEvent.registerBlockEntity`; apply side restrictions with NeoForge wrappers rather than duplicating the stored amount.
 - Existing furnaces, crushers, Accelerator, and Alloyer do not expose or consume energy. Their fuel, timing, automation, and saved data are unchanged. See the [energy API guide](api.md#energy-storage) for integration examples.
 
-### Generators and batteries
+### Generators, batteries, and power conduits
 
 - Generator output is `80 << tier.ordinal()` FE/t; Fast and Extreme fuel definitions add their registered 50 or 100 percentage points. Generator buffers hold 40 ticks of ordinary tier output. External insertion is disabled and extraction is capped at twice ordinary tier output per operation.
 - Ordinary and custom fuels use their effective ordinary burn time. Built-in Fast Coal IDs use 125% duration and Extreme Coal IDs 150%; do not apply furnace tier duration scaling or random doubling. Persist remaining/total burn, active-fuel ID, and output percentage from the consumed stack.
 - A full buffer pauses both burn time and generation. A partially filled last tick does not consume a burn tick until the complete output can be produced. `LIT` tracks actual production. Push to each adjacent `Capabilities.Energy.BLOCK` target through a root transaction and `EnergyHandlerUtil.move`.
 - Battery capacity is `80_000 << tier.ordinal()` FE. Insertion and extraction each allow capacity/20 per operation. Use the same storage instance on every side.
 - Battery `charge` uses ceiling division into 0–10 steps so any nonempty storage shows at least one step. Update the blockstate only after committed storage changes; deserialization restores energy without a callback, while the blockstate itself is saved normally.
-- Generator and battery menu integers use low/high 16-bit components because `ContainerData` synchronization is not a full arbitrary-int channel. Recombine with an unsigned low component. Neither family has built-in crafting recipes or energy-preserving dropped items.
+- Preserve exact battery FE in the nonnegative `fastfurnacev2:stored_energy` data component. Copy it in battery loot, restore it through `applyImplicitComponents` clamped to tier capacity, and collect it through `collectImplicitComponents`. Register `Capabilities.Energy.ITEM` with `ItemAccessEnergyHandler` using the supplied `ItemAccess` context so transactional inventory changes affect the actual slot.
+- Generator and battery menu integers use low/high 16-bit components because `ContainerData` synchronization is not a full arbitrary-int channel. Recombine with an unsigned low component. None of the energy blocks has built-in crafting recipes; only battery items preserve energy when broken.
+- Conduit tier rates are 1,000 FE/t times ten per ordinal. Each conduit buffer's capacity and per-operation transfer limit equal its tier rate, but a connected network's total budget is the minimum connected tier rate, not a sum of conduit rates.
+- Discover each adjacent conduit network with BFS and mark every member's `lastNetworkTick` before transfer. This ensures one execution per network per game tick regardless of chain length, branches, loops, or block-entity tick order.
+- Deduplicate external endpoints by position and exclude conduits. Drain conduit buffers before external endpoint pairs, with both phases sharing the same budget. Mark successful buffer recipients as `received`; skip sources that received and sinks that supplied during the pass to prevent same-tick backflow.
+- Apply comparative-fill direction only when both endpoints could reverse the flow (`source.canInsert && sink.canExtract`). Output-only generators must be able to charge batteries containing more FE than the generator buffer.
+- Conduits extend `PipeBlock` with six connection properties and a custom server ticker. `LevelReader` has no capability query, so connection checks pattern-match `Level`. Multipart models select the central core and rotated arms; conduit drops do not copy their saved buffer.
 
 ## Public API lifecycle
 
@@ -155,7 +162,7 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 ## GameTests and textures
 
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod initialization is too late; `DirectGameTestInstance` invokes mapped functions directly.
-- Preserve deterministic random seeds in tests asserting successful/failed rolls and exact durations. Extend tests for timing, synchronization, remainders, transactions, persistence, and active-fuel changes.
+- Preserve deterministic random seeds in tests asserting successful/failed rolls and exact durations. Extend tests for timing, synchronization, remainders, transactions, persistence, and active-fuel changes. Energy tests cover exact battery components and item transactions, mixed-tier conduit budgets, loops, same-tick deduplication, backflow, buffers, and persistence.
 - Use square sources under `tools/texture_sources/`; never feed generated animation strips back into a generator. Production seeds and exact commands live in [tools/README.md](../tools/README.md).
 - Ordinary lava veins default to eight frames, two ticks per frame, no interpolation, and two primary veins. Shared furnace and tool seeds intentionally align identical silhouettes across tiers.
 - Use `generate_extreme_coal_texture.py`, not the ordinary vein generator, for all-lava Extreme Coal, its block, Alloyer body, Extremely Fast Ingot, and Extremely Fast tools.

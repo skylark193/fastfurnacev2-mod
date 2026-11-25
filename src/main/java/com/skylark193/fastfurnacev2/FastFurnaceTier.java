@@ -38,12 +38,37 @@ public enum FastFurnaceTier {
         return this.id.replace("_furnace", "_battery");
     }
 
+    public String getConduitId() {
+        return this.id.replace("_furnace", "_power_conduit");
+    }
+
     public int getGeneratorOutput() {
         return 80 << this.ordinal();
     }
 
+    public int getGeneratorBufferCapacity() {
+        return this.getGeneratorOutput() * 40;
+    }
+
+    public int getGeneratorExtractionLimit() {
+        return this.getGeneratorOutput() * 2;
+    }
+
     public int getBatteryCapacity() {
         return 80_000 << this.ordinal();
+    }
+
+    public int getBatteryTransferLimit() {
+        return Math.max(1, this.getBatteryCapacity() / 20);
+    }
+
+    /** Returns the shared per-tick transfer budget for a network containing this tier. */
+    public int getConduitTransferRate() {
+        int rate = 1_000;
+        for (int index = 0; index < this.ordinal(); index++) {
+            rate *= 10;
+        }
+        return rate;
     }
 
     public int getSpeedPercent() {

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.8.0 exposes API version 1.3.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, and reusable energy storage. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.9.0 exposes API version 1.4.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, reusable energy storage, recipe and ingredient queries, dynamic crushed-ore mappings, and access to every fixed built-in item. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.8.0"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.9.0"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.8.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.9.0.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.8.0,)"
+versionRange="[1.9.0,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -324,7 +324,7 @@ try (Transaction transaction = Transaction.openRoot()) {
 }
 ```
 
-To simulate, let the transaction close without committing. Direct `set(int)` changes notify immediately; loading saved energy does not notify. `FastEnergyStorage` is a reusable foundation only: existing Fast Furnace V2 machines do not expose energy capabilities or consume energy, and their fuels and processing behavior are unchanged.
+To simulate, let the transaction close without committing. Direct `set(int)` changes notify immediately; loading saved energy does not notify. Fast Furnaces, Crushers, the Accelerator, and the Alloyer still do not expose or consume energy. Generators, batteries, and power conduits expose standard block energy capabilities; battery items also expose `Capabilities.Energy.ITEM` with their tier capacity and transfer limit. Battery item charge is stored in `fastfurnacev2:stored_energy` and survives breaking and placement.
 
 ## Queries and built-in content access
 
@@ -334,7 +334,12 @@ After the registration events have fired, use `FastFurnaceApi` to access content
 List<FastFurnaceTier> tiers = FastFurnaceApi.tiers();
 Item fastFurnace = FastFurnaceApi.furnace(FastFurnaceTier.FAST);
 Item diamondCrusher = FastFurnaceApi.crusher(FastFurnaceTier.DIAMOND);
+Item generator = FastFurnaceApi.generator(FastFurnaceTier.GOLD);
+Item battery = FastFurnaceApi.battery(FastFurnaceTier.IRON);
+Item conduit = FastFurnaceApi.conduit(FastFurnaceTier.DIAMOND);
 Item accelerator = FastFurnaceApi.accelerator();
+Item alloyer = FastFurnaceApi.extremelyFastAlloyer();
+Item extremelyFastIngot = FastFurnaceApi.extremelyFastIngot();
 Item fastCobblestone = FastFurnaceApi.fastCobblestone();
 Item fastCoal = FastFurnaceApi.fastCoal();
 Item fastCoalBlock = FastFurnaceApi.fastCoalBlock();
@@ -343,13 +348,16 @@ Item extremeCoal = FastFurnaceApi.extremeCoal();
 Item extremeCoalBlock = FastFurnaceApi.extremeCoalBlock();
 
 List<FastFuel> fuels = FastFurnaceApi.fuels();
-Optional<FastFuel> byId = FastFurnaceApi.findFuel(fuelId);
-Optional<FastFuel> byStack = FastFurnaceApi.findFuel(stack);
+Optional<FastFuel> fuelById = FastFurnaceApi.findFuel(fuelId);
+Optional<FastFuel> fuelByStack = FastFurnaceApi.findFuel(stack);
 
 List<CrusherRecipe> crusherRecipes = FastFurnaceApi.crusherRecipes();
-Optional<CrusherRecipe> crusherRecipe = FastFurnaceApi.findCrusherRecipe(input);
+Optional<CrusherRecipe> crusherById = FastFurnaceApi.findCrusherRecipe(crusherRecipeId);
+boolean canEnterCrusher = FastFurnaceApi.isCrusherInput(input);
+Optional<CrusherRecipe> crusherMatch = FastFurnaceApi.findCrusherRecipe(input);
 
 List<AcceleratorConversion> conversions = FastFurnaceApi.acceleratorRecipes();
+Optional<AcceleratorConversion> conversionById = FastFurnaceApi.findAcceleratorRecipe(conversionId);
 boolean canEnterInputSlot = FastFurnaceApi.isAcceleratorInput(input);
 Optional<AcceleratorConversion> conversion = FastFurnaceApi.findAcceleratorRecipe(input);
 
@@ -358,12 +366,24 @@ Optional<ExtremelyFastAlloyerRecipe> alloyerById = FastFurnaceApi.findAlloyerRec
 boolean canEnterAlloyer = FastFurnaceApi.isAlloyerInput(input);
 Optional<ExtremelyFastAlloyerRecipe> alloyerMatch = FastFurnaceApi.findAlloyerRecipe(threeInputStacks);
 
+Set<Identifier> rawOreIds = FastFurnaceApi.rawOreIds();
+Optional<Item> oneCrushedResult = FastFurnaceApi.crushedOre(rawOreId);
+Map<Identifier, Item> allCrushedResults = FastFurnaceApi.crushedOres();
+
 List<FastToolModifiers> toolModifiers = FastFurnaceApi.toolModifiers();
 Optional<FastToolModifiers> toolModifiersById = FastFurnaceApi.findToolModifiers(toolModifierId);
 Optional<FastToolModifiers> toolModifiersByStack = FastFurnaceApi.findToolModifiers(toolStack);
 ```
 
-`findCrusherRecipe` and `findAcceleratorRecipe` require enough input items to process. `isAcceleratorInput` and `isAlloyerInput` check only ingredient acceptance, making them suitable for slot and automation logic. The list-based Alloyer query examines the first three stacks and applies distinct-slot shapeless matching. Query collections are immutable, and returned output/display stacks are fresh copies. Do not retain and mutate a definition's internal state; definitions themselves are immutable.
+Every fixed built-in item has an accessor. In addition to the examples above:
+
+- Regular and deepslate ores: `deepslateExtremeCoalOre()`, `fastIronOre()`, `deepslateFastIronOre()`, `fastGoldOre()`, `deepslateFastGoldOre()`, `fastDiamondOre()`, and `deepslateFastDiamondOre()`.
+- Fast materials and storage: `rawFastIron()`, `fastIronIngot()`, `fastIronBlock()`, `rawFastGold()`, `fastGoldIngot()`, `fastGoldBlock()`, `rawFastDiamond()`, `fastDiamond()`, and `fastDiamondBlock()`.
+- All sixteen tools: `fastIronPickaxe/Shovel/Axe/Sword()`, `fastGoldPickaxe/Shovel/Axe/Sword()`, `fastDiamondPickaxe/Shovel/Axe/Sword()`, and `extremelyFastPickaxe/Shovel/Axe/Sword()`. Each tool name is a separate method with its complete suffix, such as `fastIronShovel()`.
+
+`findCrusherRecipe(ItemStack)` and `findAcceleratorRecipe(ItemStack)` require enough input items to process. The corresponding `isCrusherInput` and `isAcceleratorInput` methods, plus `isAlloyerInput`, check only ingredient acceptance, making them suitable for slot and automation logic. The list-based Alloyer query examines the first three stacks and applies distinct-slot shapeless matching. All recipe types and fuels also support lookup by exact registered `Identifier`.
+
+`rawOreIds()` includes discovered sources whose results were registered by other mods. `crushedOre` returns the selected generated or reused result for one source, and `crushedOres()` returns an immutable snapshot of the complete mapping. Query collections and maps are immutable, and returned output/display stacks are fresh copies. Do not retain and mutate a definition's internal state; definitions themselves are immutable.
 
 The current API version is available as `FastFurnaceApi.API_VERSION`.
 

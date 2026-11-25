@@ -13,6 +13,7 @@ from generate_energy_textures import (
     FRAME_COUNT,
     TIERS,
     charge_overlay,
+    conduit_lava_points,
     create_source,
     generate_all,
     load_metal_sources,
@@ -42,6 +43,7 @@ class EnergyTextureGeneratorTests(unittest.TestCase):
         self.assertEqual({path.name for path in output_paths}, expected_outputs)
         self.assertEqual(len([name for name in expected_sources if "generator" in name]), 16)
         self.assertEqual(len([name for name in expected_sources if "battery" in name]), 12)
+        self.assertEqual(len([name for name in expected_sources if "conduit" in name]), 4)
         for path in source_paths:
             with self.subTest(source=path.name), Image.open(path) as image:
                 self.assertEqual(image.size, (16, 16))
@@ -113,6 +115,21 @@ class EnergyTextureGeneratorTests(unittest.TestCase):
             idle_luminance = sum(sum(idle.getpixel((x, 6))) for x in (6, 7, 9, 10))
             active_luminance = sum(sum(active.getpixel((x, 6))) for x in (6, 7, 9, 10))
             self.assertGreater(active_luminance, idle_luminance)
+
+    def test_conduit_lava_channels_widen_by_tier(self) -> None:
+        coverage = [len(conduit_lava_points(tier)) for tier in TIERS]
+        self.assertEqual(coverage, sorted(coverage))
+        self.assertEqual(len(set(coverage)), len(TIERS))
+        for tier in TIERS:
+            _, protected = create_source(tier, "power_conduit", load_metal_sources()[tier])
+            self.assertEqual(len(protected), 256 - len(conduit_lava_points(tier)))
+            with Image.open(self.source_directory / f"{tier}_power_conduit.png") as source_image:
+                source = source_image.convert("RGBA")
+            with Image.open(self.output_directory / f"{tier}_power_conduit.png") as strip:
+                for index in range(FRAME_COUNT):
+                    frame = strip.crop((0, index * 16, 16, (index + 1) * 16))
+                    for point in protected:
+                        self.assertEqual(frame.getpixel(point), source.getpixel(point))
 
     def test_charge_overlays_fill_both_interiors_bottom_up(self) -> None:
         previous = set()

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Items](items.md)
 
-This page collects the **36 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Generators and batteries do not have crafting recipes yet. Other mods can add crusher recipes, Accelerator conversions, Alloyer recipes, and fuel definitions through the [API](api.md).
+This page collects the **36 checked-in crafting recipes**, built-in machine conversions, alloying, smelting behavior, and fuel values. Generators, batteries, and power conduits do not have crafting recipes yet. Other mods can add crusher recipes, Accelerator conversions, Alloyer recipes, and fuel definitions through the [API](api.md).
 
 ## Crafting conventions
 

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Recipes and fuels](recipes.md)
 
-Fast Furnace V2 supplies **49 fixed items**: 24 block items plus Fast Coal, Extreme Coal, three raw Fast materials, three finished Fast materials, the Extremely Fast Ingot, twelve Fast tools or swords, and four Extremely Fast tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
+Fast Furnace V2 supplies **61 fixed items**: 36 block items plus Fast Coal, Extreme Coal, three raw Fast materials, three finished Fast materials, the Extremely Fast Ingot, twelve Fast tools or swords, and four Extremely Fast tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
 
 ## Standalone item index
 
@@ -130,13 +130,15 @@ Notable item uses:
 | Block of Extreme Coal | Ordinary 16,000-tick fuel, Extreme Coal machine bonuses, 8,000-work Accelerator boost, and reversible nine-item storage |
 | Fast Furnace and upgrades | Placeable smelting machines; custom names survive breaking |
 | Fast Crusher and upgrades | Placeable crushing machines; custom names survive breaking |
+| Fast Batteries | Placeable FE storage; exact charge survives breaking, and items expose the standard item energy capability |
+| Fast Power Conduits | Placeable FE networks; buffered FE does not survive breaking |
 | Accelerator | Placeable converter; custom name survives breaking |
 | Extremely Fast Alloyer | Placeable three-input alloying machine; custom name survives breaking |
 | Regular and Deepslate Extreme Coal Ore | Silk-Touch-drop placeable ores and three-item crusher inputs |
 | Regular and Deepslate Fast Iron, Gold, and Diamond Ores | Silk-Touch-drop placeable ores and three-item crusher inputs |
 | Blocks of Fast Iron, Fast Gold, and Fast Diamond | Reversible nine-item storage and furnace/crusher upgrade ingredients |
 
-Machine block items do not retain the placed machine's inventory, progress, experience, active fuel, pending output, or boost after breaking.
+Machine block items do not retain the placed machine's inventory, progress, experience, active fuel, pending output, or boost after breaking. Battery items are the explicit exception for stored FE; generators and conduits do not retain their energy buffers.
 
 ## Crushed ores
 

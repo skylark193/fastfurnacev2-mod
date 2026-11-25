@@ -6,7 +6,7 @@ Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It expands furnace progr
 
 - **Four furnace tiers** with faster smelting, special fuel bonuses, and familiar vanilla behavior.
 - **Four crusher tiers** that turn raw ores into smeltable crushed materials, with a chance to double output.
-- **Four generator and battery tiers** for producing, transferring, and storing Forge Energy.
+- **Four generator, battery, and power-conduit tiers** for producing, transferring, and storing Forge Energy.
 - **Fast and Extreme materials** obtained through mining bonuses, ore replacement, and material conversion.
 - **Fast and Extremely Fast tools** with faster actions, built-in enchantments, and other bonuses.
 - **The Accelerator and Extremely Fast Alloyer** for advanced material conversion and alloying.
@@ -28,7 +28,7 @@ JEI is optional, but requires a release compatible with Minecraft 26.1.2 and thi
 
 1. Install Java 25 and a NeoForge profile for Minecraft 26.1.2.
 2. Build the mod or obtain its JAR from a release.
-3. Place `fastfurnacev2-1.8.0.jar` in the Minecraft `mods` directory.
+3. Place `fastfurnacev2-1.9.0.jar` in the Minecraft `mods` directory.
 
 To build the JAR yourself, run the included Gradle wrapper from the project root:
 

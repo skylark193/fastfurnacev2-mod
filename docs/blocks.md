@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Items](items.md) · [Recipes](recipes.md)
 
-Fast Furnace V2 registers **32 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
+Fast Furnace V2 registers **36 blocks**, each with a corresponding block item. All appear in the **`fastfurnacev2:fast_furnace_v2_tab`** creative tab, titled **Fast Furnace V2**, whose icon is Fast Cobblestone. Additional vanilla-tab placement is listed below.
 
 ## Complete block index
 
@@ -40,6 +40,10 @@ Fast Furnace V2 registers **32 blocks**, each with a corresponding block item. A
 | Iron Fast Battery | `fastfurnacev2:iron_fast_battery` | Functional Blocks | No crafting recipe yet |
 | Gold Fast Battery | `fastfurnacev2:gold_fast_battery` | Functional Blocks | No crafting recipe yet |
 | Diamond Fast Battery | `fastfurnacev2:diamond_fast_battery` | Functional Blocks | No crafting recipe yet |
+| Fast Power Conduit | `fastfurnacev2:fast_power_conduit` | Functional Blocks | No crafting recipe yet |
+| Iron Fast Power Conduit | `fastfurnacev2:iron_fast_power_conduit` | Functional Blocks | No crafting recipe yet |
+| Gold Fast Power Conduit | `fastfurnacev2:gold_fast_power_conduit` | Functional Blocks | No crafting recipe yet |
+| Diamond Fast Power Conduit | `fastfurnacev2:diamond_fast_power_conduit` | Functional Blocks | No crafting recipe yet |
 
 ## Fast Cobblestone
 
@@ -163,13 +167,15 @@ Common behavior:
 
 See [Fast Crushers](crushers.md) for processing, fuel, and pending-output rules.
 
-## Fast Generator and Fast Battery blocks
+## Fast Generator, Fast Battery, and Fast Power Conduit blocks
 
 The four generators and four batteries use stone map color, base-drum instrument, hardness **3.5**, and blast resistance **3.5**. All require a pickaxe and drop themselves. They currently have no crafting recipes.
 
-Generators have directional placement, animated lava-vein housing, a separate active front, and light level 13 while producing energy. Their fuel and active burn determine FE output. Batteries expose bidirectional energy storage and use paired side overlays with eleven charge steps; their animated top contains a lightning bolt. Neither dropped block item preserves its placed block's energy or other machine state.
+Generators have directional placement, animated lava-vein housing, a separate active front, and light level 13 while producing energy. Their fuel and active burn determine FE output. Batteries expose bidirectional energy storage and use paired side overlays with eleven charge steps; their animated top contains a lightning bolt. Dropped generators do not preserve energy or other machine state. Dropped batteries preserve exact stored FE and restore it when placed.
 
-See [Generators and batteries](energy.md) for exact rates, capacities, fuel behavior, transfer, automation, and persistence.
+The four power conduits use metal map color and sound, hardness **1.5**, blast resistance **6.0**, and non-occluding connected-pipe models. They require a pickaxe, drop themselves without preserving buffered FE, and have no crafting recipes yet. Their animated internal lava channels widen with each tier.
+
+See [Generators, batteries, and conduits](energy.md) for exact rates, capacities, fuel behavior, network rules, and persistence.
 
 ## Accelerator
 

@@ -4,9 +4,9 @@ Project instructions for Claude Code. Keep this file focused on durable workflow
 
 ## Project
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces, crushers, generators, and batteries, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces, crushers, generators, batteries, and power conduits, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
 
-- Current mod version: `1.8.0`; public API version: `1.3.0`.
+- Current mod version: `1.9.0`; public API version: `1.4.0`.
 - Mod ID and base package: `fastfurnacev2` and `com.skylark193.fastfurnacev2`.
 - Versions and metadata: `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`.
 - Player behavior and numeric tables: [`docs/README.md`](docs/README.md).
@@ -88,6 +88,8 @@ Read the relevant [architecture notes](docs/architecture.md) before changing the
 - **Transactions:** NeoForge item snapshots do not restore custom progress or pending output. Journal deferred resets and apply them only on root commit; aborted transfers must preserve machine state.
 - **Accelerator:** exact-work conversions require four horizontal lava sides. Ingredient acceptance and full-count processing are deliberately separate checks. Boost drain is clamped to remaining recipe and boost work.
 - **Alloyer:** dedicated three-distinct-slot shapeless recipes only. Only the Extreme Coal item fuels it. Lava changes recalculate duration without resetting elapsed work.
+- **Energy items:** battery drops preserve exact FE through `fastfurnacev2:stored_energy`. Item energy handlers must use NeoForge's supplied `ItemAccess` context; placement clamps restored FE to tier capacity.
+- **Power conduits:** each connected network runs once per tick with a shared budget equal to its slowest tier. Chains, loops, buffers, and branches must not multiply throughput or permit same-tick backflow.
 - **API initialization:** register definitions from `DefaultDataComponentsBoundEvent` on the mod bus when static data should update; common setup is too early to construct recipe `ItemStack`s. Patch tool defaults earlier through `ModifyDefaultComponentsEvent`.
 - **Tools:** custom durability saving requires the API factory's `damageItem` route; other proc modifiers are ingredient-driven. Preserve direct-melee checks, correct-tool block drops, and deterministic roll boundaries.
 - **Crushed ores:** during discovery, components and runtime tags are unbound. Reject mod-namespace raw items except the three explicit Fast raw materials to prevent recursive registration. Reuse registered external results and preserve their resources.

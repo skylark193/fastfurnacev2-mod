@@ -4,11 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.skylark193.fastfurnacev2.api.FastToolType;
 import com.skylark193.fastfurnacev2.internal.FastFurnaceApiImpl;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -34,6 +36,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -46,6 +49,8 @@ public class FastFurnaceV2 {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister.DataComponents DATA_COMPONENTS =
+            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
     public static final DeferredRegister<MapCodec<? extends GameTestInstance>> GAME_TEST_INSTANCE_TYPES =
@@ -53,6 +58,11 @@ public class FastFurnaceV2 {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MODID);
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> STORED_ENERGY =
+            DATA_COMPONENTS.registerComponentType("stored_energy", builder -> builder
+                    .persistent(Codec.intRange(0, Integer.MAX_VALUE))
+                    .networkSynchronized(ByteBufCodecs.VAR_INT));
 
     // Matches vanilla cobblestone's block properties, including hardness, blast resistance, and tool requirement.
     public static final DeferredBlock<Block> FAST_COBBLESTONE = BLOCKS.registerSimpleBlock("fast_cobblestone", properties -> properties
@@ -174,6 +184,14 @@ public class FastFurnaceV2 {
     public static final DeferredItem<BlockItem> IRON_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_battery", IRON_FAST_BATTERY);
     public static final DeferredItem<BlockItem> GOLD_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_battery", GOLD_FAST_BATTERY);
     public static final DeferredItem<BlockItem> DIAMOND_FAST_BATTERY_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_battery", DIAMOND_FAST_BATTERY);
+    public static final DeferredBlock<FastPowerConduitBlock> FAST_POWER_CONDUIT = registerConduit(FastFurnaceTier.FAST);
+    public static final DeferredBlock<FastPowerConduitBlock> IRON_FAST_POWER_CONDUIT = registerConduit(FastFurnaceTier.IRON);
+    public static final DeferredBlock<FastPowerConduitBlock> GOLD_FAST_POWER_CONDUIT = registerConduit(FastFurnaceTier.GOLD);
+    public static final DeferredBlock<FastPowerConduitBlock> DIAMOND_FAST_POWER_CONDUIT = registerConduit(FastFurnaceTier.DIAMOND);
+    public static final DeferredItem<BlockItem> FAST_POWER_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem("fast_power_conduit", FAST_POWER_CONDUIT);
+    public static final DeferredItem<BlockItem> IRON_FAST_POWER_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem("iron_fast_power_conduit", IRON_FAST_POWER_CONDUIT);
+    public static final DeferredItem<BlockItem> GOLD_FAST_POWER_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem("gold_fast_power_conduit", GOLD_FAST_POWER_CONDUIT);
+    public static final DeferredItem<BlockItem> DIAMOND_FAST_POWER_CONDUIT_ITEM = ITEMS.registerSimpleBlockItem("diamond_fast_power_conduit", DIAMOND_FAST_POWER_CONDUIT);
 
     public static final DeferredBlock<FastFurnaceBlock> FAST_FURNACE = registerFurnace(FastFurnaceTier.FAST);
     public static final DeferredBlock<FastFurnaceBlock> IRON_FAST_FURNACE = registerFurnace(FastFurnaceTier.IRON);
@@ -285,6 +303,11 @@ public class FastFurnaceV2 {
             FAST_BATTERY_BLOCK_ENTITY = BLOCK_ENTITIES.register("fast_battery", () -> new BlockEntityType<>(
                     FastBatteryBlockEntity::new,
                     FAST_BATTERY.get(), IRON_FAST_BATTERY.get(), GOLD_FAST_BATTERY.get(), DIAMOND_FAST_BATTERY.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FastPowerConduitBlockEntity>>
+            FAST_POWER_CONDUIT_BLOCK_ENTITY = BLOCK_ENTITIES.register("fast_power_conduit", () -> new BlockEntityType<>(
+                    FastPowerConduitBlockEntity::new,
+                    FAST_POWER_CONDUIT.get(), IRON_FAST_POWER_CONDUIT.get(),
+                    GOLD_FAST_POWER_CONDUIT.get(), DIAMOND_FAST_POWER_CONDUIT.get()));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.FAST);
     public static final DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> IRON_FAST_FURNACE_MENU = registerFurnaceMenu(FastFurnaceTier.IRON);
@@ -352,6 +375,7 @@ public class FastFurnaceV2 {
                     output.accept(getCrusherItem(tier).get());
                     output.accept(getGeneratorItem(tier).get());
                     output.accept(getBatteryItem(tier).get());
+                    output.accept(getConduitItem(tier).get());
                 }
                 CrushedOres.addCreative(output);
             })
@@ -377,6 +401,7 @@ public class FastFurnaceV2 {
     public FastFurnaceV2(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
+        DATA_COMPONENTS.register(modEventBus);
         BLOCK_ENTITIES.register(modEventBus);
         MENUS.register(modEventBus);
         GAME_TEST_INSTANCE_TYPES.register(modEventBus);
@@ -493,6 +518,24 @@ public class FastFurnaceV2 {
         };
     }
 
+    public static DeferredBlock<FastPowerConduitBlock> getConduitBlock(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_POWER_CONDUIT;
+            case IRON -> IRON_FAST_POWER_CONDUIT;
+            case GOLD -> GOLD_FAST_POWER_CONDUIT;
+            case DIAMOND -> DIAMOND_FAST_POWER_CONDUIT;
+        };
+    }
+
+    public static DeferredItem<BlockItem> getConduitItem(FastFurnaceTier tier) {
+        return switch (tier) {
+            case FAST -> FAST_POWER_CONDUIT_ITEM;
+            case IRON -> IRON_FAST_POWER_CONDUIT_ITEM;
+            case GOLD -> GOLD_FAST_POWER_CONDUIT_ITEM;
+            case DIAMOND -> DIAMOND_FAST_POWER_CONDUIT_ITEM;
+        };
+    }
+
     public static DeferredHolder<MenuType<?>, MenuType<FastFurnaceMenu>> getFurnaceMenu(FastFurnaceTier tier) {
         return switch (tier) {
             case FAST -> FAST_FURNACE_MENU;
@@ -538,6 +581,17 @@ public class FastFurnaceV2 {
                         .instrument(NoteBlockInstrument.BASEDRUM)
                         .requiresCorrectToolForDrops()
                         .strength(3.5F));
+    }
+
+    private static DeferredBlock<FastPowerConduitBlock> registerConduit(FastFurnaceTier tier) {
+        return BLOCKS.registerBlock(tier.getConduitId(),
+                properties -> new FastPowerConduitBlock(properties, tier),
+                properties -> properties
+                        .mapColor(MapColor.METAL)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .strength(1.5F, 6.0F)
+                        .noOcclusion());
     }
 
     private static DeferredBlock<FastFurnaceBlock> registerFurnace(FastFurnaceTier tier) {
@@ -629,6 +683,7 @@ public class FastFurnaceV2 {
                 event.accept(getCrusherItem(tier));
                 event.accept(getGeneratorItem(tier));
                 event.accept(getBatteryItem(tier));
+                event.accept(getConduitItem(tier));
             }
         }
     }
@@ -638,5 +693,14 @@ public class FastFurnaceV2 {
                 (generator, side) -> generator.energy());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_BATTERY_BLOCK_ENTITY.get(),
                 (battery, side) -> battery.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_POWER_CONDUIT_BLOCK_ENTITY.get(),
+                (conduit, side) -> conduit.energy());
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            event.registerItem(Capabilities.Energy.ITEM,
+                    (stack, context) -> new ItemAccessEnergyHandler(
+                            context, STORED_ENERGY.get(),
+                            tier.getBatteryCapacity(), tier.getBatteryTransferLimit()),
+                    getBatteryItem(tier).get());
+        }
     }
 }

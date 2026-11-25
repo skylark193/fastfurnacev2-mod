@@ -20,7 +20,7 @@ Shift-clicking an Accelerator-compatible item from the player inventory tries th
 
 The Extremely Fast Alloyer has **three ingredient slots, one Extreme Coal fuel slot, and one result slot**, with no ordinary smelting recipe book. Its built-in ingredients are shapeless across the three input slots. Shift-clicking accepted ingredients and Extreme Coal routes them into their corresponding slots; the result returns to the player inventory. No other fuel works. Unsupported furnace, crusher, Accelerator, and crafting inputs are not thereby valid Alloyer recipes.
 
-Fast Generators have one fuel slot and no result slot. Fast Batteries have no item slots. Their GUIs show exact stored FE and capacity directly; generators also show active FE/t output and burn progress.
+Fast Generators have one fuel slot and no result slot. Fast Batteries and Fast Power Conduits have no item slots. Generator and battery GUIs show exact stored FE and capacity directly; generators also show active FE/t output and burn progress. Conduits have no GUI.
 
 ## Hopper and automation directions
 
@@ -32,10 +32,11 @@ Fast Generators have one fuel slot and no result slot. Fast Batteries have no it
 | Extremely Fast Alloyer | Insert accepted Alloyer ingredients | Insert Extreme Coal only | Extract alloying result only |
 | Fast Generator | Insert or extract fuel | Insert or extract fuel | Insert or extract fuel |
 | Fast Battery | No item slots | No item slots | No item slots |
+| Fast Power Conduit | No item slots | No item slots | No item slots |
 
 Accelerator insertion also checks ingredient acceptance. A partial input stack can accumulate until it reaches the required count; processing lookup then enforces the full input count. Alloyer top insertion accepts only items used by its dedicated recipes, and horizontal-side insertion accepts only the Extreme Coal item. A complete operation still requires three distinct matched input slots.
 
-Generators and batteries expose NeoForge's standard block energy capability on every side. Generators automatically push FE to adjacent consumers and reject external FE insertion. Batteries accept and supply FE with tier-scaled transfer limits. See [Generators and batteries](energy.md) for exact values.
+Generators, batteries, and power conduits expose NeoForge's standard block energy capability on every side. Generators automatically push FE to adjacent consumers and reject external FE insertion. Batteries accept and supply FE with tier-scaled transfer limits, and their items expose the standard item energy capability. Conduits form connected networks with one shared per-tick budget determined by their slowest tier. See [Generators, batteries, and conduits](energy.md) for exact values and network rules.
 
 Fast Furnace V2 supports NeoForge item transactions around machine input changes. Aborted transfers preserve machine progress and pending crusher results; committed empty/fill transitions reset the relevant operation so a new input cannot inherit stale progress. The Alloyer uses the same progress-preserving transaction rule.
 
@@ -78,7 +79,7 @@ The Alloyer GUI has an Extreme Coal fuel slot, burn flame, and progress arrow, b
 
 All machines support comparator output based on their container contents. They can receive custom names through normal Minecraft naming mechanics, and their loot preserves that custom name.
 
-Breaking a machine does **not** create a portable inventory or energy-storage item:
+Breaking most machines does **not** create a portable inventory or energy-storage item. Batteries are the explicit energy-storage exception:
 
 | Machine | Preserved in dropped item | Not preserved |
 |---|---|---|
@@ -87,9 +88,9 @@ Breaking a machine does **not** create a portable inventory or energy-storage it
 | Accelerator | Custom name | Inventory, conversion progress, banked boost |
 | Extremely Fast Alloyer | Custom name | Three input stacks, fuel and result stacks, burn time, alloying progress |
 | Fast Generator | Custom name | Fuel stack, stored FE, active fuel, burn state |
-| Fast Battery | Custom name | Stored FE |
+| Fast Battery | Custom name and exact stored FE | — |
 
-Inventory, processing state, stored energy, and active fuel or boost are saved while the block remains placed in the world. Fast storage blocks, Fast Cobblestone, and Fast ores use their own ordinary block loot rather than machine state rules.
+Inventory, processing state, stored energy, and active fuel or boost are saved while the block remains placed in the world. Conduits also save their buffers in the world, but dropped conduit items preserve no FE. Fast storage blocks, Fast Cobblestone, and Fast ores use their own ordinary block loot rather than machine state rules.
 
 ## Optional JEI integration
 
