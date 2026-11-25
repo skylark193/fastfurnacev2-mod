@@ -65,7 +65,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         super(FastFurnaceV2.FAST_GENERATOR_BLOCK_ENTITY.get(), pos, state);
         this.tier = ((FastGeneratorBlock) state.getBlock()).getTier();
         this.energy = new FastEnergyStorage(
-                this.tier.getGeneratorOutput() * 40, 0, this.tier.getGeneratorOutput() * 2, this::setChanged);
+                this.tier.getGeneratorBufferCapacity(), 0,
+                this.tier.getGeneratorExtractionLimit(), this::setChanged);
     }
 
     public static void serverTick(
@@ -93,7 +94,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
                     Capabilities.Energy.BLOCK, pos.relative(direction), direction.getOpposite());
             if (target != null) {
                 try (Transaction transaction = Transaction.openRoot()) {
-                    EnergyHandlerUtil.move(generator.energy, target, generator.tier.getGeneratorOutput() * 2, transaction);
+                    EnergyHandlerUtil.move(generator.energy, target,
+                            generator.tier.getGeneratorExtractionLimit(), transaction);
                     transaction.commit();
                 }
             }

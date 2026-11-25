@@ -71,6 +71,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 
@@ -109,6 +110,10 @@ final class FastFurnaceGameTests {
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "energy_storage");
     private static final Identifier ENERGY_MACHINE_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "energy_machines");
+    private static final Identifier BATTERY_ITEM_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "battery_items");
+    private static final Identifier CONDUIT_TEST_ID =
+            Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "power_conduits");
     private static final Identifier API_TEST_ID =
             Identifier.fromNamespaceAndPath(FastFurnaceV2.MODID, "api_extensions");
     private static final Identifier API_FUEL_ID =
@@ -159,6 +164,10 @@ final class FastFurnaceGameTests {
             ResourceKey.create(Registries.TEST_FUNCTION, ENERGY_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> ENERGY_MACHINE_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, ENERGY_MACHINE_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> BATTERY_ITEM_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, BATTERY_ITEM_TEST_ID);
+    private static final ResourceKey<Consumer<GameTestHelper>> CONDUIT_FUNCTION =
+            ResourceKey.create(Registries.TEST_FUNCTION, CONDUIT_TEST_ID);
     private static final ResourceKey<Consumer<GameTestHelper>> API_FUNCTION =
             ResourceKey.create(Registries.TEST_FUNCTION, API_TEST_ID);
     private static final Map<ResourceKey<Consumer<GameTestHelper>>, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
@@ -179,6 +188,8 @@ final class FastFurnaceGameTests {
             Map.entry(FAST_TOOL_FUNCTION, FastFurnaceGameTests::fastToolsApplyVanillaBonuses),
             Map.entry(ENERGY_FUNCTION, FastFurnaceGameTests::energyStorageTransfersAndPersists),
             Map.entry(ENERGY_MACHINE_FUNCTION, FastFurnaceGameTests::generatorsAndBatteriesTransferAndPersist),
+            Map.entry(BATTERY_ITEM_FUNCTION, FastFurnaceGameTests::batteryItemsRetainAndTransferEnergy),
+            Map.entry(CONDUIT_FUNCTION, FastFurnaceGameTests::powerConduitsShareNetworkThroughput),
             Map.entry(API_FUNCTION, FastFurnaceGameTests::apiSupportsCustomFuelsAndRecipes));
 
     private FastFurnaceGameTests() {
@@ -212,6 +223,8 @@ final class FastFurnaceGameTests {
         event.registerTest(FAST_TOOL_TEST_ID, new DirectGameTestInstance(FAST_TOOL_FUNCTION, testData));
         event.registerTest(ENERGY_TEST_ID, new DirectGameTestInstance(ENERGY_FUNCTION, testData));
         event.registerTest(ENERGY_MACHINE_TEST_ID, new DirectGameTestInstance(ENERGY_MACHINE_FUNCTION, testData));
+        event.registerTest(BATTERY_ITEM_TEST_ID, new DirectGameTestInstance(BATTERY_ITEM_FUNCTION, testData));
+        event.registerTest(CONDUIT_TEST_ID, new DirectGameTestInstance(CONDUIT_FUNCTION, testData));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
             event.registerTest(API_TEST_ID, new DirectGameTestInstance(API_FUNCTION, testData));
         }
@@ -2464,6 +2477,151 @@ final class FastFurnaceGameTests {
         helper.succeed();
     }
 
+    private static void batteryItemsRetainAndTransferEnergy(GameTestHelper helper) {
+        BlockPos batteryPos = BlockPos.ZERO;
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            helper.setBlock(batteryPos, FastFurnaceV2.getBatteryBlock(tier).get());
+            FastBatteryBlockEntity battery = helper.getBlockEntity(batteryPos, FastBatteryBlockEntity.class);
+            int stored = tier.getBatteryCapacity() - 123;
+            battery.energy().set(stored);
+            ItemStack dropped = new ItemStack(FastFurnaceV2.getBatteryItem(tier).get());
+            dropped.applyComponents(battery.collectComponents());
+            Integer component = dropped.get(FastFurnaceV2.STORED_ENERGY.get());
+            if (component == null || component != stored) {
+                throw helper.assertionException(tier + " battery drop lost its exact stored energy");
+            }
+            var itemEnergy = dropped.getCapability(Capabilities.Energy.ITEM, ItemAccess.forStack(dropped));
+            if (itemEnergy == null || itemEnergy.getAmountAsInt() != stored
+                    || itemEnergy.getCapacityAsInt() != tier.getBatteryCapacity()) {
+                throw helper.assertionException(tier + " battery item exposed incorrect energy");
+            }
+
+            FastBatteryBlockEntity restored = new FastBatteryBlockEntity(
+                    helper.absolutePos(batteryPos), battery.getBlockState());
+            restored.applyComponentsFromItemStack(dropped);
+            assertEnergy(helper, restored.energy(), stored, tier + " battery placement lost item energy");
+
+            ItemStack portable = new ItemStack(FastFurnaceV2.getBatteryItem(tier).get());
+            var portableEnergy = portable.getCapability(Capabilities.Energy.ITEM, ItemAccess.forStack(portable));
+            if (portableEnergy == null) {
+                throw helper.assertionException(tier + " battery item had no energy capability");
+            }
+            try (Transaction transaction = Transaction.openRoot()) {
+                if (portableEnergy.insert(tier.getBatteryCapacity(), transaction) != tier.getBatteryTransferLimit()) {
+                    throw helper.assertionException(tier + " battery item ignored its insertion limit");
+                }
+            }
+            if (portableEnergy.getAmountAsInt() != 0) {
+                throw helper.assertionException("Aborted battery item insertion changed its component");
+            }
+            try (Transaction transaction = Transaction.openRoot()) {
+                portableEnergy.insert(tier.getBatteryTransferLimit(), transaction);
+                transaction.commit();
+            }
+            if (portable.getOrDefault(FastFurnaceV2.STORED_ENERGY.get(), 0) != tier.getBatteryTransferLimit()) {
+                throw helper.assertionException("Committed battery item charging did not update its component");
+            }
+        }
+
+        helper.setBlock(batteryPos, FastFurnaceV2.FAST_BATTERY.get());
+        FastBatteryBlockEntity clamped = helper.getBlockEntity(batteryPos, FastBatteryBlockEntity.class);
+        ItemStack overfilled = new ItemStack(FastFurnaceV2.DIAMOND_FAST_BATTERY_ITEM.get());
+        overfilled.set(FastFurnaceV2.STORED_ENERGY.get(), FastFurnaceTier.DIAMOND.getBatteryCapacity());
+        clamped.applyComponentsFromItemStack(overfilled);
+        assertEnergy(helper, clamped.energy(), FastFurnaceTier.FAST.getBatteryCapacity(),
+                "A lower-capacity battery did not clamp restored item energy");
+        if (!"1.4.0".equals(FastFurnaceApi.API_VERSION)) {
+            throw helper.assertionException("API version did not advance with its additive content queries");
+        }
+        helper.succeed();
+    }
+
+    private static void powerConduitsShareNetworkThroughput(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int y = tier.ordinal() * 2;
+            BlockPos sourcePos = new BlockPos(0, y, 0);
+            BlockPos conduitPos = new BlockPos(1, y, 0);
+            BlockPos sinkPos = new BlockPos(2, y, 0);
+            helper.setBlock(sourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+            helper.setBlock(conduitPos, FastFurnaceV2.getConduitBlock(tier).get());
+            helper.setBlock(sinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+            FastBatteryBlockEntity source = helper.getBlockEntity(sourcePos, FastBatteryBlockEntity.class);
+            FastPowerConduitBlockEntity conduit = helper.getBlockEntity(conduitPos, FastPowerConduitBlockEntity.class);
+            FastBatteryBlockEntity sink = helper.getBlockEntity(sinkPos, FastBatteryBlockEntity.class);
+            source.energy().set(source.energy().getCapacityAsInt());
+            int expected = Math.min(tier.getConduitTransferRate(), FastFurnaceTier.DIAMOND.getBatteryTransferLimit());
+            FastPowerConduitBlockEntity.runNetwork(level, conduit, 100 + tier.ordinal());
+            assertEnergy(helper, sink.energy(), expected, tier + " conduit transferred the wrong amount");
+            assertEnergy(helper, source.energy(), source.energy().getCapacityAsInt() - expected,
+                    tier + " conduit did not debit its source exactly");
+            int transferred = sink.energy().getAmountAsInt();
+            FastPowerConduitBlockEntity.runNetwork(level, conduit, 100 + tier.ordinal());
+            assertEnergy(helper, sink.energy(), transferred, "A conduit network ran twice in one game tick");
+            if (conduit.energy().getCapacityAsInt() != tier.getConduitTransferRate()
+                    || level.getCapability(Capabilities.Energy.BLOCK, helper.absolutePos(conduitPos), Direction.UP) == null) {
+                throw helper.assertionException(tier + " conduit had incorrect storage or no block capability");
+            }
+            if (!helper.getBlockState(conduitPos).getValue(FastPowerConduitBlock.EAST)
+                    || !helper.getBlockState(conduitPos).getValue(FastPowerConduitBlock.WEST)) {
+                throw helper.assertionException(tier + " conduit did not connect to adjacent energy blocks");
+            }
+        }
+
+        BlockPos chainSourcePos = new BlockPos(0, 8, 0);
+        BlockPos chainSinkPos = new BlockPos(4, 8, 0);
+        helper.setBlock(chainSourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        helper.setBlock(new BlockPos(1, 8, 0), FastFurnaceV2.IRON_FAST_POWER_CONDUIT.get());
+        helper.setBlock(new BlockPos(2, 8, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(new BlockPos(3, 8, 0), FastFurnaceV2.DIAMOND_FAST_POWER_CONDUIT.get());
+        helper.setBlock(chainSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastBatteryBlockEntity chainSource = helper.getBlockEntity(chainSourcePos, FastBatteryBlockEntity.class);
+        FastBatteryBlockEntity chainSink = helper.getBlockEntity(chainSinkPos, FastBatteryBlockEntity.class);
+        FastPowerConduitBlockEntity chainStart = helper.getBlockEntity(new BlockPos(1, 8, 0), FastPowerConduitBlockEntity.class);
+        chainSource.energy().set(chainSource.energy().getCapacityAsInt());
+        FastPowerConduitBlockEntity.runNetwork(level, chainStart, 200);
+        assertEnergy(helper, chainSink.energy(), 1_000,
+                "A chain or mixed-tier network multiplied or exceeded its slowest tier");
+
+        BlockPos loopSourcePos = new BlockPos(0, 10, 0);
+        BlockPos loopSinkPos = new BlockPos(3, 10, 0);
+        helper.setBlock(loopSourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        helper.setBlock(new BlockPos(1, 10, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(new BlockPos(2, 10, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(new BlockPos(2, 11, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(new BlockPos(1, 11, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(loopSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastBatteryBlockEntity loopSource = helper.getBlockEntity(loopSourcePos, FastBatteryBlockEntity.class);
+        FastBatteryBlockEntity loopSink = helper.getBlockEntity(loopSinkPos, FastBatteryBlockEntity.class);
+        FastPowerConduitBlockEntity loopStart = helper.getBlockEntity(new BlockPos(1, 10, 0), FastPowerConduitBlockEntity.class);
+        loopSource.energy().set(loopSource.energy().getCapacityAsInt());
+        FastPowerConduitBlockEntity.runNetwork(level, loopStart, 300);
+        assertEnergy(helper, loopSink.energy(), 1_000, "A loop multiplied conduit throughput");
+
+        BlockPos bufferedSinkPos = new BlockPos(1, 9, 0);
+        helper.setBlock(bufferedSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastBatteryBlockEntity bufferedSink = helper.getBlockEntity(bufferedSinkPos, FastBatteryBlockEntity.class);
+        loopStart.energy().set(700);
+        FastPowerConduitBlockEntity.runNetwork(level, loopStart, 301);
+        assertEnergy(helper, loopStart.energy(), 0, "A conduit did not drain its buffer");
+        assertEnergy(helper, bufferedSink.energy(), 1_000,
+                "A conduit buffer and the remaining network budget did not reach the adjacent sink");
+        assertEnergy(helper, loopSink.energy(), 1_000,
+                "Draining a conduit buffer changed another sink's existing energy");
+        assertEnergy(helper, loopSource.energy(), loopSource.energy().getCapacityAsInt() - 1_300,
+                "Network transfers flowed back into their original source");
+
+        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
+        loopStart.energy().set(432);
+        loopStart.saveAdditional(output);
+        FastPowerConduitBlockEntity restored = new FastPowerConduitBlockEntity(
+                helper.absolutePos(new BlockPos(1, 10, 0)), loopStart.getBlockState());
+        restored.loadAdditional(TagValueInput.create(
+                ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
+        assertEnergy(helper, restored.energy(), 432, "Conduit buffer did not persist");
+        helper.succeed();
+    }
+
     private static void assertEnergy(
             GameTestHelper helper, FastEnergyStorage storage, int expected, String message) {
         if (storage.getAmountAsInt() != expected) {
@@ -2612,8 +2770,8 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(id + " requires a tool but is not pickaxe-mineable");
             }
         }
-        if (registeredBlocks != 32) {
-            throw helper.assertionException("Expected to audit all 32 registered mod blocks, found " + registeredBlocks);
+        if (registeredBlocks != 36) {
+            throw helper.assertionException("Expected to audit all 36 registered mod blocks, found " + registeredBlocks);
         }
         helper.succeed();
     }

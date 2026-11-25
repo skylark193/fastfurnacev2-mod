@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create square energy sources and generate animated generators and batteries."""
+"""Create square energy sources and generate animated generators, batteries, and conduits."""
 
 from __future__ import annotations
 
@@ -35,6 +35,7 @@ BASE_FACES = (
     "battery_side",
     "battery_top",
     "battery_bottom",
+    "power_conduit",
 )
 METAL_SOURCES = {
     "fast": "smooth_stone.png",
@@ -262,6 +263,31 @@ def battery_bottom_source(metal: Image.Image, tier: str) -> tuple[Image.Image, s
     return image, protected
 
 
+def conduit_lava_points(tier: str) -> set[Point]:
+    width = 2 + 2 * TIERS.index(tier)
+    start = (TEXTURE_SIZE - width) // 2
+    coordinates = range(start, start + width)
+    return {(x, y) for y in range(TEXTURE_SIZE) for x in coordinates} | {
+        (x, y) for x in range(TEXTURE_SIZE) for y in coordinates
+    }
+
+
+def power_conduit_source(metal: Image.Image, tier: str) -> tuple[Image.Image, set[Point]]:
+    image, dark, middle, light = make_panel(metal, tier, 0.52)
+    protected = draw_rivets(image, light, dark)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((2, 2, 13, 13), outline=dark)
+    draw.line((2, 2, 13, 2), fill=light)
+    channel = conduit_lava_points(tier)
+    for y in range(TEXTURE_SIZE):
+        for x in range(TEXTURE_SIZE):
+            if (x, y) in channel:
+                image.putpixel((x, y), (255, 112 + 17 * ((x + y) % 4), 8, 255))
+            elif (x, y) not in protected:
+                image.putpixel((x, y), middle if (x + y) % 5 == 0 else dark)
+    return image, set(rectangle_points((0, 0, 15, 15))) - channel
+
+
 def create_source(tier: str, face: str, metal: Image.Image) -> tuple[Image.Image, set[Point]]:
     if face == "generator_front":
         return generator_front_source(metal, tier, active=False)
@@ -277,6 +303,8 @@ def create_source(tier: str, face: str, metal: Image.Image) -> tuple[Image.Image
         return battery_top_source(metal, tier)
     if face == "battery_bottom":
         return battery_bottom_source(metal, tier)
+    if face == "power_conduit":
+        return power_conduit_source(metal, tier)
     raise ValueError(f"Unknown energy texture face: {face}")
 
 

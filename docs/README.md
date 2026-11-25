@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This guide covers **Fast Furnace V2 1.8.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.3.0**.
+This guide covers **Fast Furnace V2 1.9.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.4.0**.
 
 ## Start playing
 
@@ -23,7 +23,7 @@ Furnace, crusher, Accelerator, and Alloyer GUIs include an **`i`** button with c
 | [Fast Crushers](crushers.md) | Ore processing, output doubling, fuel use, and pending output |
 | [Accelerator](accelerator.md) | Lava setup, conversions, boosts, and exact work accounting |
 | [Extremely Fast Alloyer](alloyer.md) | Three-input alloying, Extreme Coal fuel, and lava-adjusted timing |
-| [Generators and batteries](energy.md) | FE generation, special-fuel output, energy transfer, and tiered storage |
+| [Generators, batteries, and conduits](energy.md) | FE generation, portable storage, and rate-limited conduit networks |
 | [World generation and dynamic resources](world-generation.md) | Mining bonuses, ore replacement, and modded crushed-ore discovery |
 | [Automation, GUI, and JEI](automation-and-jei.md) | Slots, hopper directions, information panels, and recipe viewing |
 

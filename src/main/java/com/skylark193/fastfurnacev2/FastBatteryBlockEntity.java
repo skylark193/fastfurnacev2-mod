@@ -2,6 +2,8 @@ package com.skylark193.fastfurnacev2;
 
 import com.skylark193.fastfurnacev2.api.FastEnergyStorage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -42,7 +44,7 @@ public class FastBatteryBlockEntity extends BaseContainerBlockEntity {
         super(FastFurnaceV2.FAST_BATTERY_BLOCK_ENTITY.get(), pos, state);
         this.tier = ((FastBatteryBlock) state.getBlock()).getTier();
         int capacity = this.tier.getBatteryCapacity();
-        this.energy = new FastEnergyStorage(capacity, Math.max(1, capacity / 20), this::onEnergyChanged);
+        this.energy = new FastEnergyStorage(capacity, this.tier.getBatteryTransferLimit(), this::onEnergyChanged);
     }
 
     private void onEnergyChanged() {
@@ -82,6 +84,19 @@ public class FastBatteryBlockEntity extends BaseContainerBlockEntity {
     @Override
     public int getContainerSize() {
         return 0;
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentGetter components) {
+        super.applyImplicitComponents(components);
+        int stored = components.getOrDefault(FastFurnaceV2.STORED_ENERGY.get(), 0);
+        this.energy.set(Math.min(stored, this.energy.getCapacityAsInt()));
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(FastFurnaceV2.STORED_ENERGY.get(), this.energy.getAmountAsInt());
     }
 
     @Override

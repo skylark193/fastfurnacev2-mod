@@ -9,13 +9,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 /**
- * An immutable fuel definition shared by Fast Furnaces, Fast Crushers, and the Accelerator.
+ * An immutable fuel definition shared by Fast Furnaces, Fast Crushers, Fast Generators, and the
+ * Accelerator.
  *
  * <p>A zero base burn time leaves the item's ordinary fuel value unchanged. This allows a
  * definition to add bonuses to an existing vanilla or modded fuel, or to be Accelerator-only.
- * Burn-time percentages are applied to the effective ordinary burn time. A speed bonus is added
- * to the machine tier's normal percentage; for example, tier speed 150 and bonus 50 produce 200%.
- * Accelerator work is optional and independent of furnace fuel behavior.</p>
+ * Burn-time percentages apply to furnace and crusher duration. Speed bonuses add percentage points
+ * to furnace/crusher speed and generator output. Generators otherwise use ordinary burn duration;
+ * only the built-in Fast and Extreme Coal definitions receive their separate generator duration
+ * bonuses. Accelerator work is optional and independent of the other fuel behavior.</p>
  */
 public record FastFuel(
         Identifier id,

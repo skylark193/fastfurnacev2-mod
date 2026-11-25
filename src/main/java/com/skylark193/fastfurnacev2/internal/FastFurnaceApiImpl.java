@@ -104,6 +104,16 @@ public final class FastFurnaceApiImpl {
         return CRUSHER_RECIPES.stream().map(Entry::value).toList();
     }
 
+    public static Optional<CrusherRecipe> findCrusherRecipe(Identifier id) {
+        return Optional.ofNullable(CRUSHER_BY_ID.get(id));
+    }
+
+    public static boolean isCrusherInput(ItemStack input) {
+        return !input.isEmpty() && CRUSHER_RECIPES.stream()
+                .map(Entry::value)
+                .anyMatch(recipe -> recipe.ingredient().test(input));
+    }
+
     public static Optional<CrusherRecipe> findCrusherRecipe(ItemStack input) {
         if (input.isEmpty()) {
             return Optional.empty();
@@ -121,6 +131,10 @@ public final class FastFurnaceApiImpl {
         return !input.isEmpty() && ACCELERATOR_RECIPES.stream()
                 .map(Entry::value)
                 .anyMatch(recipe -> recipe.ingredient().test(input));
+    }
+
+    public static Optional<AcceleratorConversion> findAcceleratorRecipe(Identifier id) {
+        return Optional.ofNullable(ACCELERATOR_BY_ID.get(id));
     }
 
     public static Optional<AcceleratorConversion> findAcceleratorRecipe(ItemStack input) {
