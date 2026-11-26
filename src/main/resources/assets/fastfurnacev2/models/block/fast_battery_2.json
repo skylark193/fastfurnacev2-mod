@@ -60,16 +60,16 @@
       "shade": false,
       "faces": {
         "north": {
-          "texture": "#charge"
+          "texture": "#charge", "uv": [0, 0, 16, 16]
         },
         "south": {
-          "texture": "#charge"
+          "texture": "#charge", "uv": [0, 0, 16, 16]
         },
         "east": {
-          "texture": "#charge"
+          "texture": "#charge", "uv": [0, 0, 16, 16]
         },
         "west": {
-          "texture": "#charge"
+          "texture": "#charge", "uv": [0, 0, 16, 16]
         }
       }
     }

@@ -26,7 +26,7 @@ public class FastPowerConduitBlock extends PipeBlock implements EntityBlock {
     private final MapCodec<FastPowerConduitBlock> codec;
 
     public FastPowerConduitBlock(BlockBehaviour.Properties properties, FastFurnaceTier tier) {
-        super(0.3125F, properties);
+        super(8.0F, properties);
         this.tier = tier;
         this.codec = simpleCodec(copy -> new FastPowerConduitBlock(copy, tier));
         this.registerDefaultState(this.stateDefinition.any()
