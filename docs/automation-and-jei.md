@@ -152,7 +152,7 @@ Custom fuels use their registered duration and speed bonuses in the same calcula
 
 ### Ingredient information
 
-JEI includes concise information for Fast Cobblestone, Fast and Extreme Coal and their storage blocks, regular and deepslate Fast and Extreme Coal ores, the Accelerator, the Extremely Fast Alloyer, every furnace and crusher tier, and all Fast and Extremely Fast tools. Descriptions focus on special drop chances, machine and tool bonuses, fuel rules, and lava requirements; ordinary drops and crafting/processing recipes remain in their normal JEI views. Ore Crushing displays include the built-in ore-block recipes and their three-item normal results. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
+JEI includes concise information for Fast Cobblestone, Fast and Extreme Coal and their storage blocks, regular and deepslate Fast and Extreme Coal ores, the Accelerator, the Extremely Fast Alloyer, every furnace, crusher, generator, battery, and power-conduit tier, and all Fast and Extremely Fast tools. Descriptions focus on special drop chances, machine and tool bonuses, fuel rules, lava requirements, energy output and storage, and conduit throughput; ordinary drops and crafting/processing recipes remain in their normal JEI views. Ore Crushing displays include the built-in ore-block recipes and their three-item normal results. Looking up a Fast material or storage block also exposes its Accelerator conversion as a crafting source.
 
 ### Current compatibility boundary
 

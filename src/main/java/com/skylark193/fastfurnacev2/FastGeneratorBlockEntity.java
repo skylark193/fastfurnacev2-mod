@@ -121,10 +121,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         if (definition != null) {
             this.activeFuelId = definition.id();
             this.outputPercent = 100 + definition.speedBonusPercent();
-            if (isFastCoal(definition)) {
-                durationPercent = 125;
-            } else if (isExtremeCoal(definition)) {
-                durationPercent = 150;
+            if (isFastCoal(definition) || isExtremeCoal(definition)) {
+                durationPercent = 50;
             }
         }
         this.burnTime = (int) Math.min(Integer.MAX_VALUE, ordinaryBurnTime * (long) durationPercent / 100L);

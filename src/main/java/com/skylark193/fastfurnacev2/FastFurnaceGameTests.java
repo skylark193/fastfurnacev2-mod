@@ -2319,6 +2319,20 @@ final class FastFurnaceGameTests {
 
     private static void generatorsAndBatteriesTransferAndPersist(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        int[] generatorOutputs = {128, 256, 512, 1_024};
+        int[] generatorBuffers = {128_000, 256_000, 512_000, 1_024_000};
+        int[] batteryCapacities = {256_000, 512_000, 1_024_000, 2_560_000};
+        int[] energyTransferRates = {256, 512, 1_024, 2_560};
+        for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            int index = tier.ordinal();
+            if (tier.getGeneratorOutput() != generatorOutputs[index]
+                    || tier.getGeneratorBufferCapacity() != generatorBuffers[index]
+                    || tier.getBatteryCapacity() != batteryCapacities[index]
+                    || tier.getBatteryTransferLimit() != energyTransferRates[index]
+                    || tier.getConduitTransferRate() != energyTransferRates[index]) {
+                throw helper.assertionException(tier + " energy tier values did not match their specified table");
+            }
+        }
         ItemStack[] fuels = {
                 new ItemStack(Items.COAL),
                 new ItemStack(FastFurnaceV2.FAST_COAL.get()),
@@ -2327,7 +2341,7 @@ final class FastFurnaceGameTests {
                 new ItemStack(FastFurnaceV2.EXTREME_COAL_BLOCK_ITEM.get()),
                 new ItemStack(Blocks.COAL_BLOCK),
         };
-        int[] durations = {1600, 2000, 2400, 20000, 24000, 16000};
+        int[] durations = {1600, 800, 800, 8000, 8000, 16000};
         int[] outputPercents = {100, 150, 200, 150, 200, 100};
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             for (int fuelIndex = 0; fuelIndex < fuels.length; fuelIndex++) {
@@ -2348,7 +2362,7 @@ final class FastFurnaceGameTests {
                 }
                 FastGeneratorMenu menu = (FastGeneratorMenu) generator.createMenu(
                         0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
-                if (menu.getEnergy() != expectedOutput || menu.getCapacity() != tier.getGeneratorOutput() * 40
+                if (menu.getEnergy() != expectedOutput || menu.getCapacity() != tier.getGeneratorBufferCapacity()
                         || menu.getOutput() != expectedOutput) {
                     throw helper.assertionException("Generator menu did not expose exact energy, capacity, and output");
                 }
@@ -2406,20 +2420,20 @@ final class FastFurnaceGameTests {
         helper.setBlock(exhaustionPos, FastFurnaceV2.FAST_GENERATOR.get());
         FastGeneratorBlockEntity exhausted = helper.getBlockEntity(exhaustionPos, FastGeneratorBlockEntity.class);
         exhausted.setItem(0, new ItemStack(FastFurnaceV2.FAST_COAL.get()));
-        for (int tick = 1; tick <= 2000; tick++) {
+        for (int tick = 1; tick <= 800; tick++) {
             FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(exhaustionPos),
                     exhausted.getBlockState(), exhausted);
-            if (tick < 2000) {
+            if (tick < 800) {
                 exhausted.energy().set(0);
             }
         }
-        assertEnergy(helper, exhausted.energy(), 120, "Generator did not produce its final fueled tick");
-        if (exhausted.getBurnTime() != 0 || exhausted.getOutput() != 80 || exhausted.getActiveFuelId() != null) {
+        assertEnergy(helper, exhausted.energy(), 192, "Generator did not produce its final fueled tick");
+        if (exhausted.getBurnTime() != 0 || exhausted.getOutput() != 128 || exhausted.getActiveFuelId() != null) {
             throw helper.assertionException("Fuel exhaustion did not clear the generator's active bonuses");
         }
         FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(exhaustionPos),
                 exhausted.getBlockState(), exhausted);
-        assertEnergy(helper, exhausted.energy(), 120, "An exhausted generator continued producing without fuel");
+        assertEnergy(helper, exhausted.energy(), 192, "An exhausted generator continued producing without fuel");
 
         BlockPos transferGeneratorPos = new BlockPos(0, 6, 0);
         BlockPos transferBatteryPos = transferGeneratorPos.east();
@@ -2432,7 +2446,7 @@ final class FastFurnaceGameTests {
         FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(transferGeneratorPos),
                 transferGenerator.getBlockState(), transferGenerator);
         assertEnergy(helper, transferGenerator.energy(), 0, "Generator did not push its available energy");
-        assertEnergy(helper, transferBattery.energy(), 80, "Adjacent battery did not receive generated energy");
+        assertEnergy(helper, transferBattery.energy(), 128, "Adjacent battery did not receive generated energy");
         if (level.getCapability(Capabilities.Energy.BLOCK, helper.absolutePos(transferBatteryPos), Direction.UP) == null) {
             throw helper.assertionException("Battery energy capability was not registered");
         }
@@ -2446,7 +2460,7 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(tier + " battery had the wrong capacity");
             }
             try (Transaction transaction = Transaction.openRoot()) {
-                if (battery.energy().insert(capacity, transaction) != capacity / 20) {
+                if (battery.energy().insert(capacity, transaction) != tier.getBatteryTransferLimit()) {
                     throw helper.assertionException("Battery insertion did not obey its transfer limit");
                 }
                 transaction.commit();
@@ -2473,9 +2487,9 @@ final class FastFurnaceGameTests {
                     ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
             assertEnergy(helper, restored.energy(), capacity, "Battery charge did not persist");
         }
-        if (FastBatteryBlock.chargeLevel(0, 80_000) != 0
-                || FastBatteryBlock.chargeLevel(1, 80_000) != 1
-                || FastBatteryBlock.chargeLevel(40_000, 80_000) != 5) {
+        if (FastBatteryBlock.chargeLevel(0, 256_000) != 0
+                || FastBatteryBlock.chargeLevel(1, 256_000) != 1
+                || FastBatteryBlock.chargeLevel(128_000, 256_000) != 5) {
             throw helper.assertionException("Battery charge-level boundaries were incorrect");
         }
         helper.succeed();
@@ -2587,7 +2601,7 @@ final class FastFurnaceGameTests {
         FastPowerConduitBlockEntity chainStart = helper.getBlockEntity(new BlockPos(1, 8, 0), FastPowerConduitBlockEntity.class);
         chainSource.energy().set(chainSource.energy().getCapacityAsInt());
         FastPowerConduitBlockEntity.runNetwork(level, chainStart, 200);
-        assertEnergy(helper, chainSink.energy(), 1_000,
+        assertEnergy(helper, chainSink.energy(), 256,
                 "A chain or mixed-tier network multiplied or exceeded its slowest tier");
 
         BlockPos loopSourcePos = new BlockPos(0, 10, 0);
@@ -2603,29 +2617,29 @@ final class FastFurnaceGameTests {
         FastPowerConduitBlockEntity loopStart = helper.getBlockEntity(new BlockPos(1, 10, 0), FastPowerConduitBlockEntity.class);
         loopSource.energy().set(loopSource.energy().getCapacityAsInt());
         FastPowerConduitBlockEntity.runNetwork(level, loopStart, 300);
-        assertEnergy(helper, loopSink.energy(), 1_000, "A loop multiplied conduit throughput");
+        assertEnergy(helper, loopSink.energy(), 256, "A loop multiplied conduit throughput");
 
         BlockPos bufferedSinkPos = new BlockPos(1, 9, 0);
         helper.setBlock(bufferedSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
         FastBatteryBlockEntity bufferedSink = helper.getBlockEntity(bufferedSinkPos, FastBatteryBlockEntity.class);
-        loopStart.energy().set(700);
+        loopStart.energy().set(100);
         FastPowerConduitBlockEntity.runNetwork(level, loopStart, 301);
         assertEnergy(helper, loopStart.energy(), 0, "A conduit did not drain its buffer");
-        assertEnergy(helper, bufferedSink.energy(), 1_000,
+        assertEnergy(helper, bufferedSink.energy(), 256,
                 "A conduit buffer and the remaining network budget did not reach the adjacent sink");
-        assertEnergy(helper, loopSink.energy(), 1_000,
+        assertEnergy(helper, loopSink.energy(), 256,
                 "Draining a conduit buffer changed another sink's existing energy");
-        assertEnergy(helper, loopSource.energy(), loopSource.energy().getCapacityAsInt() - 1_300,
+        assertEnergy(helper, loopSource.energy(), loopSource.energy().getCapacityAsInt() - 412,
                 "Network transfers flowed back into their original source");
 
         TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
-        loopStart.energy().set(432);
+        loopStart.energy().set(132);
         loopStart.saveAdditional(output);
         FastPowerConduitBlockEntity restored = new FastPowerConduitBlockEntity(
                 helper.absolutePos(new BlockPos(1, 10, 0)), loopStart.getBlockState());
         restored.loadAdditional(TagValueInput.create(
                 ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
-        assertEnergy(helper, restored.energy(), 432, "Conduit buffer did not persist");
+        assertEnergy(helper, restored.energy(), 132, "Conduit buffer did not persist");
         helper.succeed();
     }
 

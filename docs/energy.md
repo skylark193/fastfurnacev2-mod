@@ -10,12 +10,12 @@ Generators accept ordinary furnace fuel in their single slot. They burn each ite
 
 | Tier | Ordinary fuel | Fast Coal | Extreme Coal | Internal buffer |
 |---|---:|---:|---:|---:|
-| Fast Generator | 80 FE/t | 120 FE/t | 160 FE/t | 3,200 FE |
-| Iron Fast Generator | 160 FE/t | 240 FE/t | 320 FE/t | 6,400 FE |
-| Gold Fast Generator | 320 FE/t | 480 FE/t | 640 FE/t | 12,800 FE |
-| Diamond Fast Generator | 640 FE/t | 960 FE/t | 1,280 FE/t | 25,600 FE |
+| Fast Generator | 128 FE/t | 192 FE/t | 256 FE/t | 128,000 FE |
+| Iron Fast Generator | 256 FE/t | 384 FE/t | 512 FE/t | 256,000 FE |
+| Gold Fast Generator | 512 FE/t | 768 FE/t | 1,024 FE/t | 512,000 FE |
+| Diamond Fast Generator | 1,024 FE/t | 1,536 FE/t | 2,048 FE/t | 1,024,000 FE |
 
-Fast Coal and its block provide **50% more FE/t** and **25% longer burn time**. Extreme Coal and its block provide **100% more FE/t** and **50% longer burn time**. These bonuses apply independently at every tier.
+Fast Coal and its block provide **50% more FE/t**, while Extreme Coal and its block provide **100% more FE/t**. Both special fuel types burn **50% faster**, lasting half their ordinary duration. These modifiers apply independently at every tier.
 
 Generators push stored FE to all adjacent energy consumers, up to twice their ordinary tier output per neighbor per tick. They pause burn time and production when the internal buffer is full. Replacing the fuel slot does not change the active burn's bonuses. Energy, remaining burn time, total burn time, and active-fuel output are saved with the placed block; breaking it drops only the block item.
 
@@ -27,10 +27,10 @@ Batteries accept and supply FE through the standard block energy capability on e
 
 | Tier | Capacity | Maximum insertion or extraction per operation |
 |---|---:|---:|
-| Fast Battery | 80,000 FE | 4,000 FE |
-| Iron Fast Battery | 160,000 FE | 8,000 FE |
-| Gold Fast Battery | 320,000 FE | 16,000 FE |
-| Diamond Fast Battery | 640,000 FE | 32,000 FE |
+| Fast Battery | 256,000 FE | 256 FE |
+| Iron Fast Battery | 512,000 FE | 512 FE |
+| Gold Fast Battery | 1,024,000 FE | 1,024 FE |
+| Diamond Fast Battery | 2,560,000 FE | 2,560 FE |
 
 Breaking a battery preserves its exact stored FE in the dropped item. Placing it restores that charge, clamped to the new battery's capacity if its components were modified to contain more. Battery items also expose NeoForge's standard transactional item energy capability, allowing other mods to charge and discharge them safely.
 
@@ -42,10 +42,10 @@ Conduits connect to adjacent conduits and blocks exposing an energy capability. 
 
 | Tier | Shared network transfer budget |
 |---|---:|
-| Fast Power Conduit | 1,000 FE/t |
-| Iron Fast Power Conduit | 10,000 FE/t |
-| Gold Fast Power Conduit | 100,000 FE/t |
-| Diamond Fast Power Conduit | 1,000,000 FE/t |
+| Fast Power Conduit | 256 FE/t |
+| Iron Fast Power Conduit | 512 FE/t |
+| Gold Fast Power Conduit | 1,024 FE/t |
+| Diamond Fast Power Conduit | 2,560 FE/t |
 
 Each connected network runs at most once per game tick and moves no more than its shared budget, including energy already stored in conduit buffers. Chains, branches, and loops do not multiply this limit. A mixed-tier network uses the rate of its slowest connected conduit. Actual transfer can be lower when sources, destinations, or their per-operation limits cannot supply or accept the full budget.
 

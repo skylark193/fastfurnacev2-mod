@@ -141,5 +141,8 @@
   "jei.fastfurnacev2.extremely_fast_tool": "Twice diamond-tool durability, 50% faster block breaking, built-in Fortune II, and a 5% chance to double block drops.",
   "jei.fastfurnacev2.extremely_fast_sword": "Twice diamond-sword durability, 50% faster attacks, built-in Looting II, a 5% chance to double kill drops, and a 10% chance to deal double damage.",
   "jei.fastfurnacev2.accelerator_info": "Requires lava on all four horizontal sides. Fast Coal and its block provide 3× processing speed; Extreme Coal and its block provide 5×.",
-  "jei.fastfurnacev2.alloyer_info": "Uses only Extreme Coal. Each horizontal lava side reduces processing time by 100 ticks."
+  "jei.fastfurnacev2.alloyer_info": "Uses only Extreme Coal. Each horizontal lava side reduces processing time by 100 ticks.",
+  "jei.fastfurnacev2.generator_info": "Generates %s FE/t with ordinary fuel, %s FE/t with Fast Coal, or %s FE/t with Extreme Coal. Both special fuels burn for half their ordinary duration. Stores up to %s FE and automatically pushes energy to adjacent consumers.",
+  "jei.fastfurnacev2.battery_info": "Stores up to %s FE and accepts or supplies up to %s FE/t on every side. Retains its exact stored energy when broken and placed again.",
+  "jei.fastfurnacev2.power_conduit_info": "Transfers up to %s FE/t through each connected network. Mixed-tier networks use the slowest conduit's rate. Connects to adjacent energy handlers and other conduits."
 }

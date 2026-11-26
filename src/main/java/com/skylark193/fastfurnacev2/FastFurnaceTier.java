@@ -43,11 +43,11 @@ public enum FastFurnaceTier {
     }
 
     public int getGeneratorOutput() {
-        return 80 << this.ordinal();
+        return 128 << this.ordinal();
     }
 
     public int getGeneratorBufferCapacity() {
-        return this.getGeneratorOutput() * 40;
+        return this.getGeneratorOutput() * 1_000;
     }
 
     public int getGeneratorExtractionLimit() {
@@ -55,20 +55,31 @@ public enum FastFurnaceTier {
     }
 
     public int getBatteryCapacity() {
-        return 80_000 << this.ordinal();
+        return switch (this) {
+            case FAST -> 256_000;
+            case IRON -> 512_000;
+            case GOLD -> 1_024_000;
+            case DIAMOND -> 2_560_000;
+        };
     }
 
     public int getBatteryTransferLimit() {
-        return Math.max(1, this.getBatteryCapacity() / 20);
+        return switch (this) {
+            case FAST -> 256;
+            case IRON -> 512;
+            case GOLD -> 1_024;
+            case DIAMOND -> 2_560;
+        };
     }
 
     /** Returns the shared per-tick transfer budget for a network containing this tier. */
     public int getConduitTransferRate() {
-        int rate = 1_000;
-        for (int index = 0; index < this.ordinal(); index++) {
-            rate *= 10;
-        }
-        return rate;
+        return switch (this) {
+            case FAST -> 256;
+            case IRON -> 512;
+            case GOLD -> 1_024;
+            case DIAMOND -> 2_560;
+        };
     }
 
     public int getSpeedPercent() {
