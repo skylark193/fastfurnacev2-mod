@@ -30,6 +30,11 @@ base {
     archivesName = mod_id
 }
 
+tasks.named('jar', Jar) {
+    // Keep distribution filenames tied to the Minecraft target, not the mod or Maven version.
+    archiveFileName = "${mod_id}-${minecraft_version}.jar"
+}
+
 repositories {
     maven {
         name = 'BlameJared'
