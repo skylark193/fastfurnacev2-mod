@@ -47,6 +47,7 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
                 case 4 -> getOutput();
                 case 5 -> energy.getCapacityAsInt() & 0xFFFF;
                 case 6 -> energy.getCapacityAsInt() >>> 16;
+                case 7 -> tier.ordinal();
                 default -> 0;
             };
         }
@@ -115,17 +116,9 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
             return;
         }
         FastFuel definition = FastFurnaceApi.findFuel(fuel).orElse(null);
-        int durationPercent = 100;
-        this.outputPercent = 100;
-        this.activeFuelId = null;
-        if (definition != null) {
-            this.activeFuelId = definition.id();
-            this.outputPercent = 100 + definition.speedBonusPercent();
-            if (isFastCoal(definition) || isExtremeCoal(definition)) {
-                durationPercent = 50;
-            }
-        }
-        this.burnTime = (int) Math.min(Integer.MAX_VALUE, ordinaryBurnTime * (long) durationPercent / 100L);
+        this.outputPercent = FastGeneratorFuelLogic.getOutputPercent(definition);
+        this.activeFuelId = definition == null ? null : definition.id();
+        this.burnTime = FastGeneratorFuelLogic.getBurnTime(ordinaryBurnTime, definition);
         this.totalBurnTime = this.burnTime;
         ItemStackTemplate remainder = fuel.getCraftingRemainder();
         fuel.shrink(1);
@@ -133,16 +126,6 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
             this.items.set(0, remainder != null ? remainder.create() : ItemStack.EMPTY);
         }
         this.setChanged();
-    }
-
-    private static boolean isFastCoal(FastFuel fuel) {
-        return fuel.id().equals(FastFurnaceApi.FAST_COAL_FUEL_ID)
-                || fuel.id().equals(FastFurnaceApi.FAST_COAL_BLOCK_FUEL_ID);
-    }
-
-    private static boolean isExtremeCoal(FastFuel fuel) {
-        return fuel.id().equals(FastFurnaceApi.EXTREME_COAL_FUEL_ID)
-                || fuel.id().equals(FastFurnaceApi.EXTREME_COAL_BLOCK_FUEL_ID);
     }
 
     private void clearActiveFuel() {

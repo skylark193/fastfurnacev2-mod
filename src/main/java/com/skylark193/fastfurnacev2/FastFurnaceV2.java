@@ -434,6 +434,7 @@ public class FastFurnaceV2 {
         NeoForge.EVENT_BUS.addListener(ExtremelyFastToolEffects::onLivingDrops);
         NeoForge.EVENT_BUS.addListener(ExtremelyFastToolEffects::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(FastFurnaceApiImpl::onFuelBurnTime);
+        NeoForge.EVENT_BUS.addListener(EnergyTooltips::onItemTooltip);
         NeoForge.EVENT_BUS.addListener(CrushedOres::generateRecipes);
         NeoForge.EVENT_BUS.addListener(FastOreGeneration::onChunkLoad);
     }

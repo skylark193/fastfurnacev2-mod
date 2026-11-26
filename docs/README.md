@@ -1,6 +1,6 @@
 # Fast Furnace V2 documentation
 
-This guide covers **Fast Furnace V2 1.11.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.4.0**.
+This guide covers **Fast Furnace V2 1.12.0** for **Minecraft 26.1.2**. Public API documentation refers to **API 1.4.0**.
 
 ## Start playing
 
@@ -10,7 +10,7 @@ This guide covers **Fast Furnace V2 1.11.0** for **Minecraft 26.1.2**. Public AP
 4. **Upgrade your machines.** Use Blocks of Fast Iron, Fast Gold, and Fast Diamond to progress through furnace and crusher tiers.
 5. **Expand production.** Add a Fast Crusher for additional ore yield, an Accelerator for Fast material conversion, and an Extremely Fast Alloyer for endgame tools.
 
-Furnace, crusher, Accelerator, Alloyer, and generator GUIs include an **`i`** button with current timing, speed, fuel, and other useful information. Hover over a generator's energy bar to see its capacity; battery GUIs display their energy values directly.
+Furnace, crusher, Accelerator, Alloyer, and generator GUIs include an **`i`** button with current timing, speed, fuel, and other useful information. Energy-block item tooltips summarize FE rates and storage. Hover over a generator's energy bar to see its capacity; battery GUIs display their energy values directly.
 
 ## Player and modpack guides
 

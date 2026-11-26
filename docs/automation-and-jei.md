@@ -108,6 +108,7 @@ With a JEI release compatible with both Minecraft 26.1.2 and this integration, F
 |---|---|---|
 | Vanilla smelting | Ordinary and generated crushed-ore smelting recipes | All four Fast Furnace tiers |
 | Tier-specific Fast Furnace fuels | Actual adjusted burn times and speed-adjusted smelt counts | The matching furnace and crusher tier |
+| Tier-specific Fast Generator fuels | Actual FE/t output and total FE supplied by each valid fuel item | The matching generator tier |
 | Ore Crushing | Built-in and API-registered crusher recipes, counts, timing, and output-doubling note | All four Fast Crusher tiers |
 | Accelerator Conversions | Built-in and custom conversions, normal and registered boost-speed durations, and lava requirement | Accelerator |
 | Accelerator Boosts | Registered boost ingredients, speed, exact work, and fully boosted conversion capacities | Accelerator |
@@ -121,6 +122,7 @@ With a JEI release compatible with both Minecraft 26.1.2 and this integration, F
 - The Accelerator's **progress arrow** opens conversions.
 - The Accelerator's **flame** opens boost fuels.
 - The Extremely Fast Alloyer's **progress arrow** opens dedicated alloying recipes, not smelting or Accelerator conversions.
+- A Fast Generator's **flame** opens its current tier's generator-fuel category, including FE/t and total FE per fuel item.
 
 JEI reserves space around visible information fly-outs so they are not covered by recipe-viewer panels.
 

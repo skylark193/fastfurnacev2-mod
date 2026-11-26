@@ -6,7 +6,7 @@ Project instructions for Claude Code. Keep this file focused on durable workflow
 
 Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces, crushers, generators, batteries, and power conduits, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
 
-- Current mod version: `1.11.0`; public API version: `1.4.0`.
+- Current mod version: `1.12.0`; public API version: `1.4.0`.
 - Mod ID and base package: `fastfurnacev2` and `com.skylark193.fastfurnacev2`.
 - Versions and metadata: `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`.
 - Player behavior and numeric tables: [`docs/README.md`](docs/README.md).

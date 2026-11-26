@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Automation and GUI](automation-and-jei.md)
 
-Fast Furnace V2 adds four generator, battery, and power-conduit tiers using NeoForge's standard Forge Energy (FE) capabilities. **None of these blocks has a crafting recipe yet.** They are available in the Fast Furnace V2 and Functional Blocks creative tabs.
+Fast Furnace V2 adds four generator, battery, and power-conduit tiers using NeoForge's standard Forge Energy (FE) capabilities. **None of these blocks has a crafting recipe yet.** They are available in the Fast Furnace V2 and Functional Blocks creative tabs. Their inventory tooltips summarize base generation, storage capacity, and transfer rates as applicable.
 
 ## Fast Generators
 
@@ -19,7 +19,7 @@ Fast Coal and its block provide **50% more FE/t**, while Extreme Coal and its bl
 
 Generators push stored FE to all adjacent energy consumers, up to twice their ordinary tier output per neighbor per tick. They pause burn time and production when the internal buffer is full. Replacing the fuel slot does not change the active burn's bonuses. Energy, remaining burn time, total burn time, and active-fuel output are saved with the placed block; breaking it drops only the block item.
 
-The GUI has one centered fuel slot, with burn progress above it and active FE/t output below. The energy bar shows current FE storage; hovering it displays maximum capacity. The **`i`** button opens an information fly-out with generation status, active output, and remaining and total fuel times. Hoppers and item automation can insert fuel from any side and remove fuel-slot items.
+The GUI has one centered fuel slot, with burn progress above it and active FE/t output below. With compatible JEI installed, clicking the burn flame opens the current tier's generator-fuel category, which lists valid fuels, their FE/t output, and their total FE per item. The energy bar shows current FE storage; hovering it displays maximum capacity. The **`i`** button opens an information fly-out with generation status, active output, and remaining and total fuel times. Hoppers and item automation can insert fuel from any side and remove fuel-slot items.
 
 ## Fast Batteries
 
