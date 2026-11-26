@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -146,6 +147,28 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
             registration.addIngredientInfo(
                     FastFurnaceV2.getCrusherBlock(tier).get(),
                     Component.translatable("jei.fastfurnacev2." + tier.getCrusherId()));
+            int generatorOutput = tier.getGeneratorOutput();
+            registration.addIngredientInfo(
+                    FastFurnaceV2.getGeneratorBlock(tier).get(),
+                    Component.translatable(
+                            "jei.fastfurnacev2.generator_info",
+                            formatEnergy(generatorOutput),
+                            formatEnergy(generatorOutput
+                                    * (100 + FastFurnaceTier.FAST_COAL_SPEED_BONUS_PERCENT) / 100),
+                            formatEnergy(generatorOutput
+                                    * (100 + FastFurnaceTier.EXTREME_COAL_SPEED_BONUS_PERCENT) / 100),
+                            formatEnergy(tier.getGeneratorBufferCapacity())));
+            registration.addIngredientInfo(
+                    FastFurnaceV2.getBatteryBlock(tier).get(),
+                    Component.translatable(
+                            "jei.fastfurnacev2.battery_info",
+                            formatEnergy(tier.getBatteryCapacity()),
+                            formatEnergy(tier.getBatteryTransferLimit())));
+            registration.addIngredientInfo(
+                    FastFurnaceV2.getConduitBlock(tier).get(),
+                    Component.translatable(
+                            "jei.fastfurnacev2.power_conduit_info",
+                            formatEnergy(tier.getConduitTransferRate())));
         }
 
         registration.addRecipes(FastCrusherCategory.getCrushingRecipeType(), createCrushingRecipes());
@@ -196,6 +219,10 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
 
     private static List<FastFuel> createAcceleratorFuels() {
         return FastFurnaceApi.fuels().stream().filter(FastFuel::isAcceleratorFuel).toList();
+    }
+
+    private static String formatEnergy(int amount) {
+        return String.format(Locale.ROOT, "%,d", amount);
     }
 
     @Override
