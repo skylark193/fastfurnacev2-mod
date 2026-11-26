@@ -31,7 +31,7 @@ Run these from the repository root:
 | Generate data resources | `.\gradlew.bat runData` | `./gradlew runData` |
 | Publish to local `repo/` | `.\gradlew.bat publish` | `./gradlew publish` |
 
-The build writes JARs to `build/libs/`. GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. Judge their result from the server log; a lingering Gradle launcher after successful shutdown is not itself a test failure.
+The build writes `fastfurnacev2-<minecraft_version>.jar` to `build/libs/`; the distribution filename uses the Minecraft target rather than `mod_version`. Mod metadata and Maven coordinates continue to use `mod_version`. GameTests are registry-based tests in main Java sources, not JUnit tests under `src/test`. Judge their result from the server log; a lingering Gradle launcher after successful shutdown is not itself a test failure.
 
 GitHub Actions runs `./gradlew build` with JDK 25. It does not run GameTests, texture tests, data generation, JEI runtime tests, or a client/server smoke test.
 

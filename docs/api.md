@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.9.1 exposes API version 1.4.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, reusable energy storage, recipe and ingredient queries, dynamic crushed-ore mappings, and access to every fixed built-in item. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.9.2 exposes API version 1.4.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, reusable energy storage, recipe and ingredient queries, dynamic crushed-ore mappings, and access to every fixed built-in item. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,11 +20,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.9.1"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.9.2"
 }
 ```
 
-There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-1.9.1.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
+There is no public Maven repository implied by this example. A local `compileOnly files("libs/fastfurnacev2-26.1.2.jar")` dependency also works for compilation. Install the mod in the development runtime as required by your toolchain.
 
 Declare the runtime dependency in `neoforge.mods.toml`:
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.9.1,)"
+versionRange="[1.9.2,)"
 ordering="NONE"
 side="BOTH"
 ```
