@@ -5,6 +5,8 @@ import com.skylark193.fastfurnacev2.ExtremelyFastAlloyerMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceMenu;
 import com.skylark193.fastfurnacev2.FastFurnaceTier;
 import com.skylark193.fastfurnacev2.FastFurnaceV2;
+import com.skylark193.fastfurnacev2.FastGeneratorFuelLogic;
+import com.skylark193.fastfurnacev2.FastGeneratorMenu;
 import com.skylark193.fastfurnacev2.api.AcceleratorConversion;
 import com.skylark193.fastfurnacev2.api.CrusherRecipe;
 import com.skylark193.fastfurnacev2.api.FastFuel;
@@ -62,7 +64,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 new ExtremelyFastAlloyerCategory(registration.getJeiHelpers().getGuiHelper()));
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             registration.addRecipeCategories(
-                    new FastFurnaceFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier));
+                    new FastFurnaceFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier),
+                    new FastGeneratorFuelCategory(registration.getJeiHelpers().getGuiHelper(), tier));
         }
     }
 
@@ -182,8 +185,11 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         }
         FuelValues fuelValues = minecraft.level.fuelValues();
         Map<FastFurnaceTier, List<IJeiFuelingRecipe>> fuelsByTier = new EnumMap<>(FastFurnaceTier.class);
+        Map<FastFurnaceTier, List<FastGeneratorFuelRecipe>> generatorFuelsByTier =
+                new EnumMap<>(FastFurnaceTier.class);
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             fuelsByTier.put(tier, new ArrayList<>());
+            generatorFuelsByTier.put(tier, new ArrayList<>());
         }
         for (ItemStack stack : registration.getIngredientManager().getAllItemStacks()) {
             int burnTime = stack.getBurnTime(RecipeType.SMELTING, fuelValues);
@@ -191,6 +197,7 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 continue;
             }
             FastFuel definition = FastFurnaceApi.findFuel(stack).orElse(null);
+            int generatorBurnTime = FastGeneratorFuelLogic.getBurnTime(burnTime, definition);
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 int adjustedBurnTime = definition == null
                         ? burnTime
@@ -200,12 +207,22 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(
                             List.of(stack), adjustedBurnTime, speedBonus));
                 }
+                if (generatorBurnTime > 0) {
+                    generatorFuelsByTier.get(tier).add(new FastGeneratorFuelRecipe(
+                            List.of(stack), generatorBurnTime,
+                            FastGeneratorFuelLogic.getOutput(tier, definition)));
+                }
             }
         }
         for (Map.Entry<FastFurnaceTier, List<IJeiFuelingRecipe>> entry : fuelsByTier.entrySet()) {
             List<IJeiFuelingRecipe> fuels = entry.getValue();
             fuels.sort(Comparator.comparingInt(IJeiFuelingRecipe::getBurnTime));
             registration.addRecipes(FastFurnaceFuelCategory.getRecipeType(entry.getKey()), fuels);
+        }
+        for (Map.Entry<FastFurnaceTier, List<FastGeneratorFuelRecipe>> entry : generatorFuelsByTier.entrySet()) {
+            List<FastGeneratorFuelRecipe> fuels = entry.getValue();
+            fuels.sort(Comparator.comparingLong(FastGeneratorFuelRecipe::totalEnergy));
+            registration.addRecipes(FastGeneratorFuelCategory.getRecipeType(entry.getKey()), fuels);
         }
     }
 
@@ -241,6 +258,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     FastCrusherCategory.getCrushingRecipeType(), FastFurnaceV2.getCrusherBlock(tier).get());
             registration.addCraftingStation(
                     FastFurnaceFuelCategory.getRecipeType(tier), FastFurnaceV2.getCrusherBlock(tier).get());
+            registration.addCraftingStation(
+                    FastGeneratorFuelCategory.getRecipeType(tier), FastFurnaceV2.getGeneratorBlock(tier).get());
         }
     }
 
@@ -323,6 +342,14 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     @Override
                     public List<Rect2i> getGuiExtraAreas(FastGeneratorScreen screen) {
                         return screen.getJeiExtraAreas();
+                    }
+
+                    @Override
+                    public List<IGuiClickableArea> getGuiClickableAreas(
+                            FastGeneratorScreen screen, double guiMouseX, double guiMouseY) {
+                        return List.of(IGuiClickableArea.createBasic(
+                                FastGeneratorMenu.FUEL_SLOT_X, 36, 14, 14,
+                                FastGeneratorFuelCategory.getRecipeType(screen.getMenu().getTier())));
                     }
                 });
     }

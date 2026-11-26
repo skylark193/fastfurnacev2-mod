@@ -2363,8 +2363,8 @@ final class FastFurnaceGameTests {
                 FastGeneratorMenu menu = (FastGeneratorMenu) generator.createMenu(
                         0, helper.makeMockPlayer(GameType.CREATIVE).getInventory());
                 if (menu.getEnergy() != expectedOutput || menu.getCapacity() != tier.getGeneratorBufferCapacity()
-                        || menu.getOutput() != expectedOutput) {
-                    throw helper.assertionException("Generator menu did not expose exact energy, capacity, and output");
+                        || menu.getOutput() != expectedOutput || menu.getTier() != tier) {
+                    throw helper.assertionException("Generator menu did not expose exact energy, capacity, output, and tier");
                 }
                 if (!menu.getSlot(0).mayPlace(fuels[fuelIndex])
                         || menu.getSlot(0).mayPlace(new ItemStack(Items.STONE))) {

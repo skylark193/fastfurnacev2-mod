@@ -14,7 +14,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 
 public class FastGeneratorMenu extends AbstractContainerMenu {
     public static final int SLOT_COUNT = 1;
-    public static final int DATA_COUNT = 7;
+    public static final int DATA_COUNT = 8;
     public static final int FUEL_SLOT_X = 80;
     public static final int FUEL_SLOT_Y = 53;
     private static final int INVENTORY_START = 1;
@@ -99,6 +99,11 @@ public class FastGeneratorMenu extends AbstractContainerMenu {
 
     public int getOutput() {
         return this.data.get(4);
+    }
+
+    public FastFurnaceTier getTier() {
+        FastFurnaceTier[] tiers = FastFurnaceTier.values();
+        return tiers[Mth.clamp(this.data.get(7), 0, tiers.length - 1)];
     }
 
     public float getEnergyProgress() {
