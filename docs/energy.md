@@ -19,7 +19,7 @@ Fast Coal and its block provide **50% more FE/t** and **25% longer burn time**. 
 
 Generators push stored FE to all adjacent energy consumers, up to twice their ordinary tier output per neighbor per tick. They pause burn time and production when the internal buffer is full. Replacing the fuel slot does not change the active burn's bonuses. Energy, remaining burn time, total burn time, and active-fuel output are saved with the placed block; breaking it drops only the block item.
 
-The GUI shows current FE storage, capacity, active output, fuel, and burn progress. Hoppers and item automation can insert fuel from any side and remove fuel-slot items.
+The GUI has one centered fuel slot, with burn progress above it and active FE/t output below. The energy bar shows current FE storage; hovering it displays maximum capacity. The **`i`** button opens an information fly-out with generation status, active output, and remaining and total fuel times. Hoppers and item automation can insert fuel from any side and remove fuel-slot items.
 
 ## Fast Batteries
 
@@ -38,7 +38,7 @@ The paired bars on every vertical face fill from bottom to top in eleven charge 
 
 ## Fast Power Conduits
 
-Conduits connect to adjacent conduits and blocks exposing an energy capability. Their connected models have animated internal lava channels; the channel widens from 2 pixels in the Fast tier to 4, 6, and 8 pixels in the Iron, Gold, and Diamond tiers.
+Conduits connect to adjacent conduits and blocks exposing an energy capability. Their connected models have animated internal lava channels; the channel widens from 2 pixels in the Fast tier to 4, 6, and 8 pixels in the Iron, Gold, and Diamond tiers. Eight-pixel-wide selection and collision shapes cover the core and connected arms so conduits can be targeted and broken reliably.
 
 | Tier | Shared network transfer budget |
 |---|---:|

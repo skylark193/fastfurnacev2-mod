@@ -20,7 +20,7 @@ Shift-clicking an Accelerator-compatible item from the player inventory tries th
 
 The Extremely Fast Alloyer has **three ingredient slots, one Extreme Coal fuel slot, and one result slot**, with no ordinary smelting recipe book. Its built-in ingredients are shapeless across the three input slots. Shift-clicking accepted ingredients and Extreme Coal routes them into their corresponding slots; the result returns to the player inventory. No other fuel works. Unsupported furnace, crusher, Accelerator, and crafting inputs are not thereby valid Alloyer recipes.
 
-Fast Generators have one fuel slot and no result slot. Fast Batteries and Fast Power Conduits have no item slots. Generator and battery GUIs show exact stored FE and capacity directly; generators also show active FE/t output and burn progress. Conduits have no GUI.
+Fast Generators have one fuel slot and no result slot. Fast Batteries and Fast Power Conduits have no item slots. Generator GUIs show active FE/t output below the fuel slot, burn progress above it, and stored FE in the energy bar; hovering the bar shows capacity. Battery GUIs show exact stored FE and capacity directly. Conduits have no GUI.
 
 ## Hopper and automation directions
 
@@ -42,7 +42,7 @@ Fast Furnace V2 supports NeoForge item transactions around machine input changes
 
 ## Information panels
 
-Fast Furnace, Fast Crusher, Accelerator, and Extremely Fast Alloyer GUIs have a small **`i`** button near the upper-right corner. Click it to toggle an information fly-out. The panel prefers the right side of the GUI, then the left, then an on-screen fallback position at narrow scaled widths.
+Fast Furnace, Fast Crusher, Accelerator, Extremely Fast Alloyer, and Fast Generator GUIs have a small **`i`** button near the upper-right corner. Click it to toggle an information fly-out. The panel prefers the right side of the GUI, then the left, then an on-screen fallback position at narrow scaled widths.
 
 ### Furnace panel
 
@@ -58,6 +58,14 @@ Fast Furnace, Fast Crusher, Accelerator, and Extremely Fast Alloyer GUIs have a 
 - Exact remaining and total active-fuel times.
 
 Furnace and crusher timers are calculated from exact tick counts and displayed in seconds with one decimal place.
+
+### Fast Generator panel
+
+- Current status: idle, generating, or paused with a full buffer.
+- Active FE/t output, including bonuses from the consumed fuel.
+- Exact remaining active-fuel time and total supplied burn time in seconds.
+
+Stored FE is intentionally omitted because the energy bar already displays it; hover the bar for maximum capacity.
 
 ### Accelerator panel
 

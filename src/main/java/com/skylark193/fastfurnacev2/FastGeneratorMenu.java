@@ -15,6 +15,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 public class FastGeneratorMenu extends AbstractContainerMenu {
     public static final int SLOT_COUNT = 1;
     public static final int DATA_COUNT = 7;
+    public static final int FUEL_SLOT_X = 80;
+    public static final int FUEL_SLOT_Y = 53;
     private static final int INVENTORY_START = 1;
     private static final int INVENTORY_END = 28;
     private static final int HOTBAR_END = 37;
@@ -31,7 +33,7 @@ public class FastGeneratorMenu extends AbstractContainerMenu {
         checkContainerDataCount(data, DATA_COUNT);
         this.container = container;
         this.data = data;
-        this.addSlot(new Slot(container, 0, 80, 53) {
+        this.addSlot(new Slot(container, 0, FUEL_SLOT_X, FUEL_SLOT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.getBurnTime(RecipeType.SMELTING, inventory.player.level().fuelValues()) > 0;

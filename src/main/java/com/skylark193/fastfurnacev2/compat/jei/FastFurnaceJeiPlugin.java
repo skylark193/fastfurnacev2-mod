@@ -12,6 +12,7 @@ import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
 import com.skylark193.fastfurnacev2.client.ExtremelyFastAlloyerScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
+import com.skylark193.fastfurnacev2.client.FastGeneratorScreen;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -290,6 +291,13 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     }
                 });
         registerFurnaceGuiHandler(registration);
+        registration.addGuiContainerHandler(
+                FastGeneratorScreen.class, new IGuiContainerHandler<FastGeneratorScreen>() {
+                    @Override
+                    public List<Rect2i> getGuiExtraAreas(FastGeneratorScreen screen) {
+                        return screen.getJeiExtraAreas();
+                    }
+                });
     }
 
     private static <R> void registerFilteredTransfer(

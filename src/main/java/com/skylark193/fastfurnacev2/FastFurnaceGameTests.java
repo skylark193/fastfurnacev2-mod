@@ -16,6 +16,7 @@ import com.skylark193.fastfurnacev2.api.event.RegisterExtremelyFastAlloyerRecipe
 import com.skylark193.fastfurnacev2.api.event.RegisterFastFuelsEvent;
 import com.skylark193.fastfurnacev2.api.event.RegisterFastToolModifiersEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -60,9 +61,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -2539,6 +2543,8 @@ final class FastFurnaceGameTests {
     private static void powerConduitsShareNetworkThroughput(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
+            assertConduitShapes(helper, FastFurnaceV2.getConduitBlock(tier).get().defaultBlockState(),
+                    false, tier + " standalone");
             int y = tier.ordinal() * 2;
             BlockPos sourcePos = new BlockPos(0, y, 0);
             BlockPos conduitPos = new BlockPos(1, y, 0);
@@ -2566,6 +2572,7 @@ final class FastFurnaceGameTests {
                     || !helper.getBlockState(conduitPos).getValue(FastPowerConduitBlock.WEST)) {
                 throw helper.assertionException(tier + " conduit did not connect to adjacent energy blocks");
             }
+            assertConduitShapes(helper, helper.getBlockState(conduitPos), true, tier + " connected");
         }
 
         BlockPos chainSourcePos = new BlockPos(0, 8, 0);
@@ -2620,6 +2627,32 @@ final class FastFurnaceGameTests {
                 ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
         assertEnergy(helper, restored.energy(), 432, "Conduit buffer did not persist");
         helper.succeed();
+    }
+
+    private static void assertConduitShapes(
+            GameTestHelper helper, BlockState state,
+            boolean connected, String label) {
+        double minX = connected ? 0.0 : 0.25;
+        double maxX = connected ? 1.0 : 0.75;
+        double[] expected = {minX, 0.25, 0.25, maxX, 0.75, 0.75};
+        assertShapeBounds(helper, state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO), expected,
+                label + " selection shape");
+        assertShapeBounds(helper, state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO), expected,
+                label + " collision shape");
+    }
+
+    private static void assertShapeBounds(
+            GameTestHelper helper, VoxelShape shape, double[] expected, String label) {
+        double[] actual = {
+            shape.min(Direction.Axis.X), shape.min(Direction.Axis.Y), shape.min(Direction.Axis.Z),
+            shape.max(Direction.Axis.X), shape.max(Direction.Axis.Y), shape.max(Direction.Axis.Z)
+        };
+        for (int index = 0; index < expected.length; index++) {
+            if (Double.compare(actual[index], expected[index]) != 0) {
+                throw helper.assertionException(label + " had incorrect bounds: expected "
+                        + Arrays.toString(expected) + ", got " + Arrays.toString(actual));
+            }
+        }
     }
 
     private static void assertEnergy(
