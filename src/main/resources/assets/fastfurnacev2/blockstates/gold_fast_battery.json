@@ -1,167 +1,167 @@
 {
   "variants": {
-    "charge=0,facing=north,lit=false": {
+    "charge=0,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_0"
     },
-    "charge=0,facing=east,lit=false": {
+    "charge=0,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_0",
       "y": 90
     },
-    "charge=0,facing=south,lit=false": {
+    "charge=0,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_0",
       "y": 180
     },
-    "charge=0,facing=west,lit=false": {
+    "charge=0,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_0",
       "y": 270
     },
-    "charge=1,facing=north,lit=false": {
+    "charge=1,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_1"
     },
-    "charge=1,facing=east,lit=false": {
+    "charge=1,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_1",
       "y": 90
     },
-    "charge=1,facing=south,lit=false": {
+    "charge=1,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_1",
       "y": 180
     },
-    "charge=1,facing=west,lit=false": {
+    "charge=1,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_1",
       "y": 270
     },
-    "charge=2,facing=north,lit=false": {
+    "charge=2,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_2"
     },
-    "charge=2,facing=east,lit=false": {
+    "charge=2,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_2",
       "y": 90
     },
-    "charge=2,facing=south,lit=false": {
+    "charge=2,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_2",
       "y": 180
     },
-    "charge=2,facing=west,lit=false": {
+    "charge=2,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_2",
       "y": 270
     },
-    "charge=3,facing=north,lit=false": {
+    "charge=3,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_3"
     },
-    "charge=3,facing=east,lit=false": {
+    "charge=3,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_3",
       "y": 90
     },
-    "charge=3,facing=south,lit=false": {
+    "charge=3,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_3",
       "y": 180
     },
-    "charge=3,facing=west,lit=false": {
+    "charge=3,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_3",
       "y": 270
     },
-    "charge=4,facing=north,lit=false": {
+    "charge=4,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_4"
     },
-    "charge=4,facing=east,lit=false": {
+    "charge=4,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_4",
       "y": 90
     },
-    "charge=4,facing=south,lit=false": {
+    "charge=4,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_4",
       "y": 180
     },
-    "charge=4,facing=west,lit=false": {
+    "charge=4,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_4",
       "y": 270
     },
-    "charge=5,facing=north,lit=false": {
+    "charge=5,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_5"
     },
-    "charge=5,facing=east,lit=false": {
+    "charge=5,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_5",
       "y": 90
     },
-    "charge=5,facing=south,lit=false": {
+    "charge=5,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_5",
       "y": 180
     },
-    "charge=5,facing=west,lit=false": {
+    "charge=5,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_5",
       "y": 270
     },
-    "charge=6,facing=north,lit=false": {
+    "charge=6,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_6"
     },
-    "charge=6,facing=east,lit=false": {
+    "charge=6,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_6",
       "y": 90
     },
-    "charge=6,facing=south,lit=false": {
+    "charge=6,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_6",
       "y": 180
     },
-    "charge=6,facing=west,lit=false": {
+    "charge=6,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_6",
       "y": 270
     },
-    "charge=7,facing=north,lit=false": {
+    "charge=7,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_7"
     },
-    "charge=7,facing=east,lit=false": {
+    "charge=7,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_7",
       "y": 90
     },
-    "charge=7,facing=south,lit=false": {
+    "charge=7,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_7",
       "y": 180
     },
-    "charge=7,facing=west,lit=false": {
+    "charge=7,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_7",
       "y": 270
     },
-    "charge=8,facing=north,lit=false": {
+    "charge=8,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_8"
     },
-    "charge=8,facing=east,lit=false": {
+    "charge=8,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_8",
       "y": 90
     },
-    "charge=8,facing=south,lit=false": {
+    "charge=8,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_8",
       "y": 180
     },
-    "charge=8,facing=west,lit=false": {
+    "charge=8,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_8",
       "y": 270
     },
-    "charge=9,facing=north,lit=false": {
+    "charge=9,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_9"
     },
-    "charge=9,facing=east,lit=false": {
+    "charge=9,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_9",
       "y": 90
     },
-    "charge=9,facing=south,lit=false": {
+    "charge=9,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_9",
       "y": 180
     },
-    "charge=9,facing=west,lit=false": {
+    "charge=9,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_9",
       "y": 270
     },
-    "charge=10,facing=north,lit=false": {
+    "charge=10,facing=north": {
       "model": "fastfurnacev2:block/gold_fast_battery_10"
     },
-    "charge=10,facing=east,lit=false": {
+    "charge=10,facing=east": {
       "model": "fastfurnacev2:block/gold_fast_battery_10",
       "y": 90
     },
-    "charge=10,facing=south,lit=false": {
+    "charge=10,facing=south": {
       "model": "fastfurnacev2:block/gold_fast_battery_10",
       "y": 180
     },
-    "charge=10,facing=west,lit=false": {
+    "charge=10,facing=west": {
       "model": "fastfurnacev2:block/gold_fast_battery_10",
       "y": 270
     }
