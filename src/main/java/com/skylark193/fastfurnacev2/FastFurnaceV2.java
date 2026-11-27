@@ -37,6 +37,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -319,9 +320,17 @@ public class FastFurnaceV2 {
             MENUS.register("extremely_fast_alloyer",
                     () -> new MenuType<>(ExtremelyFastAlloyerMenu::new, FeatureFlags.VANILLA_SET));
     public static final DeferredHolder<MenuType<?>, MenuType<FastGeneratorMenu>> FAST_GENERATOR_MENU =
-            MENUS.register("fast_generator", () -> new MenuType<>(FastGeneratorMenu::new, FeatureFlags.VANILLA_SET));
+            MENUS.register("fast_generator", () -> IMenuTypeExtension.create(
+                    (containerId, inventory, buffer) -> new FastGeneratorMenu(
+                            containerId, inventory, buffer.readBlockPos())));
     public static final DeferredHolder<MenuType<?>, MenuType<FastBatteryMenu>> FAST_BATTERY_MENU =
-            MENUS.register("fast_battery", () -> new MenuType<>(FastBatteryMenu::new, FeatureFlags.VANILLA_SET));
+            MENUS.register("fast_battery", () -> IMenuTypeExtension.create(
+                    (containerId, inventory, buffer) -> new FastBatteryMenu(
+                            containerId, inventory, buffer.readBlockPos())));
+    public static final DeferredHolder<MenuType<?>, MenuType<FastPowerConduitMenu>> FAST_POWER_CONDUIT_MENU =
+            MENUS.register("fast_power_conduit", () -> IMenuTypeExtension.create(
+                    (containerId, inventory, buffer) -> new FastPowerConduitMenu(
+                            containerId, inventory, buffer.readBlockPos())));
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FAST_FURNACE_V2_TAB = CREATIVE_MODE_TABS.register("fast_furnace_v2_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.fastfurnacev2"))
@@ -410,6 +419,7 @@ public class FastFurnaceV2 {
 
         modEventBus.addListener(this::addCreative);
         modEventBus.addListener(this::registerCapabilities);
+        modEventBus.addListener(EnergyConfigurationPayload::register);
         modEventBus.addListener((ModifyDefaultComponentsEvent event) ->
                 FastFurnaceApiImpl.modifyToolStats(modEventBus, event));
         if (Boolean.getBoolean("fastfurnacev2.apiTestContent")) {
@@ -691,11 +701,11 @@ public class FastFurnaceV2 {
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_GENERATOR_BLOCK_ENTITY.get(),
-                (generator, side) -> generator.energy());
+                FastGeneratorBlockEntity::energyForSide);
         event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_BATTERY_BLOCK_ENTITY.get(),
-                (battery, side) -> battery.energy());
+                FastBatteryBlockEntity::energyForSide);
         event.registerBlockEntity(Capabilities.Energy.BLOCK, FAST_POWER_CONDUIT_BLOCK_ENTITY.get(),
-                (conduit, side) -> conduit.energy());
+                FastPowerConduitBlockEntity::energyForSide);
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             event.registerItem(Capabilities.Energy.ITEM,
                     (stack, context) -> new ItemAccessEnergyHandler(

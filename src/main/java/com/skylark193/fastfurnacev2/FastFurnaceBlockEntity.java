@@ -120,6 +120,34 @@ public class FastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
         return new FastFurnaceMenu(containerId, inventory, this, this.menuDataAccess, this.tier);
     }
 
+    public int getCurrentBurnTime() {
+        return this.currentBurnTime;
+    }
+
+    public int getTotalFuelTime() {
+        return this.totalFuelTime;
+    }
+
+    public int getCookingProgress() {
+        return this.dataAccess.get(DATA_COOKING_PROGRESS);
+    }
+
+    public int getCookingTotalTime() {
+        return this.dataAccess.get(DATA_COOKING_TOTAL_TIME);
+    }
+
+    public int getSpeedPercent() {
+        return this.activeSpeedPercent;
+    }
+
+    public boolean isFastCrusher() {
+        return this.fastCrusher;
+    }
+
+    public boolean isCrusherDoubleOutputPending() {
+        return this.crusherDoubleOutputPending;
+    }
+
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);

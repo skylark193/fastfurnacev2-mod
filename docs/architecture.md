@@ -12,7 +12,7 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `FastFurnaceTier` | Shared tier identity, machine speed and duration scaling, energy capacities/rates, and JEI smelt-count math |
 | `FastFurnaceBlock` / `FastFurnaceBlockEntity` / `FastFurnaceMenu` | Shared furnace/crusher block identity, processing, persistence, automation, and synchronization |
 | `AcceleratorBlock` / `AcceleratorBlockEntity` / `AcceleratorMenu` | Exact-work conversions, lava requirement, boosts, automation, and synchronization |
-| `ExtremelyFastAlloyerBlock` / `ExtremelyFastAlloyerBlockEntity` / `ExtremelyFastAlloyerMenu` | Dedicated three-input recipes, Extreme Coal fuel, lava-adjusted timing, and automation |
+| `ExtremelyFastAlloyerBlock` / `ExtremelyFastAlloyerBlockEntity` / `ExtremelyFastAlloyerMenu` | Dedicated three-input recipes, Lava-Infused Coal fuel, lava-adjusted timing, and automation |
 | `ExtremelyFastAlloyerRecipe` / `ExtremelyFastAlloyerRecipes` | Public recipe definition and internal shapeless storage/matching |
 | `FastTools` / `ExtremelyFastToolEffects` | Tool materials, modifier-driven durability rolls, and post-loot/damage effects |
 | `FastEnergyStorage` | Public transaction-aware energy storage, transfer limits, value-IO persistence, and change notification |
@@ -25,6 +25,7 @@ These notes record non-obvious implementation constraints for Minecraft **26.1.2
 | `internal/FastFurnaceApiImpl` | Definition storage, matching, and ordinary fuel integration; not public API |
 | `client/` | Screens, client registration, dynamic resource colors, and tint handling |
 | `compat/jei/` | Optional catalysts, categories, transfers, click areas, ingredient information, and GUI handlers |
+| `compat/jade/` | Optional server-synchronized machine, energy, and conduit status tooltips |
 | `FastFurnaceGameTests` | Registered GameTests and the direct function-instance codec |
 | `tools/` | Deterministic texture generators, preserved square sources, and Python tests |
 
@@ -33,8 +34,8 @@ The four furnace and four crusher tiers share one block-entity type and four tie
 ## Registration and block resources
 
 - Register every `DeferredRegister` with the mod event bus. Add translations for new registry objects and user-facing text.
-- Item model definitions use `assets/<namespace>/items/`. Fast Coal also has a generated model under `models/item/`.
-- Explicitly mirror vanilla physical properties for Fast Cobblestone, coal storage blocks, and ore/storage variants. Do not use `ofFullCopy`: it also copies vanilla loot-table keys and description IDs.
+- Item model definitions use `assets/<namespace>/items/`. Lava-Infused Coal also has a generated model under `models/item/`.
+- Explicitly mirror vanilla physical properties for Lava-Infused Cobblestone, coal storage blocks, and ore/storage variants. Do not use `ofFullCopy`: it also copies vanilla loot-table keys and description IDs.
 - Every mod block using `requiresCorrectToolForDrops()` must be in `data/minecraft/tags/block/mineable/pickaxe.json`, with the appropriate mining-level tag. Otherwise mining speed and self-drops are wrong.
 - Furnace and crusher loot preserves only `minecraft:custom_name`, not inventory, XP, progress, fuel, pending output, or boost.
 - Furnaces use `minecraft:block/orientable` with all four facings and both `lit` states. Crushers use `cube_bottom_top`; the existing `LIT` state switches between static and animated tops.
@@ -51,7 +52,7 @@ The four furnace and four crusher tiers share one block-entity type and four tie
 - Resolve crusher inputs only through `FastFurnaceApi.findCrusherRecipe`. A zero recipe time inherits ordinary smelting time with a 200-tick fallback. Raw smelting inputs are not implicitly crusher inputs.
 - A blocked crusher double persists `fast_crusher_double_output_pending`, pauses fuel, consumes no input, and resumes without rerolling. Clear pending state on successful output or a changed input.
 - Decrement fuel only when the required complete result can process. Empty/unprocessable input and blocked output pause without clearing active-fuel state. Preserve cooking progress when fuel expires; changing input still resets it.
-- Use the `FastFuel` matched from the stack actually consumed, not the current fuel slot. Persist its ID as `active_fuel`; retain legacy Fast/Extreme flags for old saves. Both Extreme Coal IDs map to menu fuel type 2.
+- Use the `FastFuel` matched from the stack actually consumed, not the current fuel slot. Persist its ID as `active_fuel`; retain legacy `fast`/`extreme` flags for old saves. Both Lava-Infused Coal IDs map to menu fuel type 2.
 - Persist exact remaining and total burn times as `lit_time_remaining` and `lit_total_time`, mirroring them into vanilla furnace data. The menu uses eleven synchronized values, including split exact times, fuel family, crusher identity, and effective speed.
 
 ### Accelerator
@@ -60,14 +61,14 @@ The four furnace and four crusher tiers share one block-entity type and four tie
 - Normal work advances one unit per tick. Boost work advances by its registered work-per-tick, clamped by remaining recipe and boost work. The machine works without boost.
 - Consume boost only when valid work can advance with no banked boost. Missing lava or blocked output preserves progress and boost; empty/unsupported or changed input resets progress without discarding boost.
 - Slots and automation check ingredient acceptance, while processing lookup also verifies required input count. Top inserts input, horizontal sides insert boost, and the bottom extracts results.
-- Persist progress, recipe work, remaining/total boost, and boost definition ID. Legacy saves without an ID use the extreme flag, falling back to Fast Coal.
+- Persist progress, recipe work, remaining/total boost, and boost definition ID. Legacy saves without an ID use the extreme flag, falling back to Lava-Infused Coal (`fast_coal`).
 - `LIT` means work advanced on that tick, not merely that boost remains banked.
 
-### Extremely Fast Alloyer
+### Lava-Infused Alloyer
 
 - `FastFurnaceApiImpl` registers the built-in recipe and posts `RegisterExtremelyFastAlloyerRecipesEvent` after default item components bind. `ExtremelyFastAlloyerRecipes` stores public definitions and keeps them separate from smelting, crushing, Accelerator, and crafting recipes.
 - Shapeless matching assigns each recipe ingredient to a distinct nonempty input slot through backtracking. Missing, duplicate, partial, and unsupported inputs do not match.
-- Only the Extreme Coal item is fuel. Each supplies exactly 1,600 valid processing ticks. Work and burn countdown advance only while a valid result fits.
+- Only the Lava-Infused Coal item with ID `extreme_coal` is fuel. Each supplies exactly 1,600 valid processing ticks. Work and burn countdown advance only while a valid result fits.
 - Horizontal lava reduces the current duration dynamically to its configured minimum without resetting elapsed work. Missing fuel or blocked output preserves progress and inputs; invalid or changed input resets progress while preserving banked fuel.
 - Slots 0–2 are inputs, 3 is fuel, and 4 is output. Top exposes inputs, horizontal faces expose fuel, and bottom exposes output. Six menu values expose progress, current duration, current work state, remaining/total burn, and lava count.
 
@@ -90,17 +91,18 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 
 ### Generators, batteries, and power conduits
 
-- Generator output is `128 << tier.ordinal()` FE/t; Fast and Extreme fuel definitions add their registered 50 or 100 percentage points. Generator buffers hold 1,000 ticks of ordinary tier output. External insertion is disabled and extraction is capped at twice ordinary tier output per operation.
-- Ordinary and custom fuels use their effective ordinary burn time. Built-in Fast and Extreme Coal IDs use 50% duration; do not apply furnace tier duration scaling or random doubling. Persist remaining/total burn, active-fuel ID, and output percentage from the consumed stack.
-- A full buffer pauses both burn time and generation. A partially filled last tick does not consume a burn tick until the complete output can be produced. `LIT` tracks actual production. Push to each adjacent `Capabilities.Energy.BLOCK` target through a root transaction and `EnergyHandlerUtil.move`.
-- Battery capacities are 256,000 / 512,000 / 1,024,000 / 2,560,000 FE by tier. Insertion and extraction each allow 256 / 512 / 1,024 / 2,560 FE per operation. Use the same storage instance on every side.
+- Generator output is `128 << tier.ordinal()` FE/t; the two built-in special-fuel families add their registered 50 or 100 percentage points. Generator buffers hold 1,000 ticks of ordinary tier output. Every side defaults to output and can be configured as input, output, or both; insertion and extraction are capped at twice ordinary tier output per operation. The unsided capability remains output-only.
+- Ordinary and custom fuels use their effective ordinary burn time. Built-in special coal IDs use 50% duration plus 25 percentage points per horizontal lava side, capped at 150% with four sides. Ordinary fuel receives no lava bonus. Do not apply furnace tier duration scaling or random doubling. Capture lava and output bonuses from the consumed stack and persist remaining/total burn, active-fuel ID, output percentage, and active lava bonus so later lava or fuel-slot changes cannot alter the current burn.
+- A full buffer pauses both burn time and generation. A partially filled last tick does not consume a burn tick until the complete output can be produced. `LIT` tracks actual production. Push to each adjacent `Capabilities.Energy.BLOCK` target through the configured side wrapper, a root transaction, and `EnergyHandlerUtil.move`.
+- Battery capacities are 256,000 / 512,000 / 1,024,000 / 2,560,000 FE by tier. Insertion and extraction each allow 256 / 512 / 1,024 / 2,560 FE per operation. Use the same storage instance on every side, wrapped in side-specific input/output/both permissions; every side defaults to both.
 - Battery `charge` uses ceiling division into 0–10 steps so any nonempty storage shows at least one step. Update the blockstate only after committed storage changes; deserialization restores energy without a callback, while the blockstate itself is saved normally. Inventory items use dedicated `cube_bottom_top` models rather than the world models' transparent charge-overlay cuboids. World overlays extend slightly beyond the base cube but must declare explicit `[0, 0, 16, 16]` face UVs; derived out-of-range UVs make `NativeImage.computeTransparency` reject the 16×16 charge texture. Battery blockstate variant keys deliberately omit the inherited but unused `LIT` property so both its values resolve to the same charge/facing model, including existing saves with `lit=true`.
 - Preserve exact battery FE in the nonnegative `fastfurnacev2:stored_energy` data component. Copy it in battery loot, restore it through `applyImplicitComponents` clamped to tier capacity, and collect it through `collectImplicitComponents`. Register `Capabilities.Energy.ITEM` with `ItemAccessEnergyHandler` using the supplied `ItemAccess` context so transactional inventory changes affect the actual slot.
-- Generator and battery menu integers use low/high 16-bit components because `ContainerData` synchronization is not a full arbitrary-int channel. Recombine with an unsigned low component. Generator menus also synchronize the tier ordinal for tier-specific JEI click areas. The generator screen draws only its actual centered fuel slot, shows capacity on energy-bar hover, and shares its visible fly-out geometry with the JEI exclusion handler. None of the energy blocks has built-in crafting recipes; only battery items preserve energy when broken.
+- Generator and battery menu integers use low/high 16-bit components because `ContainerData` synchronization is not a full arbitrary-int channel. Recombine with an unsigned low component; this includes generator remaining/total burn timers, which can exceed 65,535 ticks. Generator menus also synchronize the tier ordinal for tier-specific JEI click areas, lava state, and active bonus; both energy menus synchronize all six side modes and the block position for validated configuration payloads. The generator and battery screens share their visible information/configuration fly-out geometry with JEI exclusion handlers. None of the energy blocks has built-in crafting recipes; only battery items preserve energy when broken.
 - Conduit tier rates are 256 / 512 / 1,024 / 2,560 FE/t. Each conduit buffer's capacity and per-operation transfer limit equal its tier rate, but a connected network's total budget is the minimum connected tier rate, not a sum of conduit rates.
-- Discover each adjacent conduit network with BFS and mark every member's `lastNetworkTick` before transfer. This ensures one execution per network per game tick regardless of chain length, branches, loops, or block-entity tick order.
-- Deduplicate external endpoints by position and exclude conduits. Drain conduit buffers before external endpoint pairs, with both phases sharing the same budget. Mark successful buffer recipients as `received`; skip sources that received and sinks that supplied during the pass to prevent same-tick backflow.
-- Apply comparative-fill direction only when both endpoints could reverse the flow (`source.canInsert && sink.canExtract`). Output-only generators must be able to charge batteries containing more FE than the generator buffer.
+- Discover each adjacent conduit network with BFS and mark every member's `lastNetworkTick` before transfer. This ensures one execution per network per game tick regardless of chain length, branches, loops, or block-entity tick order. When networks are joined mid-tick, traversal from an unrun conduit must not absorb a neighbor already marked for that tick and run its old network again.
+- Right-clicking any conduit opens its menu. Changing network mode propagates to every connected member and persists locally. Fill-first uses deterministic position order, round-robin rotates by game tick, and random uses shuffled permutations; all modes still share the one network budget.
+- Deduplicate external endpoints by position and exclude conduits. Each adjacent non-conduit connection has input/output/both permissions controlling network extraction/insertion and the sided capability. Drain conduit buffers before external endpoint pairs, with both phases sharing the same budget. Mark successful buffer recipients as `received`; skip sources that received and sinks that supplied during the pass to prevent same-tick backflow.
+- Never directly transfer between two Fast Furnace V2 battery endpoints on the same network. Apply comparative-fill direction only when both remaining endpoints could reverse the flow (`source.canInsert && sink.canExtract`). Output-only generators must be able to charge batteries containing more FE than the generator buffer.
 - Conduits extend `PipeBlock` with six connection properties and a custom server ticker. Their eight-pixel selection/collision core and arms deliberately exceed the five-pixel visual shell for reliable targeting. `LevelReader` has no capability query, so connection checks pattern-match `Level`. Multipart models select the central core and rotated arms; conduit drops do not copy their saved buffer.
 
 ## Public API lifecycle
@@ -127,7 +129,7 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 
 ### Generated resources and recipes
 
-- Generated IDs include the source namespace except for the three built-in Fast materials. Resolve occupied readable IDs with a deterministic name-based UUID suffix.
+- Generated IDs include the source namespace except for the three built-in Lava-Infused materials. Resolve occupied readable IDs with a deterministic name-based UUID suffix.
 - `CrushedOreItem.getName` uses `Component.translatableWithFallback`. `Component.translatable(key, fallback)` would treat the fallback as a formatting argument.
 - `ModifyRecipeJsonsEvent` clones only parsed `minecraft:smelting` JSON after `acceptsItem` matches the raw holder. Components are still unbound; do not create an `ItemStack` here.
 - Ignore recipes whose conditions do not match. Preserve every field except `ingredient`, reuse existing external-result recipes, and generate deterministic collision-free IDs from exact result and source-recipe IDs.
@@ -139,15 +141,15 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 
 - Minecraft 26.1.2 uses `ToolMaterial` and `Item.Properties`; `Tier`, `Tiers`, and `DiggerItem` are unavailable in the mapped version. `FastFurnaceApi.createTool` configures vanilla-style components and retains `AxeItem` stripping and `ShovelItem` flattening while adding modifier-driven durability rolls.
 - `ModifyDefaultComponentsEvent` runs after item registration and before default components finalize. Its initializer exposes the current `DataComponentMap.Builder`; `FastToolStats` patches durability, finite mining-speed rules, enchantability, and the vanilla base attack attribute IDs. There is no global `ItemDamageEvent` in this NeoForge version.
-- Scale sword speed as actual attacks per second: `newBaseline = (4 + vanillaBaseline) * multiplier - 4`. Fast Diamond Sword's damage scales total vanilla damage, not only the material bonus.
+- Scale sword speed as actual attacks per second: `newBaseline = (4 + vanillaBaseline) * multiplier - 4`. Lava-Infused Diamond Sword's damage scales total vanilla damage, not only the material bonus.
 - Factory-created tools override NeoForge's `IItemExtension.damageItem` route and query the highest-priority registered modifier on the server. This covers attacks, mining, stripping, and flattening without a separate event handler. Ordinary custom items can use the other modifiers without this item class.
-- Extremely Fast built-in Fortune II/Looting II uses `Item.Properties.delayedComponent(DataComponents.ENCHANTMENTS, ...)` so registry lookup occurs after default components bind.
+- Lava-Infused built-in Fortune II/Looting II uses `Item.Properties.delayedComponent(DataComponents.ENCHANTMENTS, ...)` so registry lookup occurs after default components bind.
 - Registered block-drop modifiers require a noncreative player, block drops enabled, and a correct tool. Copy complete drops after normal loot and Fortune/Looting, preserving components, positions, and motion. Kill-drop and damage rolls require a direct `PLAYER_ATTACK`; arrows, Thorns, and other indirect sources cannot proc them. Damage doubles during `LivingIncomingDamageEvent` before mitigation.
 - `FastBonusDrops` appends during server-side `BlockDropsEvent`; never clear vanilla drops. Require a noncreative breaker, enabled drops, a correct tool, and no Silk Touch.
 - `FastOreGeneration` uses server-side `ChunkEvent.Load`, source-specific salts, world seed, and position-derived randomness. Skip palettes that cannot contain eligible ore and mutate only the supplied chunk with update flags 0.
 - Store Boolean `fast_ore_chunk_processed` and `deepslate_fast_ore_chunk_processed` attachments after independent passes and call `markUnsaved()`. Retain the legacy `extreme_coal_chunk_processed` registration for old saves, but do not let it suppress current passes.
 
-## GUI and JEI integration
+## GUI, JEI, and Jade integration
 
 - Four menu types carry the furnace tier to the client; all use the same menu and screen classes. Crusher identity arrives through synchronization, so screens select crusher text and click behavior at draw time rather than in constructors.
 - Read arbitrary effective speed from synchronized menu data. Format timers with `Locale.ROOT` and `%.1f`.
@@ -157,15 +159,16 @@ NeoForge stack snapshots do not include custom machine progress or pending outpu
 - Register API crusher, Accelerator, and Alloyer definitions directly with their dedicated categories. Accelerator transfers target input slot 0 or boost slot 1, with player inventory starting at slot 3. Alloyer transfers target slots 0–2, with player inventory starting at slot 5.
 - Register the Accelerator as catalyst for both dedicated types and the Alloyer only for its dedicated type. Do not route these recipes into ordinary smelting, crushing, or tiered fuel categories.
 - Enumerate custom fuel displays from the current level's `FuelValues`, match each stack through `FastFurnaceApi.findFuel`, and calculate smelt counts as `burnTime / tier.scaleCookTime(200, speedBonusPercent)`.
-- Generator fuel categories use `FastGeneratorFuelLogic` for the same duration and output calculations as consumed fuel. Display total FE as a `long` (`burnTime * outputPerTick`). The generator flame opens the category selected from the synchronized menu tier.
+- Generator fuel categories use `FastGeneratorFuelLogic` for the same duration and output calculations as consumed fuel. Add five entries for each built-in special fuel, covering zero through four horizontal lava sides; ordinary fuel has one entry. Display total FE as a `long` (`burnTime * outputPerTick`). The generator flame opens the category selected from the synchronized menu tier.
 - Energy item tooltips use `ItemTooltipEvent`; this Minecraft version does not expose the older block-level `appendHoverText` hook.
-- Do not modify `RecipeTypes.SMELTING_FUEL` to implement Fast Furnace durations; that would alter ordinary furnace displays.
+- Jade is `compileOnly` and discovered through `@WailaPlugin`. Register one common server-data provider and matching client block-component provider for every supported machine family. Keep tooltip formatting client-side and put only primitive state into the server `CompoundTag`; conduit network mode/rate lookups occur on the server. Use `-PwithJade` for runtime validation.
+- Do not modify `RecipeTypes.SMELTING_FUEL` to implement Lava-Infused Furnace durations; that would alter ordinary furnace displays.
 
 ## GameTests and textures
 
 - GameTests use `RegisterGameTestsEvent` plus the registered `fastfurnacev2:function` instance codec. Vanilla's `TestFunctionLoader` bootstraps before mod construction, so registering a loader during mod initialization is too late; `DirectGameTestInstance` invokes mapped functions directly.
-- Preserve deterministic random seeds in tests asserting successful/failed rolls and exact durations. Extend tests for timing, synchronization, remainders, transactions, persistence, and active-fuel changes. Energy tests cover exact battery components and item transactions, mixed-tier conduit budgets, loops, same-tick deduplication, backflow, buffers, persistence, and standalone/connected conduit shape bounds.
+- Preserve deterministic random seeds in tests asserting successful/failed rolls and exact durations. Extend tests for timing, synchronization, remainders, transactions, persistence, and active-fuel changes. Energy tests cover exact battery components and item transactions, generator lava-duration boundaries and persistence, side permissions, conduit ordering and connection modes, battery-to-battery exclusion, mixed-tier budgets, loops, same-tick deduplication, backflow, buffers, persistence, and standalone/connected conduit shape bounds.
 - Use square sources under `tools/texture_sources/`; never feed generated animation strips back into a generator. Production seeds and exact commands live in [tools/README.md](../tools/README.md).
 - Ordinary lava veins default to eight frames, two ticks per frame, no interpolation, and two primary veins. Shared furnace and tool seeds intentionally align identical silhouettes across tiers.
-- Use `generate_extreme_coal_texture.py`, not the ordinary vein generator, for all-lava Extreme Coal, its block, Alloyer body, Extremely Fast Ingot, and Extremely Fast tools.
+- Use `generate_extreme_coal_texture.py`, not the ordinary vein generator, for all-lava Lava-Infused Coal, its block, Alloyer body, Lava-Infused Ingot, and Lava-Infused tools.
 - The machine-top generator's `--all-lava` option preserves Accelerator bolt geometry while replacing the background. Static crusher/dust generators remove stale animation metadata; idle crusher tops must not have animation metadata.

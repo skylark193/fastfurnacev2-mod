@@ -1,12 +1,12 @@
-# Extremely Fast Alloyer
+# Lava-Infused Alloyer
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Recipes and fuels](recipes.md) · [Automation, GUI, and JEI](automation-and-jei.md)
 
-The **Extremely Fast Alloyer** combines three dedicated alloying ingredients into one result using Extreme Coal fuel. It is a separate machine family: ordinary furnace, crusher, Accelerator, and crafting recipes are not Alloyer recipes.
+The **Lava-Infused Alloyer** combines three dedicated alloying ingredients into one result using Lava-Infused Coal (`extreme_coal`) fuel. It is a separate machine family: ordinary furnace, crusher, Accelerator, and crafting recipes are not Alloyer recipes.
 
 ## Crafting and appearance
 
-Surround one **Accelerator** with eight **Blocks of Extreme Coal**:
+Surround one **Accelerator** with eight **Blocks of Lava-Infused Coal** (`extreme_coal_block`):
 
 ```text
 E  E  E
@@ -14,9 +14,9 @@ E  A  E
 E  E  E
 ```
 
-`E` = Block of Extreme Coal; `A` = Accelerator
+`E` = Block of Lava-Infused Coal (`extreme_coal_block`); `A` = Accelerator
 
-Output: **1 × Extremely Fast Alloyer**
+Output: **1 × Lava-Infused Alloyer**
 
 The Alloyer has the Accelerator's directional shape and eleven-stage top lightning bolt, but every visible body pixel is animated lava rather than smooth stone with lava veins. The bolt fills from bottom to top as work advances and returns to stage zero after output. Its inherited `lit` state tracks whether work advanced on the current tick.
 
@@ -28,9 +28,9 @@ Place one of each ingredient into the three input slots, in any order:
 
 | Ingredient 1 | Ingredient 2 | Ingredient 3 | Output | Base processing time |
 |---|---|---|---|---:|
-| 1 × Fast Iron Ingot | 1 × Fast Gold Ingot | 1 × Fast Diamond | 1 × Extremely Fast Ingot | 800 ticks (40 seconds) |
+| 1 × Lava-Infused Iron Ingot | 1 × Lava-Infused Gold Ingot | 1 × Lava-Infused Diamond | 1 × Lava-Infused Ingot | 800 ticks (40 seconds) |
 
-All three input slots must contain their matched ingredient. Duplicate copies of one ingredient cannot substitute for another ingredient, and a partial recipe does not process. Other mods can add recipes through the [public API](api.md#extremely-fast-alloyer-recipes); custom recipes use the same fuel, lava, automation, persistence, and JEI behavior.
+All three input slots must contain their matched ingredient. Duplicate copies of one ingredient cannot substitute for another ingredient, and a partial recipe does not process. Other mods can add recipes through the [public API](api.md#lava-infused-alloyer-recipes); custom recipes use the same fuel, lava, automation, persistence, and JEI behavior.
 
 Each horizontally adjacent source or flowing lava block reduces the operation by **100 ticks**, to a minimum of **400 ticks**:
 
@@ -44,12 +44,12 @@ Each horizontally adjacent source or flowing lava block reduces the operation by
 
 Changing the lava count preserves elapsed work and recalculates the current operation's total duration. Lava above or below does not count.
 
-The **Extremely Fast Ingot** preserves an ingot silhouette while replacing every visible pixel with animated lava. It appears in Ingredients and the Fast Furnace V2 creative tab and crafts the four Extremely Fast tools.
+The **Lava-Infused Ingot** preserves an ingot silhouette while replacing every visible pixel with animated lava. It appears in Ingredients and the Fast Furnace V2 creative tab and crafts the four Lava-Infused tools.
 
-## Extreme Coal fuel and processing rules
+## Lava-Infused Coal fuel and processing rules
 
-- The fuel slot accepts **only the Extreme Coal item**. Fast Coal, ordinary coal, and both special-coal storage blocks do not work.
-- One Extreme Coal supplies **1,600 ticks of valid processing**. Fuel is consumed only when a complete valid recipe has output space and no burn time remains.
+- The fuel slot accepts **only the Lava-Infused Coal item with ID `fastfurnacev2:extreme_coal`**. The `fast_coal` item, ordinary coal, and both special-coal storage blocks do not work.
+- One `extreme_coal` supplies **1,600 ticks of valid processing**. Fuel is consumed only when a complete valid recipe has output space and no burn time remains.
 - Valid work advances exactly one tick per server tick and consumes one tick of banked fuel.
 - Missing fuel pauses without losing progress. Refueling resumes the same operation.
 - Empty, incomplete, duplicated, or unsupported inputs reset progress but retain banked burn time.
@@ -66,15 +66,15 @@ The Alloyer does not inherit the Accelerator's conversion recipes, boost fuels, 
 | Slot | Purpose |
 |---|---|
 | 0–2 | Dedicated Alloyer ingredients, in any arrangement |
-| 3 | Extreme Coal fuel only |
+| 3 | Lava-Infused Coal (`extreme_coal`) fuel only |
 | 4 | Completed result; insertion is rejected |
 
-Hoppers and other automation can insert accepted ingredients through the **top**, insert only Extreme Coal through **horizontal sides**, and extract the result through the **bottom**. Unsupported furnace, crusher, and Accelerator inputs cannot be inserted as Alloyer ingredients. Shift-clicking accepted ingredients and Extreme Coal routes them to their corresponding slots; shift-clicking the result returns it to the player inventory.
+Hoppers and other automation can insert accepted ingredients through the **top**, insert only `extreme_coal` through **horizontal sides**, and extract the result through the **bottom**. Unsupported furnace, crusher, and Accelerator inputs cannot be inserted as Alloyer ingredients. Shift-clicking accepted ingredients and `extreme_coal` routes them to their corresponding slots; shift-clicking the result returns it to the player inventory.
 
 ## GUI and JEI
 
-The furnace-style GUI contains three input slots, one Extreme Coal fuel slot and flame, one output slot, and a progress arrow. It has no ordinary smelting recipe book. Its information fly-out reports the 40-second base time, current lava-adjusted time, horizontal lava count, Extreme Coal-only fuel rule, and dedicated-recipe restriction.
+The furnace-style GUI contains three input slots, one Lava-Infused Coal (`extreme_coal`) fuel slot and flame, one output slot, and a progress arrow. It has no ordinary smelting recipe book. Its information fly-out reports the 40-second base time, current lava-adjusted time, horizontal lava count, `extreme_coal`-only fuel rule, and dedicated-recipe restriction.
 
-With a compatible JEI release, the **Extremely Fast Alloying** category displays all three inputs, the output, the base processing time, and the horizontal-lava reduction rule. The Alloyer is the category catalyst, its progress arrow opens alloying recipes, and recipe transfer targets the three input slots. JEI also reserves space around the visible information fly-out and provides descriptions for the Alloyer and Extremely Fast tools.
+With a compatible JEI release, the **Lava-Infused Alloying** category displays all three inputs, the output, the base processing time, and the horizontal-lava reduction rule. The Alloyer is the category catalyst, its progress arrow opens alloying recipes, and recipe transfer targets the three input slots. JEI also reserves space around the visible information fly-out and provides descriptions for the Alloyer and Lava-Infused tools.
 
 The current JEI compatibility boundary is described in [Automation, GUI, and JEI](automation-and-jei.md#current-compatibility-boundary); compilation does not constitute JEI runtime validation.

@@ -2,9 +2,9 @@
 
 [Documentation home](README.md) · [Fuel items](items.md#special-fuels) · [Automation and GUI](automation-and-jei.md)
 
-The **Accelerator** (`fastfurnacev2:accelerator`) converts coal, iron ingots, gold ingots, diamonds, and their storage blocks into Fast variants. It is separate from ordinary smelting and the vanilla recipe book.
+The **Accelerator** (`fastfurnacev2:accelerator`) converts coal, iron ingots, gold ingots, diamonds, and their storage blocks into Lava-Infused variants. It is separate from ordinary smelting and the vanilla recipe book.
 
-Craft it by surrounding one Iron Fast Furnace with eight Redstone Blocks. It requires a pickaxe, drops itself, preserves a custom name, supports directional placement and comparators, and appears in Functional Blocks and the Fast Furnace V2 creative tab. See [Accelerator crafting](recipes.md#accelerator-crafting) for the grid pattern.
+Craft it by surrounding one Iron Lava-Infused Furnace with eight Redstone Blocks. It requires a pickaxe, drops itself, preserves a custom name, supports directional placement and comparators, and appears in Functional Blocks and the Fast Furnace V2 creative tab. See [Accelerator crafting](recipes.md#accelerator-crafting) for the grid pattern.
 
 ## Lava setup
 
@@ -39,14 +39,14 @@ The Accelerator does not require fuel to perform these conversions. Other mods c
 
 ## Boost fuels
 
-By default, only Fast Coal, Block of Fast Coal, Extreme Coal, and Block of Extreme Coal are accepted as Accelerator boosts. Ordinary coal and other unregistered furnace fuels are rejected by the boost slot and automation.
+By default, only the Lava-Infused Coal items and blocks from the `fast_coal` and `extreme_coal` families are accepted as Accelerator boosts. Ordinary coal and other unregistered furnace fuels are rejected by the boost slot and automation.
 
 | Boost item | Work supplied | Maximum work per tick | Effective speed |
 |---|---:|---:|---:|
-| Fast Coal | 3,600 | 3 | 300% |
-| Block of Fast Coal | 4,000 | 3 | 300% |
-| Extreme Coal | 7,200 | 5 | 500% |
-| Block of Extreme Coal | 8,000 | 5 | 500% |
+| Lava-Infused Coal (`fast_coal`) | 3,600 | 3 | 300% |
+| Block of Lava-Infused Coal (`fast_coal_block`) | 4,000 | 3 | 300% |
+| Lava-Infused Coal (`extreme_coal`) | 7,200 | 5 | 500% |
+| Block of Lava-Infused Coal (`extreme_coal_block`) | 8,000 | 5 | 500% |
 
 When valid work can proceed and no boost remains, one accepted boost item is consumed and its full work capacity is banked. Each active tick advances by the smallest of:
 
@@ -61,12 +61,12 @@ This clamping prevents wasted partial ticks or boost work.
 | Boost | Item conversion | Block conversion | Built-in capacity from one boost item |
 |---|---:|---:|---|
 | None | 400 ticks | 3,600 ticks | Not applicable; conversions run without boost |
-| Fast Coal | 134 ticks | 1,200 ticks | 9 item conversions, or 1 block conversion |
-| Block of Fast Coal | 134 ticks | 1,200 ticks | 10 item conversions, or 1 block conversion plus 1 item conversion |
-| Extreme Coal | 80 ticks | 720 ticks | 18 item conversions, or 2 block conversions |
-| Block of Extreme Coal | 80 ticks | 720 ticks | 20 item conversions, or 2 block conversions plus 2 item conversions |
+| Lava-Infused Coal (`fast_coal`) | 134 ticks | 1,200 ticks | 9 item conversions, or 1 block conversion |
+| Block of Lava-Infused Coal (`fast_coal_block`) | 134 ticks | 1,200 ticks | 10 item conversions, or 1 block conversion plus 1 item conversion |
+| Lava-Infused Coal (`extreme_coal`) | 80 ticks | 720 ticks | 18 item conversions, or 2 block conversions |
+| Block of Lava-Infused Coal (`extreme_coal_block`) | 80 ticks | 720 ticks | 20 item conversions, or 2 block conversions plus 2 item conversions |
 
-Boost work can be spent across different conversion types. For example, a Block of Fast Coal can fund one 3,600-work block conversion and then one 400-work item conversion, regardless of which supported materials are used. A Block of Extreme Coal funds two block conversions with 800 work left, enough for two more item conversions.
+Boost work can be spent across different conversion types. For example, a Block of Lava-Infused Coal (`fast_coal_block`) can fund one 3,600-work block conversion and then one 400-work item conversion, regardless of which supported materials are used. A Block of Lava-Infused Coal (`extreme_coal_block`) funds two block conversions with 800 work left, enough for two more item conversions.
 
 ## Pause and reset rules
 

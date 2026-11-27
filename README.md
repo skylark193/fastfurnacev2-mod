@@ -1,16 +1,17 @@
 # Fast Furnace V2
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It expands furnace progression with faster machines, ore crushing, animated Fast materials, powerful tools, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2. It expands furnace progression with faster machines, ore crushing, animated Lava-Infused materials, powerful tools, and optional JEI and Jade integration.
 
 ## Features
 
 - **Four furnace tiers** with faster smelting, special fuel bonuses, and familiar vanilla behavior.
 - **Four crusher tiers** that turn raw ores into smeltable crushed materials, with a chance to double output.
 - **Four generator, battery, and power-conduit tiers** for producing, transferring, and storing Forge Energy.
-- **Fast and Extreme materials** obtained through mining bonuses, ore replacement, and material conversion.
-- **Fast and Extremely Fast tools** with faster actions, built-in enchantments, and other bonuses.
-- **The Accelerator and Extremely Fast Alloyer** for advanced material conversion and alloying.
-- **Mod compatibility** through crushed-ore discovery, a public extension API, and optional JEI displays.
+- **Lava-Infused materials** obtained through mining bonuses, ore replacement, and material conversion.
+- **Enhanced Lava-Infused tools** with faster actions, built-in enchantments, and other bonuses.
+- **The Accelerator and Lava-Infused Alloyer** for advanced material conversion and alloying.
+- **Configurable FE networks** with per-side generator/battery modes, conduit ordering modes, and no battery-to-battery equalization.
+- **Mod compatibility** through crushed-ore discovery, a public extension API, and optional JEI and Jade displays.
 
 See the [documentation home](docs/README.md) for a quick start and the complete player reference.
 
@@ -22,7 +23,7 @@ See the [documentation home](docs/README.md) for a quick start and the complete 
 | NeoForge | 26.1.2.126 or newer |
 | Java | 25 |
 
-JEI is optional, but requires a release compatible with Minecraft 26.1.2 and this integration. The currently configured JEI API targets Minecraft 26.1 and is not runtime-compatible with 26.1.2; see [JEI compatibility](docs/automation-and-jei.md#current-compatibility-boundary).
+JEI is optional, but requires a release compatible with Minecraft 26.1.2 and this integration. The currently configured JEI API targets Minecraft 26.1 and is not runtime-compatible with 26.1.2; see [JEI compatibility](docs/automation-and-jei.md#current-compatibility-boundary). Jade is also optional; version 26.1.12 or newer provides live machine and conduit status.
 
 ## Installation
 
@@ -48,9 +49,9 @@ The JAR is written to `build/libs/`.
 |---|---|
 | Start here | [Documentation home and quick start](docs/README.md) |
 | Content | [Blocks](docs/blocks.md), [items](docs/items.md), and [recipes and fuels](docs/recipes.md) |
-| Machines | [Fast Furnaces](docs/furnaces.md), [Fast Crushers](docs/crushers.md), [Accelerator](docs/accelerator.md), [Extremely Fast Alloyer](docs/alloyer.md), and [energy blocks](docs/energy.md) |
+| Machines | [Lava-Infused Furnaces](docs/furnaces.md), [Lava-Infused Crushers](docs/crushers.md), [Accelerator](docs/accelerator.md), [Lava-Infused Alloyer](docs/alloyer.md), and [energy blocks](docs/energy.md) |
 | World and resources | [World generation and dynamic resources](docs/world-generation.md) |
-| Automation and viewers | [Automation, GUI, and JEI](docs/automation-and-jei.md) |
+| Automation and viewers | [Automation, GUI, JEI, and Jade](docs/automation-and-jei.md) |
 | Mod developers | [Public API](docs/api.md) |
 | Contributors | [Development guide](docs/development.md) and [architecture notes](docs/architecture.md) |
 | Texture tooling | [Texture generation](tools/README.md) |

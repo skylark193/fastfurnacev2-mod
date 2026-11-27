@@ -2,7 +2,7 @@
 
 [Documentation home](README.md)
 
-Fast Furnace V2 1.12.0 exposes API version 1.4.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Fast Crusher recipes, Accelerator conversions, Accelerator boost fuels, Extremely Fast Alloyer recipes, tool-stat overrides, custom tool modifiers, reusable energy storage, recipe and ingredient queries, dynamic crushed-ore mappings, and access to every fixed built-in item. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
+Fast Furnace V2 1.13.0 exposes API version 1.4.0 for other NeoForge mods. The API supports custom ordinary fuels, tier-dependent fuel bonuses, Lava-Infused Crusher recipes, Accelerator conversions, Accelerator boost fuels, Lava-Infused Alloyer recipes, tool-stat overrides, custom tool modifiers, reusable energy storage, recipe and ingredient queries, dynamic crushed-ore mappings, and access to every fixed built-in item. Registered content runs in the actual machines and tool handlers, participates in automation and persistence where applicable, appears in the optional JEI integration where applicable, and uses the same implementation as the built-in content.
 
 The public API is under `com.skylark193.fastfurnacev2.api`. Classes under `com.skylark193.fastfurnacev2.internal` are implementation details and must not be used by other mods.
 
@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.12.0"
+    compileOnly "com.skylark193.fastfurnacev2:fastfurnacev2:1.13.0"
 }
 ```
 
@@ -32,7 +32,7 @@ Declare the runtime dependency in `neoforge.mods.toml`:
 [[dependencies.examplemod]]
 modId="fastfurnacev2"
 type="required"
-versionRange="[1.12.0,)"
+versionRange="[1.13.0,)"
 ordering="NONE"
 side="BOTH"
 ```
@@ -106,8 +106,8 @@ private void registerFuels(RegisterFastFuelsEvent event) {
                     Identifier.fromNamespaceAndPath("examplemod", "powered_blaze_powder"),
                     Ingredient.of(Items.BLAZE_POWDER),
                     800)
-            .burnTimePercent(200)       // 1,600 ticks in every Fast Furnace/Crusher tier
-            .speedBonusPercent(25)      // Fast tier: 150% + 25 = 175% processing speed
+            .burnTimePercent(200)       // 1,600 ticks in every Lava-Infused Furnace/Crusher tier
+            .speedBonusPercent(25)      // Lava-Infused tier: 150% + 25 = 175% processing speed
             .acceleratorBoost(800, 4)  // 800 work units, up to 4 work per tick
             .priority(10)
             .build());
@@ -117,16 +117,16 @@ private void registerFuels(RegisterFastFuelsEvent event) {
 The parameters are:
 
 - `baseBurnTime`: the ordinary furnace burn time in ticks. Positive values are supplied through NeoForge's fuel burn-time event. Zero preserves the item's existing vanilla or modded burn time, allowing bonuses on an existing fuel or an Accelerator-only definition.
-- `burnTimePercent`: a fixed integer percentage or `ToIntFunction<FastFurnaceTier>`. It scales the effective ordinary burn time before a Fast Furnace's independent fuel-doubling roll. Fast Crushers never roll for doubled fuel duration. Use 100 for no scaling. Long arithmetic and clamping prevent overflow.
-- `speedBonusPercent`: percentage points added to the machine tier's normal speed. For example, Fast Furnace is normally 150%; a bonus of 25 produces 175%, and its standard 200-tick recipe takes 114 ticks. Zero leaves speed unchanged. The combined speed saturates at `Integer.MAX_VALUE` rather than overflowing.
+- `burnTimePercent`: a fixed integer percentage or `ToIntFunction<FastFurnaceTier>`. It scales the effective ordinary burn time before a Lava-Infused Furnace's independent fuel-doubling roll. Lava-Infused Crushers never roll for doubled fuel duration. Use 100 for no scaling. Long arithmetic and clamping prevent overflow.
+- `speedBonusPercent`: percentage points added to the machine tier's normal speed. For example, Lava-Infused Furnace is normally 150%; a bonus of 25 produces 175%, and its standard 200-tick recipe takes 114 ticks. Zero leaves speed unchanged. The combined speed saturates at `Integer.MAX_VALUE` rather than overflowing.
 - `acceleratorBoost(work, workPerTick)`: optional exact boosted work and its maximum work advance per tick. Both values must be positive together or both zero. The Accelerator still runs without boost fuel.
 - `priority`: ingredient-match precedence; later registration breaks equal-priority ties.
 
-Active fuel identity is saved by definition ID. The machine continues using the consumed fuel's bonuses even if the fuel slot subsequently contains another item. The built-in Fast Coal, Block of Fast Coal, Extreme Coal, and Block of Extreme Coal definitions use IDs exposed as `FastFurnaceApi.FAST_COAL_FUEL_ID`, `FAST_COAL_BLOCK_FUEL_ID`, `EXTREME_COAL_FUEL_ID`, and `EXTREME_COAL_BLOCK_FUEL_ID`. Block of Extreme Coal has an ordinary burn time of 16,000 ticks, uses Extreme Coal's tier-duration and +100-percentage-point speed bonuses, and supplies 8,000 Accelerator work units at five work per tick. Its item accessor is `FastFurnaceApi.extremeCoalBlock()`.
+Active fuel identity is saved by definition ID. The machine continues using the consumed fuel's bonuses even if the fuel slot subsequently contains another item. The built-in `fast_coal`, `fast_coal_block`, `extreme_coal`, and `extreme_coal_block` definitions use IDs exposed as `FastFurnaceApi.FAST_COAL_FUEL_ID`, `FAST_COAL_BLOCK_FUEL_ID`, `EXTREME_COAL_FUEL_ID`, and `EXTREME_COAL_BLOCK_FUEL_ID`. Block of Lava-Infused Coal (`extreme_coal_block`) has an ordinary burn time of 16,000 ticks, uses `extreme_coal`'s tier-duration and +100-percentage-point speed bonuses, and supplies 8,000 Accelerator work units at five work per tick. Its item accessor is `FastFurnaceApi.extremeCoalBlock()`.
 
 `FastFuel.inputItems()` returns fresh display stacks for recipe viewers. `scaleBurnTime(...)` and `getSpeedPercent(...)` expose the same calculations used by the machines.
 
-## Fast Crusher recipes
+## Lava-Infused Crusher recipes
 
 Register a `CrusherRecipe` with an ingredient, input count, output stack, and processing time:
 
@@ -149,7 +149,7 @@ The full constructor is `(id, ingredient, inputCount, output, processingTime, pr
 - The output can have any count that leaves room for the tier's output-doubling roll. For example, three gravel can double to six. A blocked doubled result remains pending without consuming input or rerolling.
 - A recipe is processable only when the input stack contains at least `inputCount`. Successful processing consumes exactly that many items.
 - Built-in raw-ore recipes use IDs of the form `fastfurnacev2:crusher/<raw namespace>/<raw path>` and priority zero.
-- Built-in ore-block recipes use `fastfurnacev2:crusher/ore/<ore path>` for `extreme_coal_ore`, `deepslate_extreme_coal_ore`, `fast_iron_ore`, `deepslate_fast_iron_ore`, `fast_gold_ore`, `deepslate_fast_gold_ore`, `fast_diamond_ore`, and `deepslate_fast_diamond_ore`. Each consumes one ore block and produces three Extreme Coal or three matching crushed Fast materials; the normal output-doubling roll produces six.
+- Built-in ore-block recipes use `fastfurnacev2:crusher/ore/<ore path>` for `extreme_coal_ore`, `deepslate_extreme_coal_ore`, `fast_iron_ore`, `deepslate_fast_iron_ore`, `fast_gold_ore`, `deepslate_fast_gold_ore`, `fast_diamond_ore`, and `deepslate_fast_diamond_ore`. Each consumes one ore block and produces three Lava-Infused Coal (`extreme_coal`) items or three matching crushed Lava-Infused materials; the normal output-doubling roll produces six.
 
 The API does not add an ordinary smelting recipe or generate a crushed item for custom crusher output. Register those separately if desired.
 
@@ -177,7 +177,7 @@ The existing four-horizontal-lava requirement, blocked-output pause/resume, inpu
 
 Built-in conversion IDs are `fastfurnacev2:accelerator/coal`, `coal_block`, `iron`, `iron_block`, `gold`, `gold_block`, `diamond`, and `diamond_block` (each suffix after `fastfurnacev2:accelerator/`). Item conversions require 400 work units and block conversions require 3,600.
 
-## Extremely Fast Alloyer recipes
+## Lava-Infused Alloyer recipes
 
 Register an `ExtremelyFastAlloyerRecipe` with exactly three ingredients, a nonempty output, and a positive base processing time:
 
@@ -197,9 +197,9 @@ private void registerAlloyerRecipes(RegisterExtremelyFastAlloyerRecipesEvent eve
 
 The full constructor is `(id, ingredients, output, processingTicks, priority)`. The four-argument constructor uses priority zero. Ingredients are shapeless but must match three distinct nonempty input slots; processing consumes one item from each matched slot. Priority applies to the complete recipe match, with later registration breaking equal-priority ties.
 
-Custom recipes use only the Extremely Fast Alloyer and require Extreme Coal. Each horizontal lava side subtracts 100 ticks, with the usual 400-tick floor; lava never increases the duration of a recipe whose base time is already shorter. Existing input reset, output blocking, fuel preservation, transaction, persistence, and automation rules apply. Registered recipes automatically appear in the Alloyer's JEI category.
+Custom recipes use only the Lava-Infused Alloyer and require Lava-Infused Coal (`extreme_coal`). Each horizontal lava side subtracts 100 ticks, with the usual 400-tick floor; lava never increases the duration of a recipe whose base time is already shorter. Existing input reset, output blocking, fuel preservation, transaction, persistence, and automation rules apply. Registered recipes automatically appear in the Alloyer's JEI category.
 
-The built-in Extremely Fast Ingot recipe ID is `FastFurnaceApi.EXTREMELY_FAST_INGOT_RECIPE_ID`.
+The built-in Lava-Infused Ingot recipe ID is `FastFurnaceApi.EXTREMELY_FAST_INGOT_RECIPE_ID`.
 
 ## Tool statistics and custom tools
 
@@ -242,7 +242,7 @@ public static final DeferredItem<Item> CUSTOM_PICKAXE = ITEMS.registerItem(
                 properties));
 ```
 
-The factory preserves axe stripping and shovel flattening. Its item classes route durability damage through registered Fast Furnace modifiers. Block-drop, kill-drop, and melee-damage modifiers also work on ordinary items from other mods; only durability-save rolls require this factory or equivalent `damageItem` integration.
+The factory preserves axe stripping and shovel flattening. Its item classes route durability damage through registered Lava-Infused Furnace modifiers. Block-drop, kill-drop, and melee-damage modifiers also work on ordinary items from other mods; only durability-save rolls require this factory or equivalent `damageItem` integration.
 
 ### Register runtime modifiers
 
@@ -324,7 +324,7 @@ try (Transaction transaction = Transaction.openRoot()) {
 }
 ```
 
-To simulate, let the transaction close without committing. Direct `set(int)` changes notify immediately; loading saved energy does not notify. Fast Furnaces, Crushers, the Accelerator, and the Alloyer still do not expose or consume energy. Generators, batteries, and power conduits expose standard block energy capabilities; battery items also expose `Capabilities.Energy.ITEM` with their tier capacity and transfer limit. Battery item charge is stored in `fastfurnacev2:stored_energy` and survives breaking and placement.
+To simulate, let the transaction close without committing. Direct `set(int)` changes notify immediately; loading saved energy does not notify. Lava-Infused Furnaces, Crushers, the Accelerator, and the Alloyer still do not expose or consume energy. Generators, batteries, and power conduits expose standard block energy capabilities; battery items also expose `Capabilities.Energy.ITEM` with their tier capacity and transfer limit. Battery item charge is stored in `fastfurnacev2:stored_energy` and survives breaking and placement.
 
 ## Queries and built-in content access
 
@@ -378,7 +378,7 @@ Optional<FastToolModifiers> toolModifiersByStack = FastFurnaceApi.findToolModifi
 Every fixed built-in item has an accessor. In addition to the examples above:
 
 - Regular and deepslate ores: `deepslateExtremeCoalOre()`, `fastIronOre()`, `deepslateFastIronOre()`, `fastGoldOre()`, `deepslateFastGoldOre()`, `fastDiamondOre()`, and `deepslateFastDiamondOre()`.
-- Fast materials and storage: `rawFastIron()`, `fastIronIngot()`, `fastIronBlock()`, `rawFastGold()`, `fastGoldIngot()`, `fastGoldBlock()`, `rawFastDiamond()`, `fastDiamond()`, and `fastDiamondBlock()`.
+- Lava-Infused materials and storage: `rawFastIron()`, `fastIronIngot()`, `fastIronBlock()`, `rawFastGold()`, `fastGoldIngot()`, `fastGoldBlock()`, `rawFastDiamond()`, `fastDiamond()`, and `fastDiamondBlock()`.
 - All sixteen tools: `fastIronPickaxe/Shovel/Axe/Sword()`, `fastGoldPickaxe/Shovel/Axe/Sword()`, `fastDiamondPickaxe/Shovel/Axe/Sword()`, and `extremelyFastPickaxe/Shovel/Axe/Sword()`. Each tool name is a separate method with its complete suffix, such as `fastIronShovel()`.
 
 `findCrusherRecipe(ItemStack)` and `findAcceleratorRecipe(ItemStack)` require enough input items to process. The corresponding `isCrusherInput` and `isAcceleratorInput` methods, plus `isAlloyerInput`, check only ingredient acceptance, making them suitable for slot and automation logic. The list-based Alloyer query examines the first three stacks and applies distinct-slot shapeless matching. All recipe types and fuels also support lookup by exact registered `Identifier`.

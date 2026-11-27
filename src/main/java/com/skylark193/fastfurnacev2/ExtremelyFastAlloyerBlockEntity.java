@@ -149,6 +149,26 @@ public class ExtremelyFastAlloyerBlockEntity extends BaseContainerBlockEntity im
                 MIN_RECIPE_TICKS, baseTicks - Math.max(0, horizontalLavaSides) * LAVA_TICK_REDUCTION));
     }
 
+    public int getWorkProgress() {
+        return this.workProgress;
+    }
+
+    public int getRecipeTicks() {
+        return this.recipeTicks;
+    }
+
+    public int getBurnTimeRemaining() {
+        return this.burnTimeRemaining;
+    }
+
+    public int getTotalBurnTime() {
+        return this.totalBurnTime;
+    }
+
+    public int getLavaSides() {
+        return this.lavaSides;
+    }
+
     private void consumeFuel() {
         ItemStack fuel = this.items.get(ExtremelyFastAlloyerMenu.FUEL_SLOT);
         if (!isExtremeCoal(fuel)) {

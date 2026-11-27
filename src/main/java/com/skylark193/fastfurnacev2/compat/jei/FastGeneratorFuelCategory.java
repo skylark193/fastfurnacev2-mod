@@ -20,7 +20,7 @@ final class FastGeneratorFuelCategory implements IRecipeCategory<FastGeneratorFu
     private static final Map<FastFurnaceTier, IRecipeType<FastGeneratorFuelRecipe>> RECIPE_TYPES =
             new EnumMap<>(FastFurnaceTier.class);
     private static final int WIDTH = 180;
-    private static final int HEIGHT = 36;
+    private static final int HEIGHT = 64;
 
     static {
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -82,7 +82,11 @@ final class FastGeneratorFuelCategory implements IRecipeCategory<FastGeneratorFu
         addCenteredText(builder, Component.translatable(
                 "jei.fastfurnacev2.generator_fuel_output", formatEnergy(recipe.outputPerTick())), 0);
         addCenteredText(builder, Component.translatable(
-                "jei.fastfurnacev2.generator_fuel_total", formatEnergy(recipe.totalEnergy())), 18);
+                "jei.fastfurnacev2.generator_fuel_total", formatEnergy(recipe.totalEnergy())), 16);
+        addCenteredText(builder, Component.translatable(
+                "jei.fastfurnacev2.generator_fuel_burn_percent", recipe.burnTimePercent()), 32);
+        addCenteredText(builder, Component.translatable(
+                "jei.fastfurnacev2.generator_fuel_lava", recipe.lavaSides()), 48);
     }
 
     private static void addCenteredText(IRecipeExtrasBuilder builder, Component text, int y) {

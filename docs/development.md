@@ -13,6 +13,7 @@ This page is for contributors building or modifying Fast Furnace V2. Player beha
 | NeoForge | 26.1.2.126 |
 | ModDev Gradle plugin | 2.0.148 |
 | JEI API | 29.2.0.21, compile-only by default |
+| Jade API | 26.1.12+neoforge, compile-only by default |
 
 Use the included **Gradle 9.2.1 wrapper**; a system Gradle installation is unnecessary. Dependency and mod metadata versions live in [`gradle.properties`](../gradle.properties).
 
@@ -53,6 +54,10 @@ Do not claim that an earlier test covers later edits. If validation fails or can
 JEI APIs are `compileOnly`. JEI 29.2.0.21 declares Minecraft `[26.1,26.1]` and cannot launch on Minecraft 26.1.2, so normal development launches exclude its runtime.
 
 After selecting a compatible JEI release, update `jei_version` and, if needed, `jei_minecraft_version`, then opt in with `-PwithJei`. Gradle checks property presence: even `-PwithJei=false` enables `localRuntime`. Never bypass JEI's version requirement or claim runtime validation without launching it.
+
+## Jade validation boundary
+
+Jade APIs are `compileOnly` by default. Use `-PwithJade` to add the configured Jade runtime to development launches; as with JEI, property presence enables it. Server-side plugin loading can be checked with `./gradlew runGameTestServer -PwithJade`, but tooltip layout and client interaction still require a development client. Do not automatically launch that client or claim visual validation from compilation alone.
 
 ## Version management
 

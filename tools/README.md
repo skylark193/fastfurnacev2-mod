@@ -10,7 +10,7 @@ The lava-vein generator:
 - Produces a vertical PNG animation strip and its companion `.png.mcmeta` file.
 - Uses a fixed seed so repeated runs with the same arguments produce identical output.
 
-The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Regular and deepslate Fast material ore sources are preserved as `iron_ore.png`, `deepslate_iron_ore.png`, `gold_ore.png`, `deepslate_gold_ore.png`, `diamond_ore.png`, and `deepslate_diamond_ore.png`; `deepslate_coal_ore.png` supplies Deepslate Extreme Coal Ore. Raw and finished Fast material sources are `raw_iron.png`, `raw_gold.png`, `raw_diamond.png`, `iron_ingot.png`, `gold_ingot.png`, and `diamond.png`. Vanilla tool sources are the four `iron_*`, four `golden_*`, and four `diamond_*` PNGs for pickaxes, shovels, axes, and swords in the same directory. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
+The vanilla cobblestone, coal, coal ore, coal block, smooth stone, Netherrack, and gunpowder sources are preserved at `texture_sources/cobblestone.png`, `texture_sources/coal.png`, `texture_sources/coal_ore.png`, `texture_sources/coal_block.png`, `texture_sources/smooth_stone.png`, `texture_sources/netherrack.png`, and `texture_sources/gunpowder.png`. Regular and deepslate Lava-Infused material ore sources are preserved as `iron_ore.png`, `deepslate_iron_ore.png`, `gold_ore.png`, `deepslate_gold_ore.png`, `diamond_ore.png`, and `deepslate_diamond_ore.png`; `deepslate_coal_ore.png` supplies Deepslate Lava-Infused Coal Ore. Raw and finished Lava-Infused material sources are `raw_iron.png`, `raw_gold.png`, `raw_diamond.png`, `iron_ingot.png`, `gold_ingot.png`, and `diamond.png`. Vanilla tool sources are the four `iron_*`, four `golden_*`, and four `diamond_*` PNGs for pickaxes, shovels, axes, and swords in the same directory. Vanilla furnace front, lit front, side, and top sources are preserved under `texture_sources/furnace/`. The iron, gold, and diamond block sources are preserved as `texture_sources/iron_block.png`, `texture_sources/gold_block.png`, and `texture_sources/diamond_block.png`. Each `<tier>_furnace/` directory contains that tier's four square furnace sources, combining the metal block pattern with vanilla furnace shading while preserving burning-fire pixels. Keep square source textures here; do not use a generated animation strip as the input for another run.
 
 ## Setup
 
@@ -23,7 +23,7 @@ py -m venv .venv
 
 On macOS/Linux, use `python3 -m venv .venv` and `.venv/bin/python` instead. Pillow is the only dependency and is pinned in `requirements.txt`. The virtual environment is excluded from Git.
 
-## Regenerate Fast Cobblestone
+## Regenerate Lava-Infused Cobblestone
 
 Windows:
 
@@ -39,7 +39,7 @@ macOS/Linux:
 
 This writes the animated block texture and its `.png.mcmeta` metadata. The existing block model references the animated texture automatically.
 
-## Regenerate Fast Coal
+## Regenerate Lava-Infused Coal
 
 Windows:
 
@@ -53,11 +53,11 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_lava_texture.py --input tools/texture_sources/coal.png --output src/main/resources/assets/fastfurnacev2/textures/item/fast_coal.png --seed 415 --frames 8 --frame-time 2 --veins 2
 ```
 
-This writes the animated item texture and its `.png.mcmeta` metadata. The existing Fast Coal item model references the texture automatically.
+This writes the animated item texture and its `.png.mcmeta` metadata. The existing Lava-Infused Coal item model references the texture automatically.
 
-## Regenerate Extreme Coal Ore and Extreme Coal
+## Regenerate Lava-Infused Coal Ore and Lava-Infused Coal
 
-Extreme Coal Ore uses the standard lava-vein generator with seed **419**. Extreme Coal uses seed **420** and a separate generator that preserves the coal silhouette and alpha channel while replacing every visible pixel with an animated lava-palette color. It loads the shared palette directly from the sibling lava generator so it works under Python's isolated `-I` mode.
+Lava-Infused Coal Ore uses the standard lava-vein generator with seed **419**. Lava-Infused Coal uses seed **420** and a separate generator that preserves the coal silhouette and alpha channel while replacing every visible pixel with an animated lava-palette color. It loads the shared palette directly from the sibling lava generator so it works under Python's isolated `-I` mode.
 
 Windows:
 
@@ -73,11 +73,11 @@ macOS/Linux:
 .venv/bin/python -I tools/generate_extreme_coal_texture.py --input tools/texture_sources/coal.png --output src/main/resources/assets/fastfurnacev2/textures/item/extreme_coal.png --seed 420 --frames 8 --frame-time 2
 ```
 
-Both commands write eight-frame vertical strips and sibling `.png.mcmeta` files with two ticks per frame and no interpolation. The Extreme Coal generator's `--seed`, `--frames`, and `--frame-time` options control deterministic heat variation and animation timing.
+Both commands write eight-frame vertical strips and sibling `.png.mcmeta` files with two ticks per frame and no interpolation. The Lava-Infused Coal generator's `--seed`, `--frames`, and `--frame-time` options control deterministic heat variation and animation timing.
 
-## Regenerate Deepslate Ores and Block of Extreme Coal
+## Regenerate Deepslate Ores and Block of Lava-Infused Coal
 
-Deepslate Extreme Coal Ore uses seed **433**, Deepslate Fast Iron Ore **434**, Deepslate Fast Gold Ore **435**, and Deepslate Fast Diamond Ore **436**. Block of Extreme Coal uses seed **437** with the all-lava generator, preserving the coal-block source's alpha and luminance detail while changing every visible pixel's color over time. All five outputs have eight frames at two ticks per frame with no interpolation.
+Deepslate Lava-Infused Coal Ore uses seed **433**, Deepslate Lava-Infused Iron Ore **434**, Deepslate Lava-Infused Gold Ore **435**, and Deepslate Lava-Infused Diamond Ore **436**. Block of Lava-Infused Coal uses seed **437** with the all-lava generator, preserving the coal-block source's alpha and luminance detail while changing every visible pixel's color over time. All five outputs have eight frames at two ticks per frame with no interpolation.
 
 Windows:
 
@@ -91,7 +91,7 @@ Windows:
 
 On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments.
 
-## Regenerate Fast Tools and Swords
+## Regenerate Lava-Infused Tools and Swords
 
 All twelve tool textures use shared seed **439**, eight frames, two ticks per frame, no interpolation, and two primary veins. The shared seed intentionally gives identical tool silhouettes the same vein placement across material tiers.
 
@@ -114,7 +114,7 @@ Windows:
 
 On macOS/Linux, use `.venv/bin/python` and forward slashes with the same arguments. The checked-in tests cover all twelve concrete outputs.
 
-## Regenerate Block of Fast Coal
+## Regenerate Block of Lava-Infused Coal
 
 Windows:
 
@@ -130,9 +130,9 @@ macOS/Linux:
 
 This writes the animated block texture and its `.png.mcmeta` metadata. The block and item definitions reference the same `cube_all` block model automatically.
 
-## Regenerate Fast Material Textures
+## Regenerate Lava-Infused Material Textures
 
-The Fast ores, raw materials, finished materials, and storage blocks use seeds **421–432** in material order. Every command writes an eight-frame vertical strip with two ticks per frame, no interpolation, and two primary veins.
+The Lava-Infused ores, raw materials, finished materials, and storage blocks use seeds **421–432** in material order. Every command writes an eight-frame vertical strip with two ticks per frame, no interpolation, and two primary veins.
 
 | Output | Source | Seed |
 |---|---|---:|
@@ -188,9 +188,9 @@ macOS/Linux:
 
 The first command writes the eight-frame body texture. The second writes `accelerator_top_0.png` through `accelerator_top_10.png`, each with eight frames and sibling animation metadata. It rejects an input path that collides with any generated PNG or metadata path before writing, protecting the square source artwork. The lightning-bolt outline and current fill remain stationary within each animation; only the lava background moves. Higher levels fill more of the bolt from bottom to top. The blockstate selects these models from `bolt_level`, independently of the inherited `lit` state. Each model puts its stage texture on the top face only and retains the body texture on the front, sides, and bottom.
 
-## Regenerate Extremely Fast Alloyer and Ingot Textures
+## Regenerate Lava-Infused Alloyer and Ingot Textures
 
-The Alloyer body and all eleven top stages use seed **440**; the Extremely Fast Ingot uses seed **441**. Both use the all-lava generator, which preserves the square source's silhouette and alpha while replacing every visible pixel with an animated shared-palette lava color. The Alloyer top generator's `--all-lava` option combines that background with the same stationary lightning-bolt geometry and eleven-stage bottom-up fill used by the Accelerator. Do not substitute the ordinary lava-vein generator.
+The Alloyer body and all eleven top stages use seed **440**; the Lava-Infused Ingot uses seed **441**. Both use the all-lava generator, which preserves the square source's silhouette and alpha while replacing every visible pixel with an animated shared-palette lava color. The Alloyer top generator's `--all-lava` option combines that background with the same stationary lightning-bolt geometry and eleven-stage bottom-up fill used by the Accelerator. Do not substitute the ordinary lava-vein generator.
 
 Windows:
 
@@ -208,7 +208,7 @@ On macOS/Linux, use `.venv/bin/python` and forward slashes with the same argumen
 
 The body and ingot commands write eight-frame strips with two ticks per frame and no interpolation. The top command writes `extremely_fast_alloyer_top_0.png` through `extremely_fast_alloyer_top_10.png`, each with eight frames and sibling metadata. The bolt outline and current fill remain stationary within each animation while the all-lava background moves. The same input/output and metadata collision checks as the Accelerator top generator apply.
 
-## Regenerate Fast Crusher Sides and Bottom
+## Regenerate Lava-Infused Crusher Sides and Bottom
 
 Windows:
 
@@ -224,7 +224,7 @@ macOS/Linux:
 
 This writes the animated side/bottom block texture and its `.png.mcmeta` metadata.
 
-## Regenerate the Fast Crusher Blender Top
+## Regenerate the Lava-Infused Crusher Blender Top
 
 The top generator draws a metal housing, glass rim, four-blade rotor, and lava-colored contents over the preserved 16×16 Netherrack source. It writes a static idle PNG without animation metadata and a separate eight-frame processing strip with one tick per frame. The rotor completes one revolution per loop; the housing remains unchanged in every frame. The optional `--trim` argument accepts a 16×16 iron, gold, or diamond block source and applies its pixels only to the stationary outer housing around the blender. The Netherrack corners, glass, and animated center remain unchanged.
 
@@ -293,7 +293,7 @@ The generator preserves the source silhouette and transparency while remapping v
 
 ## Regenerate Generator, Battery, and Power-Conduit Textures
 
-The energy generator creates the preserved square source artwork from the vanilla-style smooth-stone and tier-metal sources, then applies animated lava veins without moving the generator housing, fuel grille, battery terminals, lightning bolt, charge-bar borders, or conduit housing. Fast, Iron Fast, Gold Fast, and Diamond Fast tiers use seeds **443**, **444**, **445**, and **446** respectively. It writes eight eight-frame base textures per tier, each at two ticks per frame with no interpolation, plus eleven static transparent battery charge overlays with paired bars that fill from bottom to top.
+The energy generator creates the preserved square source artwork from the vanilla-style smooth-stone and tier-metal sources, then applies animated lava veins without moving the generator housing, fuel grille, battery terminals, lightning bolt, charge-bar borders, or conduit housing. Lava-Infused, Iron Lava-Infused, Gold Lava-Infused, and Diamond Lava-Infused tiers use seeds **443**, **444**, **445**, and **446** respectively. It writes eight eight-frame base textures per tier, each at two ticks per frame with no interpolation, plus eleven static transparent battery charge overlays with paired bars that fill from bottom to top.
 
 Each conduit source has a cross-shaped internal lava channel. Its width is **2, 4, 6, or 8 pixels** by tier, so higher tiers have visibly more animated lava while the housing remains stationary. The four preserved square sources are `tools/texture_sources/energy/<tier>_power_conduit.png`; generated vertical strips and animation metadata use the corresponding names under `assets/fastfurnacev2/textures/block/`.
 
@@ -337,4 +337,4 @@ macOS/Linux:
 .venv/bin/python -I -m unittest discover -s tools -p "test_*.py"
 ```
 
-The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, all-lava visible pixels and preserved silhouettes for Extreme Coal, its block, the Alloyer body, and Extremely Fast Ingot, per-pixel all-lava animation, the Accelerator and Alloyer bolts' monotonic bottom-up fill and stationary outlines, the crusher top's stationary housing, visible, distinct, stationary iron/gold/diamond trim, and the energy machines' stationary details, animated lava, paired charge bars, and widening conduit channels. CLI subprocess tests also reject Accelerator/Alloyer top input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.
+The tests check deterministic output, distinct animation frames, in-bounds wrapping paths, preservation of source pixels, source transparency, exact lava coverage and unchanged visible pixels for the four deepslate ores and all twelve tools, all-lava visible pixels and preserved silhouettes for Lava-Infused Coal, its block, the Alloyer body, and Lava-Infused Ingot, per-pixel all-lava animation, the Accelerator and Alloyer bolts' monotonic bottom-up fill and stationary outlines, the crusher top's stationary housing, visible, distinct, stationary iron/gold/diamond trim, and the energy machines' stationary details, animated lava, paired charge bars, and widening conduit channels. CLI subprocess tests also reject Accelerator/Alloyer top input/output collisions without changing the source and verify removal of stale animation metadata from static crusher and dust outputs. They do not prove byte-for-byte reproduction of every checked-in texture; compare regenerated assets separately when needed.

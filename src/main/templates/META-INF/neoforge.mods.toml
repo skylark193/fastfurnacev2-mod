@@ -6,7 +6,7 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="skylark193"
 description='''
-Adds Fast Cobblestone, Fast and Extreme Coal, Fast Coal Blocks, a lava-powered Accelerator, four tiers of accelerated furnaces and raw-ore crushers, dynamically tinted crushed ores, an extensible modding API, and optional JEI integration.
+Adds Lava-Infused blocks and materials, a lava-powered Accelerator, four tiers of furnaces, crushers, generators, batteries, and power conduits, dynamically tinted crushed ores, an extensible modding API, and optional JEI and Jade integration.
 '''
 
 [[dependencies.${mod_id}]]
@@ -27,6 +27,13 @@ side="BOTH"
 modId="jei"
 type="optional"
 versionRange="[${jei_version},)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="jade"
+type="optional"
+versionRange="[26.1.12,)"
 ordering="AFTER"
 side="BOTH"
 

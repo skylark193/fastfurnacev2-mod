@@ -1,6 +1,7 @@
 package com.skylark193.fastfurnacev2.client;
 
 import com.skylark193.fastfurnacev2.FastGeneratorMenu;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -17,15 +18,16 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
     private static final Identifier TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/furnace.png");
     private static final Identifier LIT_PROGRESS_SPRITE =
             Identifier.withDefaultNamespace("container/furnace/lit_progress");
-    private static final int ENERGY_X = 151;
+    private static final int ENERGY_X = 140;
     private static final int ENERGY_Y = 19;
     private static final int ENERGY_WIDTH = 16;
     private static final int ENERGY_HEIGHT = 42;
     private static final int INFO_BUTTON_X = 160;
     private static final int INFO_BUTTON_Y = 4;
-    private static final int INFO_BUTTON_SIZE = 12;
+    private static final int CONFIG_BUTTON_Y = 18;
+    private static final int BUTTON_SIZE = 12;
     private static final int INFO_PANEL_WIDTH = 160;
-    private static final int INFO_PANEL_HEIGHT = 68;
+    private static final int INFO_PANEL_HEIGHT = 79;
     private static final Component INFO_TITLE = Component.translatable("gui.fastfurnacev2.generator.info");
     private static final String STATUS = "gui.fastfurnacev2.generator.status";
     private static final Component IDLE = Component.translatable("gui.fastfurnacev2.generator.status.idle");
@@ -36,6 +38,7 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
     private static final Component SECONDS = Component.translatable("gui.fastfurnacev2.seconds");
 
     private boolean infoVisible;
+    private boolean configurationVisible;
 
     public FastGeneratorScreen(FastGeneratorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -67,10 +70,20 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 0 && this.isHovering(
-                INFO_BUTTON_X, INFO_BUTTON_Y, INFO_BUTTON_SIZE, INFO_BUTTON_SIZE, event.x(), event.y())) {
-            this.infoVisible = !this.infoVisible;
-            return true;
+        if (event.button() == 0) {
+            if (this.isHovering(INFO_BUTTON_X, INFO_BUTTON_Y, BUTTON_SIZE, BUTTON_SIZE, event.x(), event.y())) {
+                this.infoVisible = !this.infoVisible;
+                return true;
+            }
+            if (this.isHovering(INFO_BUTTON_X, CONFIG_BUTTON_Y, BUTTON_SIZE, BUTTON_SIZE, event.x(), event.y())) {
+                this.configurationVisible = !this.configurationVisible;
+                return true;
+            }
+            if (this.configurationVisible && EnergySideConfigurationControl.mouseClicked(
+                    this.menu, this.getConfigurationPanelX(), this.getConfigurationPanelY(),
+                    (int) event.x() - this.leftPos, (int) event.y() - this.topPos)) {
+                return true;
+            }
         }
         return super.mouseClicked(event, doubleClick);
     }
@@ -83,15 +96,12 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
                 FastGeneratorMenu.FUEL_SLOT_X + 8 - this.font.width(output) / 2,
                 FastGeneratorMenu.FUEL_SLOT_Y + 20, 0xFF404040, false);
 
-        boolean infoHovered = this.isHovering(
-                INFO_BUTTON_X, INFO_BUTTON_Y, INFO_BUTTON_SIZE, INFO_BUTTON_SIZE, mouseX, mouseY);
-        graphics.fill(INFO_BUTTON_X - 1, INFO_BUTTON_Y - 1,
-                INFO_BUTTON_X + INFO_BUTTON_SIZE + 1, INFO_BUTTON_Y + INFO_BUTTON_SIZE + 1, 0xFF373737);
-        graphics.fill(INFO_BUTTON_X, INFO_BUTTON_Y,
-                INFO_BUTTON_X + INFO_BUTTON_SIZE, INFO_BUTTON_Y + INFO_BUTTON_SIZE,
-                infoHovered ? 0xFF6F6F6F : 0xFF4F4F4F);
-        graphics.text(this.font, "i", INFO_BUTTON_X + 5, INFO_BUTTON_Y + 2, 0xFFFFFFFF, false);
-
+        this.drawButton(graphics, INFO_BUTTON_Y, "i", mouseX, mouseY);
+        this.drawButton(graphics, CONFIG_BUTTON_Y, "E", mouseX, mouseY);
+        if (this.isHovering(INFO_BUTTON_X, CONFIG_BUTTON_Y, BUTTON_SIZE, BUTTON_SIZE, mouseX, mouseY)) {
+            graphics.setTooltipForNextFrame(
+                    Component.translatable("gui.fastfurnacev2.energy_sides"), mouseX, mouseY);
+        }
         if (this.isHovering(ENERGY_X, ENERGY_Y, ENERGY_WIDTH, ENERGY_HEIGHT, mouseX, mouseY)) {
             graphics.setTooltipForNextFrame(Component.translatable(
                     "gui.fastfurnacev2.generator.capacity", this.menu.getCapacity()), mouseX, mouseY);
@@ -107,7 +117,25 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
                     x + 6, y + 31, 0xFFE0E0E0, false);
             this.drawTime(graphics, CURRENT_BURN, this.menu.getBurnTime(), x, y + 44);
             this.drawTime(graphics, TOTAL_FUEL, this.menu.getTotalBurnTime(), x, y + 55);
+            graphics.text(this.font, Component.translatable(
+                            "gui.fastfurnacev2.generator.lava_bonus", this.menu.getActiveLavaBonusPercent()),
+                    x + 6, y + 66, 0xFFE0E0E0, false);
         }
+        if (this.configurationVisible) {
+            EnergySideConfigurationControl.render(graphics, this.font, this.menu,
+                    this.getConfigurationPanelX(), this.getConfigurationPanelY(),
+                    mouseX - this.leftPos, mouseY - this.topPos);
+        }
+    }
+
+    private void drawButton(GuiGraphicsExtractor graphics, int y, String label, int mouseX, int mouseY) {
+        boolean hovered = this.isHovering(INFO_BUTTON_X, y, BUTTON_SIZE, BUTTON_SIZE, mouseX, mouseY);
+        graphics.fill(INFO_BUTTON_X - 1, y - 1,
+                INFO_BUTTON_X + BUTTON_SIZE + 1, y + BUTTON_SIZE + 1, 0xFF373737);
+        graphics.fill(INFO_BUTTON_X, y, INFO_BUTTON_X + BUTTON_SIZE, y + BUTTON_SIZE,
+                hovered ? 0xFF6F6F6F : 0xFF4F4F4F);
+        graphics.text(this.font, label, INFO_BUTTON_X + (BUTTON_SIZE - this.font.width(label)) / 2,
+                y + 2, 0xFFFFFFFF, false);
     }
 
     private Component getStatus() {
@@ -128,25 +156,40 @@ public class FastGeneratorScreen extends AbstractContainerScreen<FastGeneratorMe
     }
 
     public List<Rect2i> getJeiExtraAreas() {
-        if (!this.infoVisible) {
-            return List.of();
+        List<Rect2i> areas = new ArrayList<>();
+        if (this.infoVisible) {
+            areas.add(new Rect2i(this.leftPos + this.getInfoPanelX() - 1, this.topPos + INFO_BUTTON_Y - 1,
+                    INFO_PANEL_WIDTH + 2, INFO_PANEL_HEIGHT + 2));
         }
-        return List.of(new Rect2i(
-                this.leftPos + this.getInfoPanelX() - 1,
-                this.topPos + INFO_BUTTON_Y - 1,
-                INFO_PANEL_WIDTH + 2,
-                INFO_PANEL_HEIGHT + 2));
+        if (this.configurationVisible) {
+            areas.add(new Rect2i(this.leftPos + this.getConfigurationPanelX() - 1,
+                    this.topPos + this.getConfigurationPanelY() - 1,
+                    EnergySideConfigurationControl.WIDTH + 2, EnergySideConfigurationControl.HEIGHT + 2));
+        }
+        return areas;
     }
 
     private int getInfoPanelX() {
+        return this.getPanelX(INFO_PANEL_WIDTH);
+    }
+
+    private int getConfigurationPanelX() {
+        return this.getPanelX(EnergySideConfigurationControl.WIDTH);
+    }
+
+    private int getConfigurationPanelY() {
+        return this.infoVisible ? INFO_BUTTON_Y + INFO_PANEL_HEIGHT + 4 : CONFIG_BUTTON_Y;
+    }
+
+    private int getPanelX(int panelWidth) {
         int rightX = this.imageWidth + 4;
-        if (this.leftPos + rightX + INFO_PANEL_WIDTH + 1 <= this.width) {
+        if (this.leftPos + rightX + panelWidth + 1 <= this.width) {
             return rightX;
         }
-        int leftX = -INFO_PANEL_WIDTH - 4;
+        int leftX = -panelWidth - 4;
         if (this.leftPos + leftX - 1 >= 0) {
             return leftX;
         }
-        return Math.max(1 - this.leftPos, this.width - this.leftPos - INFO_PANEL_WIDTH - 1);
+        return Math.max(1 - this.leftPos, this.width - this.leftPos - panelWidth - 1);
     }
 }
