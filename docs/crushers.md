@@ -1,17 +1,17 @@
-# Fast Crushers
+# Lava-Infused Crushers
 
 [Documentation home](README.md) · [Dynamic crushed ores](world-generation.md#dynamic-crushed-ores) · [Recipes](recipes.md)
 
-Fast Crushers are fuel-powered machines that turn raw ore items into matching crushed items. They use the same tier speeds and special-fuel duration bonuses as Fast Furnaces, but their random tier roll doubles **output**, never fuel duration.
+Lava-Infused Crushers are fuel-powered machines that turn raw ore items into matching crushed items. They use the same tier speeds and special-fuel duration bonuses as Lava-Infused Furnaces, but their random tier roll doubles **output**, never fuel duration.
 
 | Tier | Block ID | Normal speed | Output-doubling chance |
 |---|---|---:|---:|
-| Fast | `fastfurnacev2:fast_crusher` | 150% | 10% |
+| Lava-Infused | `fastfurnacev2:fast_crusher` | 150% | 10% |
 | Iron | `fastfurnacev2:iron_fast_crusher` | 200% | 15% |
 | Gold | `fastfurnacev2:gold_fast_crusher` | 250% | 20% |
 | Diamond | `fastfurnacev2:diamond_fast_crusher` | 300% | 25% |
 
-Craft the base Fast Crusher with three Fast Diamonds across the top row, a Fast Furnace in the center, and Fast Iron Ingots in the remaining five slots. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching Blocks of Fast Iron, Fast Gold, or Fast Diamond. See [Recipes](recipes.md#fast-crusher).
+Craft the base Lava-Infused Crusher with three Lava-Infused Diamonds across the top row, a Lava-Infused Furnace in the center, and Lava-Infused Iron Ingots in the remaining five slots. Iron, Gold, and Diamond upgrades each surround the previous crusher with eight matching Blocks of Lava-Infused Iron, Lava-Infused Gold, or Lava-Infused Diamond. See [Recipes](recipes.md#lava-infused-crusher).
 
 All crushers require a pickaxe, drop themselves, preserve custom names, support comparators and directional placement, and emit light level 13 while lit. Their sides and bottom use animated Netherrack textures. The top blender is static while idle and animated while lit; upgrade tiers add their metal block's texture to the stationary housing.
 
@@ -36,10 +36,10 @@ Fast Furnace V2 also registers these ore-block recipes:
 
 | Input | Normal output | Successful output-doubling roll |
 |---|---|---|
-| Regular or Deepslate Extreme Coal Ore | 3 × Extreme Coal | 6 × Extreme Coal |
-| Regular or Deepslate Fast Iron Ore | 3 × Crushed Fast Iron | 6 × Crushed Fast Iron |
-| Regular or Deepslate Fast Gold Ore | 3 × Crushed Fast Gold | 6 × Crushed Fast Gold |
-| Regular or Deepslate Fast Diamond Ore | 3 × Crushed Fast Diamond | 6 × Crushed Fast Diamond |
+| Regular or Deepslate Lava-Infused Coal Ore | 3 × Lava-Infused Coal (`extreme_coal`) | 6 × Lava-Infused Coal (`extreme_coal`) |
+| Regular or Deepslate Lava-Infused Iron Ore | 3 × Crushed Lava-Infused Iron | 6 × Crushed Lava-Infused Iron |
+| Regular or Deepslate Lava-Infused Gold Ore | 3 × Crushed Lava-Infused Gold | 6 × Crushed Lava-Infused Gold |
+| Regular or Deepslate Lava-Infused Diamond Ore | 3 × Crushed Lava-Infused Diamond | 6 × Crushed Lava-Infused Diamond |
 
 The selected external crushed item or dust is used when discovery supplies one. These recipes inherit ordinary-smelting-time fallback and tier/fuel timing like other built-in crusher definitions.
 
@@ -55,9 +55,9 @@ processing ticks = max(1, floor(base processing ticks × 100 / effective speed p
 
 For a standard 200-tick operation:
 
-| Tier | Effective speed: ordinary / Fast Coal / Extreme Coal | Processing time: ordinary / Fast Coal / Extreme Coal |
+| Tier | Effective speed: ordinary / `fast_coal` / `extreme_coal` | Processing time: ordinary / `fast_coal` / `extreme_coal` |
 |---|---:|---:|
-| Fast | 150% / 200% / 250% | 133 / 100 / 80 ticks |
+| Lava-Infused | 150% / 200% / 250% | 133 / 100 / 80 ticks |
 | Iron | 200% / 250% / 300% | 100 / 80 / 66 ticks |
 | Gold | 250% / 300% / 350% | 80 / 66 / 57 ticks |
 | Diamond | 300% / 350% / 400% | 66 / 57 / 50 ticks |
@@ -66,11 +66,11 @@ Custom API recipes can specify their own base processing time. A custom time of 
 
 ## Fuel behavior
 
-Fast Coal and Block of Fast Coal add 50 percentage points to active processing speed; Extreme Coal and Block of Extreme Coal add 100. Their adjusted durations are identical to the **before doubling** values used by furnaces:
+The `fast_coal` item and block add 50 percentage points to active processing speed; the `extreme_coal` item and block add 100. Their adjusted durations are identical to the **before doubling** values used by furnaces:
 
-| Tier | Fast Coal | Block of Fast Coal | Extreme Coal | Block of Extreme Coal |
+| Tier | `fast_coal` | `fast_coal_block` | `extreme_coal` | `extreme_coal_block` |
 |---|---:|---:|---:|---:|
-| Fast | 2,400 | 24,000 | 3,200 | 32,000 |
+| Lava-Infused | 2,400 | 24,000 | 3,200 | 32,000 |
 | Iron | 2,800 | 28,000 | 4,000 | 40,000 |
 | Gold | 3,200 | 32,000 | 4,800 | 48,000 |
 | Diamond | 3,600 | 36,000 | 5,600 | 56,000 |
@@ -103,7 +103,7 @@ For ordinary blocked results, processing progress resets unless a doubled result
 
 ## Custom crusher recipes
 
-The [modding API](api.md#fast-crusher-recipes) supports:
+The [modding API](api.md#lava-infused-crusher-recipes) supports:
 
 - Item, tag, or other ingredient matching.
 - Input stacks requiring more than one item.

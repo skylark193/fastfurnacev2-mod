@@ -2,41 +2,41 @@
 
 [Documentation home](README.md) · [Blocks](blocks.md) · [Recipes and fuels](recipes.md)
 
-Fast Furnace V2 supplies **61 fixed items**: 36 block items plus Fast Coal, Extreme Coal, three raw Fast materials, three finished Fast materials, the Extremely Fast Ingot, twelve Fast tools or swords, and four Extremely Fast tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
+Fast Furnace V2 supplies **61 fixed items**: 36 block items plus two Lava-Infused Coal items (`fast_coal` and `extreme_coal`), three raw Lava-Infused materials, three finished Lava-Infused materials, the Lava-Infused Ingot, twelve Lava-Infused material tools or swords, and four Lava-Infused alloy tools or swords. Dynamically generated crushed-ore items are additional and environment-dependent.
 
 ## Standalone item index
 
 | Item | Registry ID | Primary acquisition | Vanilla creative tab |
 |---|---|---|---|
-| Fast Coal | `fastfurnacev2:fast_coal` | Bonus coal-ore drop or Accelerator conversion | Ingredients |
-| Extreme Coal | `fastfurnacev2:extreme_coal` | Drop from Extreme Coal Ore | Ingredients |
-| Raw Fast Iron | `fastfurnacev2:raw_fast_iron` | Drop from Fast Iron Ore | Ingredients |
-| Raw Fast Gold | `fastfurnacev2:raw_fast_gold` | Drop from Fast Gold Ore | Ingredients |
-| Raw Fast Diamond | `fastfurnacev2:raw_fast_diamond` | Drop from Fast Diamond Ore | Ingredients |
-| Fast Iron Ingot | `fastfurnacev2:fast_iron_ingot` | Smelt raw/crushed Fast Iron or convert an Iron Ingot | Ingredients |
-| Fast Gold Ingot | `fastfurnacev2:fast_gold_ingot` | Smelt raw/crushed Fast Gold or convert a Gold Ingot | Ingredients |
-| Fast Diamond | `fastfurnacev2:fast_diamond` | Smelt raw/crushed Fast Diamond or convert a Diamond | Ingredients |
-| Extremely Fast Ingot | `fastfurnacev2:extremely_fast_ingot` | Alloy Fast Iron Ingot, Fast Gold Ingot, and Fast Diamond | Ingredients |
-| Extremely Fast Pickaxe | `fastfurnacev2:extremely_fast_pickaxe` | Craft Extremely Fast Ingots and sticks | Tools & Utilities |
-| Extremely Fast Shovel | `fastfurnacev2:extremely_fast_shovel` | Craft an Extremely Fast Ingot and sticks | Tools & Utilities |
-| Extremely Fast Axe | `fastfurnacev2:extremely_fast_axe` | Craft Extremely Fast Ingots and sticks | Tools & Utilities; Combat |
-| Extremely Fast Sword | `fastfurnacev2:extremely_fast_sword` | Craft Extremely Fast Ingots and a stick | Combat |
+| Lava-Infused Coal | `fastfurnacev2:fast_coal` | Bonus coal-ore drop or Accelerator conversion | Ingredients |
+| Lava-Infused Coal | `fastfurnacev2:extreme_coal` | Drop from Lava-Infused Coal Ore | Ingredients |
+| Raw Lava-Infused Iron | `fastfurnacev2:raw_fast_iron` | Drop from Lava-Infused Iron Ore | Ingredients |
+| Raw Lava-Infused Gold | `fastfurnacev2:raw_fast_gold` | Drop from Lava-Infused Gold Ore | Ingredients |
+| Raw Lava-Infused Diamond | `fastfurnacev2:raw_fast_diamond` | Drop from Lava-Infused Diamond Ore | Ingredients |
+| Lava-Infused Iron Ingot | `fastfurnacev2:fast_iron_ingot` | Smelt raw/crushed Lava-Infused Iron or convert an Iron Ingot | Ingredients |
+| Lava-Infused Gold Ingot | `fastfurnacev2:fast_gold_ingot` | Smelt raw/crushed Lava-Infused Gold or convert a Gold Ingot | Ingredients |
+| Lava-Infused Diamond | `fastfurnacev2:fast_diamond` | Smelt raw/crushed Lava-Infused Diamond or convert a Diamond | Ingredients |
+| Lava-Infused Ingot | `fastfurnacev2:extremely_fast_ingot` | Alloy Lava-Infused Iron Ingot, Lava-Infused Gold Ingot, and Lava-Infused Diamond | Ingredients |
+| Lava-Infused Pickaxe | `fastfurnacev2:extremely_fast_pickaxe` | Craft Lava-Infused Ingots and sticks | Tools & Utilities |
+| Lava-Infused Shovel | `fastfurnacev2:extremely_fast_shovel` | Craft a Lava-Infused Ingot and sticks | Tools & Utilities |
+| Lava-Infused Axe | `fastfurnacev2:extremely_fast_axe` | Craft Lava-Infused Ingots and sticks | Tools & Utilities; Combat |
+| Lava-Infused Sword | `fastfurnacev2:extremely_fast_sword` | Craft Lava-Infused Ingots and a stick | Combat |
 | Crushed Iron | `fastfurnacev2:crushed_iron` | Crush raw iron when no external result is selected | Ingredients |
 | Crushed Copper | `fastfurnacev2:crushed_copper` | Crush raw copper when no external result is selected | Ingredients |
 | Crushed Gold | `fastfurnacev2:crushed_gold` | Crush raw gold when no external result is selected | Ingredients |
-| Crushed Fast Iron | `fastfurnacev2:crushed_fast_iron` | Crush Raw Fast Iron when no external result is selected | Ingredients |
-| Crushed Fast Gold | `fastfurnacev2:crushed_fast_gold` | Crush Raw Fast Gold when no external result is selected | Ingredients |
-| Crushed Fast Diamond | `fastfurnacev2:crushed_fast_diamond` | Crush Raw Fast Diamond when no external result is selected | Ingredients |
+| Crushed Lava-Infused Iron | `fastfurnacev2:crushed_fast_iron` | Crush Raw Lava-Infused Iron when no external result is selected | Ingredients |
+| Crushed Lava-Infused Gold | `fastfurnacev2:crushed_fast_gold` | Crush Raw Lava-Infused Gold when no external result is selected | Ingredients |
+| Crushed Lava-Infused Diamond | `fastfurnacev2:crushed_fast_diamond` | Crush Raw Lava-Infused Diamond when no external result is selected | Ingredients |
 
-Fast Coal, Extreme Coal, raw and finished Fast materials, the Extremely Fast Ingot, Fast tools and swords, and crushed items generated by this mod also appear in the **Fast Furnace V2** creative tab. Pickaxes, shovels, and axes additionally appear in Tools & Utilities; swords and axes appear in Combat. External crushed items keep their own names, models, and creative-tab placement.
+Both Lava-Infused Coal items, raw and finished Lava-Infused materials, the Lava-Infused Ingot, Lava-Infused tools and swords, and crushed items generated by this mod also appear in the **Fast Furnace V2** creative tab. Pickaxes, shovels, and axes additionally appear in Tools & Utilities; swords and axes appear in Combat. External crushed items keep their own names, models, and creative-tab placement.
 
 ## Special fuels
 
-### Fast Coal
+### Lava-Infused Coal (`fast_coal`)
 
 **ID:** `fastfurnacev2:fast_coal`
 
-Fast Coal is an animated, coal-shaped fuel item.
+Lava-Infused Coal is an animated, coal-shaped fuel item.
 
 **Acquisition:**
 
@@ -46,74 +46,74 @@ Fast Coal is an animated, coal-shaped fuel item.
 **Uses:**
 
 - Ordinary furnace fuel for **1,600 ticks**, matching vanilla coal.
-- Adds **50 percentage points** to active Fast Furnace or Fast Crusher processing speed.
+- Adds **50 percentage points** to active Lava-Infused Furnace or Lava-Infused Crusher processing speed.
 - Receives a tier-dependent burn-duration multiplier in those machines.
 - Supplies **3,600 Accelerator work units** at up to **3 work per tick**.
-- Crafts Block of Fast Coal.
+- Crafts Block of Lava-Infused Coal.
 
-The ordinary fuel value is not globally increased. The longer duration and speed bonus come from Fast Furnace V2's machines. See [Mining bonuses](world-generation.md#mining-bonuses), [Fast Furnaces](furnaces.md), and [Accelerator boosts](accelerator.md#boost-fuels).
+The ordinary fuel value is not globally increased. The longer duration and speed bonus come from Fast Furnace V2's machines. See [Mining bonuses](world-generation.md#mining-bonuses), [Lava-Infused Furnaces](furnaces.md), and [Accelerator boosts](accelerator.md#boost-fuels).
 
-### Extreme Coal
+### Lava-Infused Coal (`extreme_coal`)
 
 **ID:** `fastfurnacev2:extreme_coal`
 
-Extreme Coal preserves coal's item silhouette while replacing every visible pixel with animated lava colors.
+Lava-Infused Coal preserves coal's item silhouette while replacing every visible pixel with animated lava colors.
 
-**Acquisition:** mine regular or Deepslate Extreme Coal Ore without Silk Touch, or crush either ore block into three Extreme Coal. Vanilla Fortune scaling can increase mining drops.
+**Acquisition:** mine regular or Deepslate Lava-Infused Coal Ore without Silk Touch, or crush either ore block into three Lava-Infused Coal. Vanilla Fortune scaling can increase mining drops.
 
 **Uses:**
 
 - Ordinary furnace fuel for **1,600 ticks**, matching vanilla coal.
-- Adds **100 percentage points** to active Fast Furnace or Fast Crusher processing speed.
-- Receives twice Fast Coal's added tier-duration bonus.
+- Adds **100 percentage points** to active Lava-Infused Furnace or Lava-Infused Crusher processing speed.
+- Receives twice `fast_coal`'s added tier-duration bonus.
 - Supplies **7,200 Accelerator work units** at up to **5 work per tick**.
-- Is the Extremely Fast Alloyer's only accepted fuel, supplying **1,600 valid processing ticks** per item.
+- Is the Lava-Infused Alloyer's only accepted fuel, supplying **1,600 valid processing ticks** per item.
 
-Extreme Coal doubles Fast Coal's added bonuses, not every total value. For example, Fast Coal's +50 percentage points become Extreme Coal's +100, and its Accelerator speed increases from 3× to 5× rather than 6×. See [Fast and Extreme ore generation](world-generation.md#fast-and-extreme-ore-generation) and the [fuel reference](recipes.md#fuel-reference).
+`extreme_coal` doubles `fast_coal`'s added bonuses, not every total value. For example, the +50 percentage points from `fast_coal` become +100 for `extreme_coal`, and its Accelerator speed increases from 3× to 5× rather than 6×. See [special ore generation](world-generation.md#special-ore-generation) and the [fuel reference](recipes.md#fuel-reference).
 
-## Fast material items
+## Lava-Infused material items
 
-Raw Fast Iron, Raw Fast Gold, and Raw Fast Diamond resemble vanilla raw materials with animated lava veins. Mine the matching Fast ore without Silk Touch to obtain them; Fortune can increase the drop quantity. Each has two processing routes:
+Raw Lava-Infused Iron, Raw Lava-Infused Gold, and Raw Lava-Infused Diamond resemble vanilla raw materials with animated lava veins. Mine the matching Lava-Infused ore without Silk Touch to obtain them; Fortune can increase the drop quantity. Each has two processing routes:
 
-1. Smelt one raw Fast material directly into one Fast Iron Ingot, Fast Gold Ingot, or Fast Diamond.
-2. Crush one raw Fast material into two matching crushed items, then smelt each crushed item into one finished material. An external crushed item or dust is reused when available.
+1. Smelt one raw Lava-Infused material directly into one Lava-Infused Iron Ingot, Lava-Infused Gold Ingot, or Lava-Infused Diamond.
+2. Crush one raw Lava-Infused material into two matching crushed items, then smelt each crushed item into one finished material. An external crushed item or dust is reused when available.
 
-Fast Iron Ingots, Fast Gold Ingots, and Fast Diamonds retain their vanilla material silhouettes with animated lava veins. They can also be obtained by converting the corresponding vanilla material in an Accelerator. Nine matching finished materials craft a reversible Fast storage block used in machine upgrades. They are also the crafting and repair materials for Fast tools and swords.
+Lava-Infused Iron Ingots, Lava-Infused Gold Ingots, and Lava-Infused Diamonds retain their vanilla material silhouettes with animated lava veins. They can also be obtained by converting the corresponding vanilla material in an Accelerator. Nine matching finished materials craft a reversible Lava-Infused storage block used in machine upgrades. They are also the crafting and repair materials for Lava-Infused tools and swords.
 
-See [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), [Raw Fast material smelting](recipes.md#raw-fast-material-smelting), and [Accelerator conversions](accelerator.md#built-in-conversions).
+See [Lava-Infused material ores](blocks.md#lava-infused-iron-gold-and-diamond-ores), [Raw Lava-Infused material smelting](recipes.md#raw-lava-infused-material-smelting), and [Accelerator conversions](accelerator.md#built-in-conversions).
 
-## Extremely Fast Ingot
+## Lava-Infused Ingot
 
 **ID:** `fastfurnacev2:extremely_fast_ingot`
 
-The Extremely Fast Ingot preserves the ingot silhouette while replacing every visible pixel with animated lava. Alloy one Fast Iron Ingot, one Fast Gold Ingot, and one Fast Diamond in any order across the Extremely Fast Alloyer's three input slots using Extreme Coal fuel. The base operation takes **800 ticks (40 seconds)**, reduced by 100 ticks per horizontal lava side to a minimum of 400 ticks.
+The Lava-Infused Ingot preserves the ingot silhouette while replacing every visible pixel with animated lava. Alloy one Lava-Infused Iron Ingot, one Lava-Infused Gold Ingot, and one Lava-Infused Diamond in any order across the Lava-Infused Alloyer's three input slots using Lava-Infused Coal (`extreme_coal`) fuel. The base operation takes **800 ticks (40 seconds)**, reduced by 100 ticks per horizontal lava side to a minimum of 400 ticks.
 
-It appears in Ingredients and the Fast Furnace V2 creative tab. This is a dedicated Alloyer operation, not a crafting, smelting, crushing, or Accelerator recipe. See [Extremely Fast Alloying](recipes.md#extremely-fast-alloying).
+It appears in Ingredients and the Fast Furnace V2 creative tab. This is a dedicated Alloyer operation, not a crafting, smelting, crushing, or Accelerator recipe. See [Lava-Infused Alloying](recipes.md#lava-infused-alloying).
 
-## Fast tools and swords
+## Lava-Infused material tools and swords
 
 Each material has a pickaxe, shovel, axe, and sword using the vanilla tool's durability, enchantability, harvest behavior, textures, and stick-and-material crafting pattern, with the following additions:
 
 | Set | Pickaxe, shovel, and axe | Sword | Repair material |
 |---|---|---|---|
-| Fast Iron | 20% faster block breaking | 20% faster attacks | Fast Iron Ingot |
-| Fast Gold | 30% faster block breaking | 30% faster attacks | Fast Gold Ingot |
-| Fast Diamond | 20% faster block breaking; 5% chance to avoid durability damage | 20% faster attacks; 20% more attack damage; 5% chance to avoid durability damage | Fast Diamond |
+| Lava-Infused Iron | 20% faster block breaking | 20% faster attacks | Lava-Infused Iron Ingot |
+| Lava-Infused Gold | 30% faster block breaking | 30% faster attacks | Lava-Infused Gold Ingot |
+| Lava-Infused Diamond | 20% faster block breaking; 5% chance to avoid durability damage | 20% faster attacks; 20% more attack damage; 5% chance to avoid durability damage | Lava-Infused Diamond |
 
-Fast Diamond's durability roll applies whenever the tool would take durability damage, including mining, melee attacks, axe stripping, and shovel flattening. It is independent of Unbreaking. Attack-speed bonuses multiply actual attacks per second rather than vanilla's negative attribute modifier.
+Lava-Infused Diamond's durability roll applies whenever the tool would take durability damage, including mining, melee attacks, axe stripping, and shovel flattening. It is independent of Unbreaking. Attack-speed bonuses multiply actual attacks per second rather than vanilla's negative attribute modifier.
 
 Registry IDs follow `fastfurnacev2:fast_<material>_<tool>`, where material is `iron`, `gold`, or `diamond`, and tool is `pickaxe`, `shovel`, `axe`, or `sword`. Every texture preserves its vanilla silhouette with animated lava veins. JEI provides a short description of each item's bonuses.
 
-See [Tool crafting](recipes.md#fast-tools-and-swords) for the patterns.
+See [Tool crafting](recipes.md#lava-infused-material-tools-and-swords) for the patterns.
 
-## Extremely Fast tools and swords
+## Lava-Infused alloy tools and swords
 
-The Extremely Fast Pickaxe, Shovel, Axe, and Sword use vanilla stick-and-Extremely-Fast-Ingot crafting patterns. Their textures preserve the diamond-tool silhouettes while replacing every visible pixel with animated lava. All four have **double the corresponding diamond tool's durability**, retain diamond harvest and enchantability behavior, and repair with Extremely Fast Ingots.
+The Lava-Infused Pickaxe, Shovel, Axe, and Sword use vanilla stick-and-Lava-Infused-Ingot crafting patterns. Their textures preserve the diamond-tool silhouettes while replacing every visible pixel with animated lava. All four have **double the corresponding diamond tool's durability**, retain diamond harvest and enchantability behavior, and repair with Lava-Infused Ingots.
 
 | Item | Built-in bonuses |
 |---|---|
-| Extremely Fast Pickaxe, Shovel, and Axe | 50% faster block breaking than diamond; built-in Fortune II; independent 5% chance to double all block drops after normal Fortune calculations |
-| Extremely Fast Sword | 50% faster attacks than diamond with unchanged base attack damage; built-in Looting II; independent 5% chance to double kill drops after normal Looting calculations; independent 10% chance to deal double damage |
+| Lava-Infused Pickaxe, Shovel, and Axe | 50% faster block breaking than diamond; built-in Fortune II; independent 5% chance to double all block drops after normal Fortune calculations |
+| Lava-Infused Sword | 50% faster attacks than diamond with unchanged base attack damage; built-in Looting II; independent 5% chance to double kill drops after normal Looting calculations; independent 10% chance to deal double damage |
 
 The drop rolls duplicate complete dropped stacks, including components, rather than rerolling loot. Both sword rolls require a direct player melee attack; arrows, Thorns, and other indirect damage cannot trigger them. The damage roll occurs before ordinary damage mitigation and does not permanently change the sword's attributes. Fortune II and Looting II are actual default enchantment components and appear in item tooltips. Pickaxes, shovels, and axes appear in Tools & Utilities; the sword and axe appear in Combat; all four appear in the mod creative tab.
 
@@ -125,30 +125,30 @@ Notable item uses:
 
 | Block item | Additional item-level behavior |
 |---|---|
-| Fast Cobblestone | Fast Furnace crafting ingredient and mod creative-tab icon |
-| Block of Fast Coal | Ordinary 16,000-tick fuel, special furnace/crusher fuel, Accelerator boost, and reversible nine-item storage |
-| Block of Extreme Coal | Ordinary 16,000-tick fuel, Extreme Coal machine bonuses, 8,000-work Accelerator boost, and reversible nine-item storage |
-| Fast Furnace and upgrades | Placeable smelting machines; custom names survive breaking |
-| Fast Crusher and upgrades | Placeable crushing machines; custom names survive breaking |
-| Fast Batteries | Placeable FE storage; exact charge survives breaking, and items expose the standard item energy capability |
-| Fast Power Conduits | Placeable FE networks; buffered FE does not survive breaking |
+| Lava-Infused Cobblestone | Lava-Infused Furnace crafting ingredient and mod creative-tab icon |
+| Block of Lava-Infused Coal (`fast_coal_block`) | Ordinary 16,000-tick fuel, `fast_coal` machine bonuses, 4,000-work Accelerator boost, and reversible nine-item storage |
+| Block of Lava-Infused Coal (`extreme_coal_block`) | Ordinary 16,000-tick fuel, `extreme_coal` machine bonuses, 8,000-work Accelerator boost, and reversible nine-item storage |
+| Lava-Infused Furnace and upgrades | Placeable smelting machines; custom names survive breaking |
+| Lava-Infused Crusher and upgrades | Placeable crushing machines; custom names survive breaking |
+| Lava-Infused Batteries | Placeable FE storage; exact charge survives breaking, and items expose the standard item energy capability |
+| Lava-Infused Power Conduits | Placeable FE networks; buffered FE does not survive breaking |
 | Accelerator | Placeable converter; custom name survives breaking |
-| Extremely Fast Alloyer | Placeable three-input alloying machine; custom name survives breaking |
-| Regular and Deepslate Extreme Coal Ore | Silk-Touch-drop placeable ores and three-item crusher inputs |
-| Regular and Deepslate Fast Iron, Gold, and Diamond Ores | Silk-Touch-drop placeable ores and three-item crusher inputs |
-| Blocks of Fast Iron, Fast Gold, and Fast Diamond | Reversible nine-item storage and furnace/crusher upgrade ingredients |
+| Lava-Infused Alloyer | Placeable three-input alloying machine; custom name survives breaking |
+| Regular and Deepslate Lava-Infused Coal Ore | Silk-Touch-drop placeable ores and three-item crusher inputs |
+| Regular and Deepslate Lava-Infused Iron, Gold, and Diamond Ores | Silk-Touch-drop placeable ores and three-item crusher inputs |
+| Blocks of Lava-Infused Iron, Lava-Infused Gold, and Lava-Infused Diamond | Reversible nine-item storage and furnace/crusher upgrade ingredients |
 
 Machine block items do not retain the placed machine's inventory, progress, experience, active fuel, pending output, or boost after breaking. Battery items are the explicit exception for stored FE; generators and conduits do not retain their energy buffers.
 
 ## Crushed ores
 
-Crushed ores are processing intermediates produced by Fast Crushers. They are not a fixed list of standalone items in every installation:
+Crushed ores are processing intermediates produced by Lava-Infused Crushers. They are not a fixed list of standalone items in every installation:
 
 1. The mod discovers registered raw ore items during startup.
 2. It selects a matching external crushed item or dust when one exists.
 3. Otherwise, it registers a generated `CrushedOreItem` for that source.
 
-With no external matches, vanilla raw iron, raw copper, and raw gold map to the corresponding generated IDs in the item index. The built-in raw Fast materials similarly map to `crushed_fast_iron`, `crushed_fast_gold`, and `crushed_fast_diamond`. Other modded sources use `crushed_<source namespace>_<normalized path>`, flattening path slashes to underscores. A readable-ID collision adds a deterministic name-based UUID suffix. Raw-ore suffixes can remain in these registry IDs even though they are removed from display names.
+With no external matches, vanilla raw iron, raw copper, and raw gold map to the corresponding generated IDs in the item index. The built-in raw Lava-Infused materials similarly map to `crushed_fast_iron`, `crushed_fast_gold`, and `crushed_fast_diamond`. Other modded sources use `crushed_<source namespace>_<normalized path>`, flattening path slashes to underscores. A readable-ID collision adds a deterministic name-based UUID suffix. Raw-ore suffixes can remain in these registry IDs even though they are removed from display names.
 
 ### Generated appearance and naming
 
@@ -162,6 +162,6 @@ With no external matches, vanilla raw iron, raw copper, and raw gold map to the 
 
 When the selected crushed item lacks an ordinary smelting recipe, Fast Furnace V2 clones the source raw item's smelting JSON with the crushed item as its ingredient. Output, experience, cooking time, category, and group are preserved. Existing external recipes are reused rather than replaced.
 
-When such a smelting recipe exists, crushed items work in ordinary furnaces and every Fast Furnace tier. They are not automatically Accelerator inputs, fuels, or new crusher inputs.
+When such a smelting recipe exists, crushed items work in ordinary furnaces and every Lava-Infused Furnace tier. They are not automatically Accelerator inputs, fuels, or new crusher inputs.
 
 See [Dynamic crushed ores](world-generation.md#dynamic-crushed-ores) for discovery and external-match precedence.

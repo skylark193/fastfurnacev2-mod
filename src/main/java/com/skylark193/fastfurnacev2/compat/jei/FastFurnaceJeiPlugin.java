@@ -13,6 +13,7 @@ import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
 import com.skylark193.fastfurnacev2.client.AcceleratorScreen;
 import com.skylark193.fastfurnacev2.client.ExtremelyFastAlloyerScreen;
+import com.skylark193.fastfurnacev2.client.FastBatteryScreen;
 import com.skylark193.fastfurnacev2.client.FastFurnaceScreen;
 import com.skylark193.fastfurnacev2.client.FastGeneratorScreen;
 import java.util.ArrayList;
@@ -197,7 +198,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                 continue;
             }
             FastFuel definition = FastFurnaceApi.findFuel(stack).orElse(null);
-            int generatorBurnTime = FastGeneratorFuelLogic.getBurnTime(burnTime, definition);
+            int maximumLavaSides = FastGeneratorFuelLogic.isBuiltInSpecialFuel(definition)
+                    ? FastGeneratorFuelLogic.MAX_HORIZONTAL_LAVA : 0;
             for (FastFurnaceTier tier : FastFurnaceTier.values()) {
                 int adjustedBurnTime = definition == null
                         ? burnTime
@@ -207,10 +209,17 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     fuelsByTier.get(tier).add(new FastFurnaceFuelRecipe(
                             List.of(stack), adjustedBurnTime, speedBonus));
                 }
-                if (generatorBurnTime > 0) {
-                    generatorFuelsByTier.get(tier).add(new FastGeneratorFuelRecipe(
-                            List.of(stack), generatorBurnTime,
-                            FastGeneratorFuelLogic.getOutput(tier, definition)));
+                for (int lavaSides = 0; lavaSides <= maximumLavaSides; lavaSides++) {
+                    int generatorBurnTime = FastGeneratorFuelLogic.getBurnTime(burnTime, definition, lavaSides);
+                    if (generatorBurnTime > 0) {
+                        int burnTimePercent = FastGeneratorFuelLogic.isBuiltInSpecialFuel(definition)
+                                ? FastGeneratorFuelLogic.BASE_SPECIAL_BURN_TIME_PERCENT
+                                + FastGeneratorFuelLogic.getLavaBurnBonusPercent(definition, lavaSides)
+                                : 100;
+                        generatorFuelsByTier.get(tier).add(new FastGeneratorFuelRecipe(
+                                List.of(stack), generatorBurnTime,
+                                FastGeneratorFuelLogic.getOutput(tier, definition), lavaSides, burnTimePercent));
+                    }
                 }
             }
         }
@@ -221,7 +230,8 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
         }
         for (Map.Entry<FastFurnaceTier, List<FastGeneratorFuelRecipe>> entry : generatorFuelsByTier.entrySet()) {
             List<FastGeneratorFuelRecipe> fuels = entry.getValue();
-            fuels.sort(Comparator.comparingLong(FastGeneratorFuelRecipe::totalEnergy));
+            fuels.sort(Comparator.comparingLong(FastGeneratorFuelRecipe::totalEnergy)
+                    .thenComparingInt(FastGeneratorFuelRecipe::lavaSides));
             registration.addRecipes(FastGeneratorFuelCategory.getRecipeType(entry.getKey()), fuels);
         }
     }
@@ -337,6 +347,12 @@ public class FastFurnaceJeiPlugin implements IModPlugin {
                     }
                 });
         registerFurnaceGuiHandler(registration);
+        registration.addGuiContainerHandler(FastBatteryScreen.class, new IGuiContainerHandler<FastBatteryScreen>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(FastBatteryScreen screen) {
+                return screen.getJeiExtraAreas();
+            }
+        });
         registration.addGuiContainerHandler(
                 FastGeneratorScreen.class, new IGuiContainerHandler<FastGeneratorScreen>() {
                     @Override

@@ -16,10 +16,10 @@ Mining an eligible block can append **one** bonus item after vanilla drops have 
 
 | Mined block | Bonus item |
 |---|---|
-| Stone (`minecraft:stone`) | 1 × Fast Cobblestone |
-| Any block in `minecraft:coal_ores` | 1 × Fast Coal |
+| Stone (`minecraft:stone`) | 1 × Lava-Infused Cobblestone |
+| Any block in `minecraft:coal_ores` | 1 × Lava-Infused Coal |
 
-The coal-ores tag includes regular coal ore and deepslate coal ore. Extreme Coal Ore is not in that tag and does not trigger this separate Fast Coal bonus roll. The bonus is independent of the block's normal drops: mining stone still produces its normal result, and coal ore retains its ordinary coal or Silk Touch behavior.
+The coal-ores tag includes regular coal ore and deepslate coal ore. Lava-Infused Coal Ore is not in that tag and does not trigger this separate Lava-Infused Coal bonus roll. The bonus is independent of the block's normal drops: mining stone still produces its normal result, and coal ore retains its ordinary coal or Silk Touch behavior.
 
 ### Eligibility requirements
 
@@ -48,11 +48,11 @@ bonus chance = min(100%, 10% + 5 percentage points × Fortune level)
 | III | 25% |
 | Nonstandard level 18 or higher | 100% |
 
-Each eligible block makes its own roll. Fortune increases the chance of the one-item bonus; it does not multiply that bonus into multiple Fast Cobblestone or Fast Coal items. Coal ore's separate vanilla Fortune-scaled coal drops are unchanged.
+Each eligible block makes its own roll. Fortune increases the chance of the one-item bonus; it does not multiply that bonus into multiple Lava-Infused Cobblestone or Lava-Infused Coal items. Coal ore's separate vanilla Fortune-scaled coal drops are unchanged.
 
-## Fast and Extreme ore generation
+## Special ore generation
 
-Fast and Extreme ores are created by replacing existing regular and deepslate vanilla ore blocks, rather than by adding separate ore-vein distributions.
+Lava-Infused ore variants are created by replacing existing regular and deepslate vanilla ore blocks, rather than by adding separate ore-vein distributions.
 
 ### Replacement rule
 
@@ -96,18 +96,18 @@ All eight replacement ores follow the corresponding vanilla ore's Silk Touch alt
 
 | Replacement ore | Ordinary drop |
 |---|---|
-| Regular or Deepslate Extreme Coal Ore | Extreme Coal |
-| Regular or Deepslate Fast Iron Ore | Raw Fast Iron |
-| Regular or Deepslate Fast Gold Ore | Raw Fast Gold |
-| Regular or Deepslate Fast Diamond Ore | Raw Fast Diamond |
+| Regular or Deepslate Lava-Infused Coal Ore | Lava-Infused Coal (`extreme_coal`) |
+| Regular or Deepslate Lava-Infused Iron Ore | Raw Lava-Infused Iron |
+| Regular or Deepslate Lava-Infused Gold Ore | Raw Lava-Infused Gold |
+| Regular or Deepslate Lava-Infused Diamond Ore | Raw Lava-Infused Diamond |
 
-Without Silk Touch, Fortune can increase the drop quantity. With Silk Touch, each ore drops itself. Fast ore mining tiers match their vanilla equivalents in both regular and deepslate forms: Fast Iron Ore requires a stone pickaxe or better, while Fast Gold and Fast Diamond Ore require an iron pickaxe or better.
+Without Silk Touch, Fortune can increase the drop quantity. With Silk Touch, each ore drops itself. Lava-Infused ore mining tiers match their vanilla equivalents in both regular and deepslate forms: Lava-Infused Iron Ore requires a stone pickaxe or better, while Lava-Infused Gold and Lava-Infused Diamond Ore require an iron pickaxe or better.
 
-See [Extreme Coal Ores](blocks.md#extreme-coal-ores), [Fast material ores](blocks.md#fast-iron-gold-and-diamond-ores), and [Fast material items](items.md#fast-material-items).
+See [Lava-Infused Coal Ores](blocks.md#lava-infused-coal-ores), [Lava-Infused material ores](blocks.md#lava-infused-iron-gold-and-diamond-ores), and [Lava-Infused material items](items.md#lava-infused-material-items).
 
 ## Dynamic crushed ores
 
-Fast Crushers need a crushed result for each supported raw ore. Fast Furnace V2 discovers raw items and selects or generates those results during registry startup.
+Lava-Infused Crushers need a crushed result for each supported raw ore. Fast Furnace V2 discovers raw items and selects or generates those results during registry startup.
 
 ### Raw-ore discovery
 
@@ -121,7 +121,7 @@ Packaged item-tag JSON from loaded mod files is indexed so nested references can
 
 Only registered, non-block raw items participate. Datapacks cannot introduce new registry items after startup.
 
-Items in Fast Furnace V2's own namespace are excluded from raw-ore discovery except for the three explicit built-ins `raw_fast_iron`, `raw_fast_gold`, and `raw_fast_diamond`. Generated crushed IDs can retain source suffixes such as `_raw_ore`; allowing arbitrary mod outputs to rediscover themselves would recursively register more items. The narrow whitelist supports the built-in Fast-material processing chain without reopening that recursion.
+Items in Fast Furnace V2's own namespace are excluded from raw-ore discovery except for the three explicit built-ins `raw_fast_iron`, `raw_fast_gold`, and `raw_fast_diamond`. Generated crushed IDs can retain source suffixes such as `_raw_ore`; allowing arbitrary mod outputs to rediscover themselves would recursively register more items. The narrow whitelist supports the built-in Lava-Infused-material processing chain without reopening that recursion.
 
 ### External result selection
 
@@ -163,7 +163,7 @@ With vanilla raw materials and no external matches:
 | `fastfurnacev2:raw_fast_gold` | `fastfurnacev2:crushed_fast_gold` |
 | `fastfurnacev2:raw_fast_diamond` | `fastfurnacev2:crushed_fast_diamond` |
 
-Other modded sources include their source namespace in the readable generated ID; the three built-in raw Fast materials use the short IDs shown above. If a readable ID is occupied, a deterministic name-based UUID suffix avoids a collision.
+Other modded sources include their source namespace in the readable generated ID; the three built-in raw Lava-Infused materials use the short IDs shown above. If a readable ID is occupied, a deterministic name-based UUID suffix avoids a collision.
 
 Generated items use a shared dust-pile model, a source-derived tint, and an ID-derived English fallback name. Display normalization removes raw-ore suffixes, so a generated result for `tin_raw_ore` is named **Crushed Tin** even when no language entry exists.
 
@@ -180,7 +180,7 @@ After raw smelting recipes are parsed, Fast Furnace V2 clones eligible `minecraf
 - Original raw and external recipes are not replaced.
 - Generated recipe IDs include a deterministic UUID derived from the exact result and source-recipe IDs, preventing namespace/path flattening collisions.
 
-Both generated and external crushed results work in ordinary furnaces and Fast Furnaces when an ordinary smelting recipe is available.
+Both generated and external crushed results work in ordinary furnaces and Lava-Infused Furnaces when an ordinary smelting recipe is available.
 
 ### Client appearance
 
@@ -195,4 +195,4 @@ The tint system reads `textures/item/<raw_item_id>.png` from the active resource
 
 Colors refresh on client resource reloads. External crushed items do not receive this model or tint override.
 
-See [Items](items.md#crushed-ores), [Fast Crushers](crushers.md), and [Crushed-ore smelting](recipes.md#crushed-ore-smelting).
+See [Items](items.md#crushed-ores), [Lava-Infused Crushers](crushers.md), and [Crushed-ore smelting](recipes.md#crushed-ore-smelting).

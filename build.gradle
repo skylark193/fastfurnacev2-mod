@@ -40,6 +40,10 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
 }
 
 // Mojang ships Java 25 to end users in 26.1.2, so mods should target Java 25.
@@ -120,6 +124,11 @@ configurations {
 dependencies {
     compileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${jei_minecraft_version}-neoforge-api:${jei_version}"
+    compileOnly "maven.modrinth:jade:${jade_version}"
+
+    if (providers.gradleProperty('withJade').isPresent()) {
+        localRuntime "maven.modrinth:jade:${jade_version}"
+    }
 
     // JEI 29.2.0.21 requires Minecraft 26.1 exactly and cannot launch on this project's 26.1.2.
     // Opt in only when using a JEI runtime whose metadata supports the configured Minecraft version.

@@ -34,5 +34,6 @@ public class FastFurnaceV2Client {
         event.register(FastFurnaceV2.EXTREMELY_FAST_ALLOYER_MENU.get(), ExtremelyFastAlloyerScreen::new);
         event.register(FastFurnaceV2.FAST_GENERATOR_MENU.get(), FastGeneratorScreen::new);
         event.register(FastFurnaceV2.FAST_BATTERY_MENU.get(), FastBatteryScreen::new);
+        event.register(FastFurnaceV2.FAST_POWER_CONDUIT_MENU.get(), FastPowerConduitScreen::new);
     }
 }

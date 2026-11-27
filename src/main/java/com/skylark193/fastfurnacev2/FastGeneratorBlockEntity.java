@@ -3,9 +3,12 @@ package com.skylark193.fastfurnacev2;
 import com.skylark193.fastfurnacev2.api.FastEnergyStorage;
 import com.skylark193.fastfurnacev2.api.FastFuel;
 import com.skylark193.fastfurnacev2.api.FastFurnaceApi;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -31,10 +34,15 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
     private static final int[] FUEL_SLOT = {0};
     private final FastFurnaceTier tier;
     private final FastEnergyStorage energy;
+    private final EnergyHandler unsidedHandler;
+    private final EnergySideConfiguration sideConfiguration = new EnergySideConfiguration(EnergySideMode.OUTPUT);
+    private final Map<Direction, EnergyHandler> sideHandlers = new EnumMap<>(Direction.class);
     private NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     private int burnTime;
     private int totalBurnTime;
     private int outputPercent = 100;
+    private int lavaSides;
+    private int activeLavaBonusPercent;
     private @Nullable Identifier activeFuelId;
     private final ContainerData dataAccess = new ContainerData() {
         @Override
@@ -48,6 +56,12 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
                 case 5 -> energy.getCapacityAsInt() & 0xFFFF;
                 case 6 -> energy.getCapacityAsInt() >>> 16;
                 case 7 -> tier.ordinal();
+                case 8, 9, 10, 11, 12, 13 ->
+                        sideConfiguration.get(Direction.values()[index - 8]).ordinal();
+                case 14 -> lavaSides;
+                case 15 -> activeLavaBonusPercent;
+                case 16 -> burnTime >>> 16;
+                case 17 -> totalBurnTime >>> 16;
                 default -> 0;
             };
         }
@@ -66,14 +80,20 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         super(FastFurnaceV2.FAST_GENERATOR_BLOCK_ENTITY.get(), pos, state);
         this.tier = ((FastGeneratorBlock) state.getBlock()).getTier();
         this.energy = new FastEnergyStorage(
-                this.tier.getGeneratorBufferCapacity(), 0,
+                this.tier.getGeneratorBufferCapacity(),
+                this.tier.getGeneratorExtractionLimit(),
                 this.tier.getGeneratorExtractionLimit(), this::setChanged);
+        this.unsidedHandler = new EnergySideHandler(this.energy, EnergySideMode.OUTPUT);
+        for (Direction direction : Direction.values()) {
+            this.sideHandlers.put(direction, new EnergySideHandler(this.energy, this.sideConfiguration, direction));
+        }
     }
 
     public static void serverTick(
             ServerLevel level, BlockPos pos, BlockState state, FastGeneratorBlockEntity generator) {
         int previousBurn = generator.burnTime;
         int previousTotal = generator.totalBurnTime;
+        generator.lavaSides = MachineLogic.countHorizontalLava(level, pos);
         boolean generating = false;
         if (generator.energy.getAmountAsInt() < generator.energy.getCapacityAsInt()) {
             if (generator.burnTime <= 0) {
@@ -95,7 +115,7 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
                     Capabilities.Energy.BLOCK, pos.relative(direction), direction.getOpposite());
             if (target != null) {
                 try (Transaction transaction = Transaction.openRoot()) {
-                    EnergyHandlerUtil.move(generator.energy, target,
+                    EnergyHandlerUtil.move(generator.energyForSide(direction), target,
                             generator.tier.getGeneratorExtractionLimit(), transaction);
                     transaction.commit();
                 }
@@ -118,7 +138,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         FastFuel definition = FastFurnaceApi.findFuel(fuel).orElse(null);
         this.outputPercent = FastGeneratorFuelLogic.getOutputPercent(definition);
         this.activeFuelId = definition == null ? null : definition.id();
-        this.burnTime = FastGeneratorFuelLogic.getBurnTime(ordinaryBurnTime, definition);
+        this.activeLavaBonusPercent = FastGeneratorFuelLogic.getLavaBurnBonusPercent(definition, this.lavaSides);
+        this.burnTime = FastGeneratorFuelLogic.getBurnTime(ordinaryBurnTime, definition, this.lavaSides);
         this.totalBurnTime = this.burnTime;
         ItemStackTemplate remainder = fuel.getCraftingRemainder();
         fuel.shrink(1);
@@ -130,11 +151,44 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
 
     private void clearActiveFuel() {
         this.outputPercent = 100;
+        this.activeLavaBonusPercent = 0;
         this.activeFuelId = null;
+    }
+
+    public FastFurnaceTier getTier() {
+        return this.tier;
     }
 
     public FastEnergyStorage energy() {
         return this.energy;
+    }
+
+    public EnergyHandler energyForSide(@Nullable Direction direction) {
+        return direction == null ? this.unsidedHandler : this.sideHandlers.get(direction);
+    }
+
+    public EnergySideMode getEnergySideMode(Direction direction) {
+        return this.sideConfiguration.get(direction);
+    }
+
+    public void cycleEnergySide(Direction direction) {
+        this.sideConfiguration.cycle(direction);
+        this.setChanged();
+    }
+
+    public int getLavaSides() {
+        return this.lavaSides;
+    }
+
+    public int getActiveLavaBonusPercent() {
+        return this.activeLavaBonusPercent;
+    }
+
+    public int getActiveBurnTimePercent() {
+        FastFuel activeFuel = this.activeFuelId == null
+                ? null : FastFurnaceApi.findFuel(this.activeFuelId).orElse(null);
+        return FastGeneratorFuelLogic.isBuiltInSpecialFuel(activeFuel)
+                ? FastGeneratorFuelLogic.BASE_SPECIAL_BURN_TIME_PERCENT + this.activeLavaBonusPercent : 100;
     }
 
     public int getOutput() {
@@ -170,7 +224,12 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
 
     @Override
     protected AbstractContainerMenu createMenu(int containerId, Inventory inventory) {
-        return new FastGeneratorMenu(containerId, inventory, this, this.dataAccess);
+        return new FastGeneratorMenu(containerId, inventory, this, this.dataAccess, this.worldPosition);
+    }
+
+    @Override
+    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.worldPosition);
     }
 
     @Override
@@ -207,6 +266,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         this.burnTime = input.getIntOr("generator_burn_time", 0);
         this.totalBurnTime = input.getIntOr("generator_total_burn_time", 0);
         this.outputPercent = this.burnTime > 0 ? input.getIntOr("generator_output_percent", 100) : 100;
+        this.activeLavaBonusPercent = this.burnTime > 0 ? input.getIntOr("generator_lava_bonus", 0) : 0;
+        this.sideConfiguration.deserialize(input.getIntOr("energy_side_modes", EnergySideConfiguration.ALL_OUTPUT));
         Identifier fuelId = Identifier.tryParse(input.getStringOr("generator_active_fuel", ""));
         this.activeFuelId = this.burnTime > 0 ? fuelId : null;
     }
@@ -219,6 +280,8 @@ public class FastGeneratorBlockEntity extends BaseContainerBlockEntity implement
         output.putInt("generator_burn_time", this.burnTime);
         output.putInt("generator_total_burn_time", this.totalBurnTime);
         output.putInt("generator_output_percent", this.outputPercent);
+        output.putInt("generator_lava_bonus", this.activeLavaBonusPercent);
+        output.putInt("energy_side_modes", this.sideConfiguration.serialize());
         if (this.activeFuelId != null) {
             output.putString("generator_active_fuel", this.activeFuelId.toString());
         }

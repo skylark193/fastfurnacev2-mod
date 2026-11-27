@@ -1,5 +1,7 @@
 package com.skylark193.fastfurnacev2;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -12,9 +14,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 
-public class FastGeneratorMenu extends AbstractContainerMenu {
+public class FastGeneratorMenu extends AbstractContainerMenu implements EnergyConfigurableMenu {
     public static final int SLOT_COUNT = 1;
-    public static final int DATA_COUNT = 8;
+    public static final int DATA_COUNT = 18;
     public static final int FUEL_SLOT_X = 80;
     public static final int FUEL_SLOT_Y = 53;
     private static final int INVENTORY_START = 1;
@@ -22,17 +24,20 @@ public class FastGeneratorMenu extends AbstractContainerMenu {
     private static final int HOTBAR_END = 37;
     private final Container container;
     private final ContainerData data;
+    private final BlockPos pos;
 
-    public FastGeneratorMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(DATA_COUNT));
+    public FastGeneratorMenu(int containerId, Inventory inventory, BlockPos pos) {
+        this(containerId, inventory, new SimpleContainer(SLOT_COUNT), new SimpleContainerData(DATA_COUNT), pos);
     }
 
-    public FastGeneratorMenu(int containerId, Inventory inventory, Container container, ContainerData data) {
+    public FastGeneratorMenu(
+            int containerId, Inventory inventory, Container container, ContainerData data, BlockPos pos) {
         super(FastFurnaceV2.FAST_GENERATOR_MENU.get(), containerId);
         checkContainerSize(container, SLOT_COUNT);
         checkContainerDataCount(data, DATA_COUNT);
         this.container = container;
         this.data = data;
+        this.pos = pos;
         this.addSlot(new Slot(container, 0, FUEL_SLOT_X, FUEL_SLOT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -90,11 +95,11 @@ public class FastGeneratorMenu extends AbstractContainerMenu {
     }
 
     public int getBurnTime() {
-        return this.data.get(2);
+        return (this.data.get(16) << 16) | (this.data.get(2) & 0xFFFF);
     }
 
     public int getTotalBurnTime() {
-        return this.data.get(3);
+        return (this.data.get(17) << 16) | (this.data.get(3) & 0xFFFF);
     }
 
     public int getOutput() {
@@ -104,6 +109,24 @@ public class FastGeneratorMenu extends AbstractContainerMenu {
     public FastFurnaceTier getTier() {
         FastFurnaceTier[] tiers = FastFurnaceTier.values();
         return tiers[Mth.clamp(this.data.get(7), 0, tiers.length - 1)];
+    }
+
+    public int getLavaSides() {
+        return Mth.clamp(this.data.get(14), 0, 4);
+    }
+
+    public int getActiveLavaBonusPercent() {
+        return this.data.get(15);
+    }
+
+    @Override
+    public BlockPos getEnergyBlockPos() {
+        return this.pos;
+    }
+
+    @Override
+    public EnergySideMode getEnergySideMode(Direction direction) {
+        return EnergySideMode.fromSerialized(this.data.get(8 + direction.ordinal()));
     }
 
     public float getEnergyProgress() {

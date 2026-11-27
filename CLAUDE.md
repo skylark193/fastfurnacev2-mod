@@ -4,9 +4,9 @@ Project instructions for Claude Code. Keep this file focused on durable workflow
 
 ## Project
 
-Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces, crushers, generators, batteries, and power conduits, Fast and Extreme materials, dynamic crushed ores, an Accelerator, an Extremely Fast Alloyer, enhanced tools, and optional JEI integration.
+Fast Furnace V2 is a NeoForge mod for Minecraft 26.1.2, using Java 25 and Mojang official mappings. Its content includes tiered furnaces, crushers, generators, batteries, and power conduits, Lava-Infused materials, dynamic crushed ores, an Accelerator, a Lava-Infused Alloyer, enhanced tools, and optional JEI and Jade integration.
 
-- Current mod version: `1.12.0`; public API version: `1.4.0`.
+- Current mod version: `1.13.0`; public API version: `1.4.0`.
 - Mod ID and base package: `fastfurnacev2` and `com.skylark193.fastfurnacev2`.
 - Versions and metadata: `gradle.properties` and `src/main/templates/META-INF/neoforge.mods.toml`.
 - Player behavior and numeric tables: [`docs/README.md`](docs/README.md).
@@ -60,7 +60,7 @@ If Windows Gradle selects another JDK, set `JAVA_HOME` to JDK 25 and prepend its
 
 GameTests are registry-based tests in main Java sources, not JUnit tests. Judge results from the server log; a lingering Gradle launcher after successful shutdown is not itself a test failure. CI runs only `./gradlew build` with JDK 25.
 
-JEI is `compileOnly` by default. JEI 29.2.0.21 supports Minecraft 26.1, not 26.1.2; compilation is not JEI runtime validation. Follow the [JEI opt-in procedure](docs/development.md#jei-validation-boundary) after selecting a compatible release.
+JEI is `compileOnly` by default. JEI 29.2.0.21 supports Minecraft 26.1, not 26.1.2; compilation is not JEI runtime validation. Follow the [JEI opt-in procedure](docs/development.md#jei-validation-boundary) after selecting a compatible release. Jade is also `compileOnly`; use `-PwithJade` for runtime checks and do not claim client tooltip validation from a server launch.
 
 ## Version management
 
@@ -87,12 +87,12 @@ Read the relevant [architecture notes](docs/architecture.md) before changing the
 - **Fuel:** use bonuses from the consumed stack's matched definition, not the current fuel slot. Preserve active-fuel IDs and legacy-save fallback.
 - **Transactions:** NeoForge item snapshots do not restore custom progress or pending output. Journal deferred resets and apply them only on root commit; aborted transfers must preserve machine state.
 - **Accelerator:** exact-work conversions require four horizontal lava sides. Ingredient acceptance and full-count processing are deliberately separate checks. Boost drain is clamped to remaining recipe and boost work.
-- **Alloyer:** dedicated three-distinct-slot shapeless recipes only. Only the Extreme Coal item fuels it. Lava changes recalculate duration without resetting elapsed work.
+- **Alloyer:** dedicated three-distinct-slot shapeless recipes only. Only the Lava-Infused Coal item fuels it. Lava changes recalculate duration without resetting elapsed work.
 - **Energy items:** battery drops preserve exact FE through `fastfurnacev2:stored_energy`. Item energy handlers must use NeoForge's supplied `ItemAccess` context; placement clamps restored FE to tier capacity.
 - **Power conduits:** each connected network runs once per tick with a shared budget equal to its slowest tier. Chains, loops, buffers, and branches must not multiply throughput or permit same-tick backflow.
 - **API initialization:** register definitions from `DefaultDataComponentsBoundEvent` on the mod bus when static data should update; common setup is too early to construct recipe `ItemStack`s. Patch tool defaults earlier through `ModifyDefaultComponentsEvent`.
 - **Tools:** custom durability saving requires the API factory's `damageItem` route; other proc modifiers are ingredient-driven. Preserve direct-melee checks, correct-tool block drops, and deterministic roll boundaries.
-- **Crushed ores:** during discovery, components and runtime tags are unbound. Reject mod-namespace raw items except the three explicit Fast raw materials to prevent recursive registration. Reuse registered external results and preserve their resources.
+- **Crushed ores:** during discovery, components and runtime tags are unbound. Reject mod-namespace raw items except the three explicit Lava-Infused raw materials to prevent recursive registration. Reuse registered external results and preserve their resources.
 - **Client separation:** keep client classes and `NativeImage` out of common code. Do not rely on `@OnlyIn` runtime stripping in this NeoForge version.
 - **Menus and JEI:** crusher identity arrives through menu synchronization, so select screen text and click behavior at draw time. Register shared transfer handlers once with machine filters; duplicate JEI registrations overwrite one another.
 - **Textures:** generate only from preserved square sources. Use the all-lava generator where required and keep exact seeds/commands in `tools/README.md`.

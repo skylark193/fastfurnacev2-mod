@@ -125,6 +125,30 @@ public class AcceleratorBlockEntity extends BaseContainerBlockEntity implements 
         return FastFurnaceApi.findFuel(fuel).map(FastFuel::acceleratorWorkPerTick).orElse(0);
     }
 
+    public int getWorkProgress() {
+        return this.workProgress;
+    }
+
+    public int getRecipeTicks() {
+        return this.recipeTicks;
+    }
+
+    public int getBoostWork() {
+        return this.boostWork;
+    }
+
+    public int getTotalBoostWork() {
+        return this.totalBoostWork;
+    }
+
+    public int getLavaSideCount() {
+        return this.lavaSideCount;
+    }
+
+    public int getBoostWorkPerTick() {
+        return this.boostWorkPerTick;
+    }
+
     @Override
     protected Component getDefaultName() {
         return Component.translatable(FastFurnaceV2.ACCELERATOR.get().getDescriptionId());

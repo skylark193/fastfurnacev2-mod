@@ -5,7 +5,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -18,6 +23,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.redstone.Orientation;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jspecify.annotations.Nullable;
 
@@ -76,6 +82,20 @@ public class FastPowerConduitBlock extends PipeBlock implements EntityBlock {
                 this.canConnect(level, neighbourPos, directionToNeighbour));
     }
 
+    @Override
+    protected void neighborChanged(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Block block,
+            @Nullable Orientation orientation,
+            boolean movedByPiston) {
+        BlockState connectedState = this.withConnections(level, pos, state);
+        if (connectedState != state) {
+            level.setBlock(pos, connectedState, 3);
+        }
+    }
+
     private BlockState withConnections(Level level, BlockPos pos, BlockState state) {
         for (Direction direction : Direction.values()) {
             state = state.setValue(PROPERTY_BY_DIRECTION.get(direction),
@@ -90,6 +110,31 @@ public class FastPowerConduitBlock extends PipeBlock implements EntityBlock {
         }
         return level instanceof Level actualLevel
                 && actualLevel.getCapability(Capabilities.Energy.BLOCK, pos, direction.getOpposite()) != null;
+    }
+
+    @Override
+    protected InteractionResult useItemOn(
+            ItemStack stack,
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hitResult) {
+        return this.openConfiguration(level, pos, player);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(
+            BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        return this.openConfiguration(level, pos, player);
+    }
+
+    private InteractionResult openConfiguration(Level level, BlockPos pos, Player player) {
+        if (level.getBlockEntity(pos) instanceof FastPowerConduitBlockEntity conduit) {
+            player.openMenu(conduit);
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override

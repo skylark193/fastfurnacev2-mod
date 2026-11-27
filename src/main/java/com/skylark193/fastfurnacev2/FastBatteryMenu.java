@@ -1,5 +1,7 @@
 package com.skylark193.fastfurnacev2;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -11,21 +13,24 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public class FastBatteryMenu extends AbstractContainerMenu {
-    public static final int DATA_COUNT = 4;
+public class FastBatteryMenu extends AbstractContainerMenu implements EnergyConfigurableMenu {
+    public static final int DATA_COUNT = 11;
     private final Container container;
     private final ContainerData data;
+    private final BlockPos pos;
 
-    public FastBatteryMenu(int containerId, Inventory inventory) {
-        this(containerId, inventory, new SimpleContainer(0), new SimpleContainerData(DATA_COUNT));
+    public FastBatteryMenu(int containerId, Inventory inventory, BlockPos pos) {
+        this(containerId, inventory, new SimpleContainer(0), new SimpleContainerData(DATA_COUNT), pos);
     }
 
-    public FastBatteryMenu(int containerId, Inventory inventory, Container container, ContainerData data) {
+    public FastBatteryMenu(
+            int containerId, Inventory inventory, Container container, ContainerData data, BlockPos pos) {
         super(FastFurnaceV2.FAST_BATTERY_MENU.get(), containerId);
         checkContainerSize(container, 0);
         checkContainerDataCount(data, DATA_COUNT);
         this.container = container;
         this.data = data;
+        this.pos = pos;
         this.addStandardInventorySlots(inventory, 8, 84);
         this.addDataSlots(data);
     }
@@ -59,6 +64,11 @@ public class FastBatteryMenu extends AbstractContainerMenu {
         return clicked;
     }
 
+    public FastFurnaceTier getTier() {
+        FastFurnaceTier[] tiers = FastFurnaceTier.values();
+        return tiers[Mth.clamp(this.data.get(10), 0, tiers.length - 1)];
+    }
+
     public int getEnergy() {
         return (this.data.get(1) << 16) | (this.data.get(0) & 0xFFFF);
     }
@@ -72,4 +82,13 @@ public class FastBatteryMenu extends AbstractContainerMenu {
         return capacity == 0 ? 0.0F : Mth.clamp(this.getEnergy() / (float) capacity, 0.0F, 1.0F);
     }
 
+    @Override
+    public BlockPos getEnergyBlockPos() {
+        return this.pos;
+    }
+
+    @Override
+    public EnergySideMode getEnergySideMode(Direction direction) {
+        return EnergySideMode.fromSerialized(this.data.get(4 + direction.ordinal()));
+    }
 }

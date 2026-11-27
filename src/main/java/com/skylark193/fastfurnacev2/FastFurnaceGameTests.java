@@ -40,12 +40,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -74,6 +76,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
@@ -331,7 +334,7 @@ final class FastFurnaceGameTests {
         FastFurnaceMenu menu = createMenu(helper, crusher);
         if (menu.getTier() != FastFurnaceTier.FAST
                 || !menu.isFastCrusher()
-                || !crusher.getDisplayName().getString().equals("Fast Crusher")) {
+                || !crusher.getDisplayName().getString().equals("Lava-Infused Crusher")) {
             throw helper.assertionException("Fast Crusher did not synchronize its identity and Fast-tier behavior");
         }
 
@@ -1447,7 +1450,7 @@ final class FastFurnaceGameTests {
                 new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()),
                 new ItemStack(FastFurnaceV2.FAST_GOLD_INGOT.get()));
         ExtremelyFastAlloyerMenu menu = createAlloyerMenu(helper, alloyer);
-        if (!alloyer.getDisplayName().getString().equals("Extremely Fast Alloyer")
+        if (!alloyer.getDisplayName().getString().equals("Lava-Infused Alloyer")
                 || menu.getRecipeTicks() != 800
                 || !menu.getSlot(0).mayPlace(new ItemStack(FastFurnaceV2.FAST_IRON_INGOT.get()))
                 || !menu.getSlot(ExtremelyFastAlloyerMenu.FUEL_SLOT).mayPlace(
@@ -2397,6 +2400,83 @@ final class FastFurnaceGameTests {
             }
         }
 
+        FastFuel specialFuel = FastFurnaceApi.findFuel(new ItemStack(FastFurnaceV2.FAST_COAL.get())).orElseThrow();
+        BlockPos lavaGeneratorPos = new BlockPos(12, 0, 0);
+        List<Direction> horizontal = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
+        for (int lavaSides = 0; lavaSides <= FastGeneratorFuelLogic.MAX_HORIZONTAL_LAVA; lavaSides++) {
+            for (int index = 0; index < horizontal.size(); index++) {
+                helper.setBlock(lavaGeneratorPos.relative(horizontal.get(index)),
+                        index < lavaSides ? Blocks.LAVA : Blocks.AIR);
+            }
+            helper.setBlock(lavaGeneratorPos, Blocks.AIR);
+            helper.setBlock(lavaGeneratorPos, FastFurnaceV2.FAST_GENERATOR.get());
+            FastGeneratorBlockEntity lavaGenerator =
+                    helper.getBlockEntity(lavaGeneratorPos, FastGeneratorBlockEntity.class);
+            lavaGenerator.setItem(0, new ItemStack(FastFurnaceV2.FAST_COAL.get()));
+            FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(lavaGeneratorPos),
+                    lavaGenerator.getBlockState(), lavaGenerator);
+            int expectedDuration = 1_600 * (50 + lavaSides * 25) / 100;
+            if (lavaGenerator.getTotalBurnTime() != expectedDuration
+                    || lavaGenerator.getBurnTime() != expectedDuration - 1
+                    || lavaGenerator.getActiveLavaBonusPercent() != lavaSides * 25
+                    || FastGeneratorFuelLogic.getBurnTime(1_600, specialFuel, lavaSides) != expectedDuration) {
+                throw helper.assertionException("Special generator fuel had the wrong duration at "
+                        + lavaSides + " horizontal lava sides");
+            }
+            if (lavaSides == FastGeneratorFuelLogic.MAX_HORIZONTAL_LAVA) {
+                helper.setBlock(lavaGeneratorPos.east(), Blocks.AIR);
+                FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(lavaGeneratorPos),
+                        lavaGenerator.getBlockState(), lavaGenerator);
+                if (lavaGenerator.getTotalBurnTime() != expectedDuration
+                        || lavaGenerator.getActiveLavaBonusPercent() != 100) {
+                    throw helper.assertionException("Lava changes retroactively altered an active generator fuel");
+                }
+                TagValueOutput output = TagValueOutput.createWithContext(
+                        ProblemReporter.DISCARDING, level.registryAccess());
+                lavaGenerator.saveAdditional(output);
+                FastGeneratorBlockEntity restored = new FastGeneratorBlockEntity(
+                        helper.absolutePos(lavaGeneratorPos), lavaGenerator.getBlockState());
+                restored.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING,
+                        level.registryAccess(), output.buildResult()));
+                if (restored.getActiveLavaBonusPercent() != 100
+                        || restored.getTotalBurnTime() != expectedDuration) {
+                    throw helper.assertionException("The active generator lava bonus did not persist");
+                }
+            }
+        }
+        helper.setBlock(lavaGeneratorPos, Blocks.AIR);
+        for (Direction direction : horizontal) {
+            helper.setBlock(lavaGeneratorPos.relative(direction), Blocks.LAVA);
+        }
+        helper.setBlock(lavaGeneratorPos, FastFurnaceV2.FAST_GENERATOR.get());
+        FastGeneratorBlockEntity ordinaryGenerator =
+                helper.getBlockEntity(lavaGeneratorPos, FastGeneratorBlockEntity.class);
+        ordinaryGenerator.setItem(0, new ItemStack(Items.COAL));
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(lavaGeneratorPos),
+                ordinaryGenerator.getBlockState(), ordinaryGenerator);
+        if (ordinaryGenerator.getTotalBurnTime() != 1_600
+                || ordinaryGenerator.getActiveLavaBonusPercent() != 0) {
+            throw helper.assertionException("Ordinary generator fuel received a lava duration bonus");
+        }
+        for (Direction direction : horizontal) {
+            helper.setBlock(lavaGeneratorPos.relative(direction), Blocks.AIR);
+        }
+
+        int longBurnTime = 50_000;
+        int longTotalBurnTime = 100_000;
+        SimpleContainerData timerData = new SimpleContainerData(FastGeneratorMenu.DATA_COUNT);
+        timerData.set(2, longBurnTime & 0xFFFF);
+        timerData.set(3, longTotalBurnTime & 0xFFFF);
+        timerData.set(16, longBurnTime >>> 16);
+        timerData.set(17, longTotalBurnTime >>> 16);
+        FastGeneratorMenu timerMenu = new FastGeneratorMenu(0,
+                helper.makeMockPlayer(GameType.CREATIVE).getInventory(),
+                new SimpleContainer(FastGeneratorMenu.SLOT_COUNT), timerData, BlockPos.ZERO);
+        if (timerMenu.getBurnTime() != longBurnTime
+                || timerMenu.getTotalBurnTime() != longTotalBurnTime) {
+            throw helper.assertionException("Generator menu truncated long burn timers");
+        }
+
         BlockPos fullPos = new BlockPos(0, 3, 0);
         helper.setBlock(fullPos, FastFurnaceV2.FAST_GENERATOR.get());
         FastGeneratorBlockEntity full = helper.getBlockEntity(fullPos, FastGeneratorBlockEntity.class);
@@ -2450,6 +2530,40 @@ final class FastFurnaceGameTests {
         if (level.getCapability(Capabilities.Energy.BLOCK, helper.absolutePos(transferBatteryPos), Direction.UP) == null) {
             throw helper.assertionException("Battery energy capability was not registered");
         }
+        transferGenerator.cycleEnergySide(Direction.EAST);
+        transferGenerator.cycleEnergySide(Direction.EAST);
+        if (transferGenerator.getEnergySideMode(Direction.EAST) != EnergySideMode.INPUT) {
+            throw helper.assertionException("Generator side modes did not cycle from output to input");
+        }
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(transferGeneratorPos),
+                transferGenerator.getBlockState(), transferGenerator);
+        assertEnergy(helper, transferGenerator.energy(), 128, "A generator pushed through an input-only side");
+        assertEnergy(helper, transferBattery.energy(), 128, "An input-only generator side supplied its neighbor");
+        EnergyHandler generatorInput = transferGenerator.energyForSide(Direction.EAST);
+        if (insertEnergy(generatorInput, 32) != 32 || extractEnergy(generatorInput, 32) != 0
+                || insertEnergy(transferGenerator.energyForSide(null), 32) != 0) {
+            throw helper.assertionException("Generator sided or unsided energy permissions were incorrect");
+        }
+        TagValueOutput generatorSides = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING, level.registryAccess());
+        transferGenerator.saveAdditional(generatorSides);
+        FastGeneratorBlockEntity restoredGeneratorSides = new FastGeneratorBlockEntity(
+                helper.absolutePos(transferGeneratorPos), transferGenerator.getBlockState());
+        restoredGeneratorSides.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING,
+                level.registryAccess(), generatorSides.buildResult()));
+        if (restoredGeneratorSides.getEnergySideMode(Direction.EAST) != EnergySideMode.INPUT) {
+            throw helper.assertionException("Generator side configuration did not persist");
+        }
+        transferGenerator.cycleEnergySide(Direction.EAST);
+        int availableBeforePush = transferGenerator.energy().getAmountAsInt();
+        FastGeneratorBlockEntity.serverTick(level, helper.absolutePos(transferGeneratorPos),
+                transferGenerator.getBlockState(), transferGenerator);
+        int expectedPush = Math.min(availableBeforePush + 128,
+                FastFurnaceTier.FAST.getGeneratorExtractionLimit());
+        assertEnergy(helper, transferBattery.energy(), 128 + expectedPush,
+                "An output-enabled generator side did not resume pushing");
+        assertEnergy(helper, transferGenerator.energy(), availableBeforePush + 128 - expectedPush,
+                "Generator output push did not conserve energy");
 
         BlockPos batteryPos = new BlockPos(6, 0, 0);
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
@@ -2486,6 +2600,36 @@ final class FastFurnaceGameTests {
             restored.loadAdditional(TagValueInput.create(
                     ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
             assertEnergy(helper, restored.energy(), capacity, "Battery charge did not persist");
+            if (menu.getTier() != tier) {
+                throw helper.assertionException("Battery menu did not synchronize its tier");
+            }
+            restored.cycleEnergySide(Direction.NORTH);
+            if (restored.getEnergySideMode(Direction.NORTH) != EnergySideMode.INPUT
+                    || extractEnergy(restored.energyForSide(Direction.NORTH), 10) != 0) {
+                throw helper.assertionException("An input-only battery side allowed extraction");
+            }
+            TagValueOutput sideOutput = TagValueOutput.createWithContext(
+                    ProblemReporter.DISCARDING, level.registryAccess());
+            restored.saveAdditional(sideOutput);
+            FastBatteryBlockEntity restoredSides = new FastBatteryBlockEntity(
+                    helper.absolutePos(batteryPos), battery.getBlockState());
+            restoredSides.loadAdditional(TagValueInput.create(
+                    ProblemReporter.DISCARDING, level.registryAccess(), sideOutput.buildResult()));
+            if (restoredSides.getEnergySideMode(Direction.NORTH) != EnergySideMode.INPUT) {
+                throw helper.assertionException("Battery side configuration did not persist");
+            }
+            restoredSides.cycleEnergySide(Direction.NORTH);
+            if (insertEnergy(restoredSides.energyForSide(Direction.NORTH), 10) != 0) {
+                throw helper.assertionException("An output-only battery side accepted insertion");
+            }
+            if (extractEnergy(restoredSides.energyForSide(Direction.NORTH), 10) != 10) {
+                throw helper.assertionException("An output-only battery side rejected extraction");
+            }
+            restoredSides.cycleEnergySide(Direction.NORTH);
+            if (insertEnergy(restoredSides.energyForSide(Direction.NORTH), 10) != 10
+                    || extractEnergy(restoredSides.energyForSide(Direction.NORTH), 10) != 10) {
+                throw helper.assertionException("A bidirectional battery side did not allow both operations");
+            }
         }
         if (FastBatteryBlock.chargeLevel(0, 256_000) != 0
                 || FastBatteryBlock.chargeLevel(1, 256_000) != 1
@@ -2556,6 +2700,18 @@ final class FastFurnaceGameTests {
 
     private static void powerConduitsShareNetworkThroughput(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        List<String> ordered = List.of("first", "second", "third");
+        if (!ConduitTransferMode.FILL_FIRST_FOUND.order(ordered, 0, RandomSource.create(0)).equals(ordered)
+                || !ConduitTransferMode.ROUND_ROBIN.order(ordered, 0, RandomSource.create(0)).equals(ordered)
+                || !ConduitTransferMode.ROUND_ROBIN.order(ordered, 1, RandomSource.create(0))
+                        .equals(List.of("second", "third", "first"))) {
+            throw helper.assertionException("Conduit fill-first or round-robin ordering was incorrect");
+        }
+        List<String> randomOrder = ConduitTransferMode.RANDOM.order(ordered, 0, RandomSource.create(42));
+        if (!randomOrder.equals(ConduitTransferMode.RANDOM.order(ordered, 0, RandomSource.create(42)))
+                || randomOrder.size() != ordered.size() || !randomOrder.containsAll(ordered)) {
+            throw helper.assertionException("Conduit random ordering was not a deterministic permutation");
+        }
         for (FastFurnaceTier tier : FastFurnaceTier.values()) {
             assertConduitShapes(helper, FastFurnaceV2.getConduitBlock(tier).get().defaultBlockState(),
                     false, tier + " standalone");
@@ -2563,14 +2719,17 @@ final class FastFurnaceGameTests {
             BlockPos sourcePos = new BlockPos(0, y, 0);
             BlockPos conduitPos = new BlockPos(1, y, 0);
             BlockPos sinkPos = new BlockPos(2, y, 0);
-            helper.setBlock(sourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+            helper.setBlock(sourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
             helper.setBlock(conduitPos, FastFurnaceV2.getConduitBlock(tier).get());
             helper.setBlock(sinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
-            FastBatteryBlockEntity source = helper.getBlockEntity(sourcePos, FastBatteryBlockEntity.class);
+            FastGeneratorBlockEntity source = helper.getBlockEntity(sourcePos, FastGeneratorBlockEntity.class);
             FastPowerConduitBlockEntity conduit = helper.getBlockEntity(conduitPos, FastPowerConduitBlockEntity.class);
             FastBatteryBlockEntity sink = helper.getBlockEntity(sinkPos, FastBatteryBlockEntity.class);
             source.energy().set(source.energy().getCapacityAsInt());
-            int expected = Math.min(tier.getConduitTransferRate(), FastFurnaceTier.DIAMOND.getBatteryTransferLimit());
+            sink.energy().set(0);
+            int expected = Math.min(Math.min(tier.getConduitTransferRate(),
+                    FastFurnaceTier.DIAMOND.getBatteryTransferLimit()),
+                    FastFurnaceTier.DIAMOND.getGeneratorExtractionLimit());
             FastPowerConduitBlockEntity.runNetwork(level, conduit, 100 + tier.ordinal());
             assertEnergy(helper, sink.energy(), expected, tier + " conduit transferred the wrong amount");
             assertEnergy(helper, source.energy(), source.energy().getCapacityAsInt() - expected,
@@ -2591,12 +2750,12 @@ final class FastFurnaceGameTests {
 
         BlockPos chainSourcePos = new BlockPos(0, 8, 0);
         BlockPos chainSinkPos = new BlockPos(4, 8, 0);
-        helper.setBlock(chainSourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        helper.setBlock(chainSourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
         helper.setBlock(new BlockPos(1, 8, 0), FastFurnaceV2.IRON_FAST_POWER_CONDUIT.get());
         helper.setBlock(new BlockPos(2, 8, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
         helper.setBlock(new BlockPos(3, 8, 0), FastFurnaceV2.DIAMOND_FAST_POWER_CONDUIT.get());
         helper.setBlock(chainSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
-        FastBatteryBlockEntity chainSource = helper.getBlockEntity(chainSourcePos, FastBatteryBlockEntity.class);
+        FastGeneratorBlockEntity chainSource = helper.getBlockEntity(chainSourcePos, FastGeneratorBlockEntity.class);
         FastBatteryBlockEntity chainSink = helper.getBlockEntity(chainSinkPos, FastBatteryBlockEntity.class);
         FastPowerConduitBlockEntity chainStart = helper.getBlockEntity(new BlockPos(1, 8, 0), FastPowerConduitBlockEntity.class);
         chainSource.energy().set(chainSource.energy().getCapacityAsInt());
@@ -2606,13 +2765,13 @@ final class FastFurnaceGameTests {
 
         BlockPos loopSourcePos = new BlockPos(0, 10, 0);
         BlockPos loopSinkPos = new BlockPos(3, 10, 0);
-        helper.setBlock(loopSourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        helper.setBlock(loopSourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
         helper.setBlock(new BlockPos(1, 10, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
         helper.setBlock(new BlockPos(2, 10, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
         helper.setBlock(new BlockPos(2, 11, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
         helper.setBlock(new BlockPos(1, 11, 0), FastFurnaceV2.FAST_POWER_CONDUIT.get());
         helper.setBlock(loopSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
-        FastBatteryBlockEntity loopSource = helper.getBlockEntity(loopSourcePos, FastBatteryBlockEntity.class);
+        FastGeneratorBlockEntity loopSource = helper.getBlockEntity(loopSourcePos, FastGeneratorBlockEntity.class);
         FastBatteryBlockEntity loopSink = helper.getBlockEntity(loopSinkPos, FastBatteryBlockEntity.class);
         FastPowerConduitBlockEntity loopStart = helper.getBlockEntity(new BlockPos(1, 10, 0), FastPowerConduitBlockEntity.class);
         loopSource.energy().set(loopSource.energy().getCapacityAsInt());
@@ -2632,6 +2791,104 @@ final class FastFurnaceGameTests {
         assertEnergy(helper, loopSource.energy(), loopSource.energy().getCapacityAsInt() - 412,
                 "Network transfers flowed back into their original source");
 
+        chainStart.setNetworkTransferMode(ConduitTransferMode.RANDOM);
+        for (int x = 1; x <= 3; x++) {
+            FastPowerConduitBlockEntity member = helper.getBlockEntity(
+                    new BlockPos(x, 8, 0), FastPowerConduitBlockEntity.class);
+            if (member.getTransferMode() != ConduitTransferMode.RANDOM
+                    || member.getNetworkTransferMode() != ConduitTransferMode.RANDOM) {
+                throw helper.assertionException("Network transfer mode did not propagate to every conduit");
+            }
+        }
+        FastPowerConduitBlockEntity chainMiddle = helper.getBlockEntity(
+                new BlockPos(2, 8, 0), FastPowerConduitBlockEntity.class);
+        chainMiddle.cycleNetworkTransferMode();
+        if (chainStart.getTransferMode() != ConduitTransferMode.FILL_FIRST_FOUND
+                || chainMiddle.getNetworkTransferMode() != ConduitTransferMode.FILL_FIRST_FOUND) {
+            throw helper.assertionException("Right-click network mode cycling did not update the whole network");
+        }
+
+        BlockPos configuredSourcePos = new BlockPos(0, 14, 0);
+        BlockPos configuredConduitPos = new BlockPos(1, 14, 0);
+        BlockPos configuredSinkPos = new BlockPos(2, 14, 0);
+        helper.setBlock(configuredSourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
+        helper.setBlock(configuredConduitPos, FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(configuredSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastGeneratorBlockEntity configuredSource =
+                helper.getBlockEntity(configuredSourcePos, FastGeneratorBlockEntity.class);
+        FastPowerConduitBlockEntity configured =
+                helper.getBlockEntity(configuredConduitPos, FastPowerConduitBlockEntity.class);
+        FastBatteryBlockEntity configuredSink =
+                helper.getBlockEntity(configuredSinkPos, FastBatteryBlockEntity.class);
+        configuredSource.energy().set(configuredSource.energy().getCapacityAsInt());
+        setConnectionMode(configured, Direction.WEST, EnergySideMode.OUTPUT);
+        FastPowerConduitBlockEntity.runNetwork(level, configured, 400);
+        assertEnergy(helper, configuredSink.energy(), 0,
+                "An output-only conduit connection extracted from its external neighbor");
+        setConnectionMode(configured, Direction.WEST, EnergySideMode.INPUT);
+        setConnectionMode(configured, Direction.EAST, EnergySideMode.INPUT);
+        FastPowerConduitBlockEntity.runNetwork(level, configured, 401);
+        assertEnergy(helper, configuredSink.energy(), 0,
+                "An input-only conduit connection inserted into its external neighbor");
+        setConnectionMode(configured, Direction.EAST, EnergySideMode.OUTPUT);
+        FastPowerConduitBlockEntity.runNetwork(level, configured, 402);
+        assertEnergy(helper, configuredSink.energy(), 256,
+                "Correctly configured conduit connections did not transfer energy");
+
+        BlockPos batterySourcePos = new BlockPos(0, 16, 0);
+        BlockPos batteryConduitPos = new BlockPos(1, 16, 0);
+        BlockPos batterySinkPos = new BlockPos(2, 16, 0);
+        helper.setBlock(batterySourcePos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        helper.setBlock(batteryConduitPos, FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(batterySinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastBatteryBlockEntity batterySource =
+                helper.getBlockEntity(batterySourcePos, FastBatteryBlockEntity.class);
+        FastPowerConduitBlockEntity batteryNetwork =
+                helper.getBlockEntity(batteryConduitPos, FastPowerConduitBlockEntity.class);
+        FastBatteryBlockEntity batterySink =
+                helper.getBlockEntity(batterySinkPos, FastBatteryBlockEntity.class);
+        batterySource.energy().set(batterySource.energy().getCapacityAsInt());
+        FastPowerConduitBlockEntity.runNetwork(level, batteryNetwork, 403);
+        assertEnergy(helper, batterySink.energy(), 0, "A conduit network moved energy between two batteries");
+        assertEnergy(helper, batterySource.energy(), batterySource.energy().getCapacityAsInt(),
+                "A battery-to-battery transfer drained the source battery");
+
+        BlockPos firstSourcePos = new BlockPos(0, 18, 0);
+        BlockPos firstConduitPos = new BlockPos(1, 18, 0);
+        BlockPos firstSinkPos = new BlockPos(1, 18, 1);
+        helper.setBlock(firstSourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
+        helper.setBlock(firstConduitPos, FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(firstSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastGeneratorBlockEntity firstSource = helper.getBlockEntity(firstSourcePos, FastGeneratorBlockEntity.class);
+        FastPowerConduitBlockEntity firstNetwork = helper.getBlockEntity(
+                firstConduitPos, FastPowerConduitBlockEntity.class);
+        FastBatteryBlockEntity firstSink = helper.getBlockEntity(firstSinkPos, FastBatteryBlockEntity.class);
+        firstSource.energy().set(firstSource.energy().getCapacityAsInt());
+        firstSink.energy().set(0);
+        FastPowerConduitBlockEntity.runNetwork(level, firstNetwork, 404);
+        assertEnergy(helper, firstSink.energy(), 256, "The first same-tick network did not run");
+
+        BlockPos secondConduitPos = new BlockPos(2, 18, 0);
+        BlockPos secondSourcePos = new BlockPos(3, 18, 0);
+        BlockPos secondSinkPos = new BlockPos(2, 18, 1);
+        helper.setBlock(secondConduitPos, FastFurnaceV2.FAST_POWER_CONDUIT.get());
+        helper.setBlock(secondSourcePos, FastFurnaceV2.DIAMOND_FAST_GENERATOR.get());
+        helper.setBlock(secondSinkPos, FastFurnaceV2.DIAMOND_FAST_BATTERY.get());
+        FastPowerConduitBlockEntity secondNetwork = helper.getBlockEntity(
+                secondConduitPos, FastPowerConduitBlockEntity.class);
+        FastGeneratorBlockEntity secondSource = helper.getBlockEntity(secondSourcePos, FastGeneratorBlockEntity.class);
+        FastBatteryBlockEntity secondSink = helper.getBlockEntity(secondSinkPos, FastBatteryBlockEntity.class);
+        secondSource.energy().set(secondSource.energy().getCapacityAsInt());
+        secondSink.energy().set(0);
+        FastPowerConduitBlockEntity.runNetwork(level, secondNetwork, 404);
+        assertEnergy(helper, firstSink.energy(), 256,
+                "Joining networks mid-tick ran an already-processed conduit again");
+        assertEnergy(helper, secondSink.energy(), 256, "The newly joined conduit did not run");
+        assertEnergy(helper, firstSource.energy(), firstSource.energy().getCapacityAsInt() - 256,
+                "An already-processed network supplied energy twice in one tick");
+
+        loopStart.setNetworkTransferMode(ConduitTransferMode.ROUND_ROBIN);
+        setConnectionMode(loopStart, Direction.SOUTH, EnergySideMode.INPUT);
         TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
         loopStart.energy().set(132);
         loopStart.saveAdditional(output);
@@ -2640,6 +2897,10 @@ final class FastFurnaceGameTests {
         restored.loadAdditional(TagValueInput.create(
                 ProblemReporter.DISCARDING, level.registryAccess(), output.buildResult()));
         assertEnergy(helper, restored.energy(), 132, "Conduit buffer did not persist");
+        if (restored.getTransferMode() != ConduitTransferMode.ROUND_ROBIN
+                || restored.getConnectionMode(Direction.SOUTH) != EnergySideMode.INPUT) {
+            throw helper.assertionException("Conduit connection or network transfer mode did not persist");
+        }
         helper.succeed();
     }
 
@@ -2666,6 +2927,33 @@ final class FastFurnaceGameTests {
                 throw helper.assertionException(label + " had incorrect bounds: expected "
                         + Arrays.toString(expected) + ", got " + Arrays.toString(actual));
             }
+        }
+    }
+
+    private static void setConnectionMode(
+            FastPowerConduitBlockEntity conduit, Direction direction, EnergySideMode mode) {
+        int attempts = 0;
+        while (conduit.getConnectionMode(direction) != mode && attempts++ < EnergySideMode.values().length) {
+            conduit.cycleConnectionMode(direction);
+        }
+        if (conduit.getConnectionMode(direction) != mode) {
+            throw new IllegalStateException("Unable to configure conduit connection");
+        }
+    }
+
+    private static int insertEnergy(EnergyHandler handler, int amount) {
+        try (Transaction transaction = Transaction.openRoot()) {
+            int inserted = handler.insert(amount, transaction);
+            transaction.commit();
+            return inserted;
+        }
+    }
+
+    private static int extractEnergy(EnergyHandler handler, int amount) {
+        try (Transaction transaction = Transaction.openRoot()) {
+            int extracted = handler.extract(amount, transaction);
+            transaction.commit();
+            return extracted;
         }
     }
 
